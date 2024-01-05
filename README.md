@@ -29,11 +29,11 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 这里 `UserHandler` 上的 `RegisterRoutes` 是一种分散注册路由的做法，还有一种**集中式的做法，比如说在 `main` 函数里将所有的路由都注册好。**
 
 - 集中式：
-    - 优点：打开就能看到全部路由
-    - 缺点：路由过多的时候，难以维护，查找起来不方便。
+  - 优点：打开就能看到全部路由
+  - 缺点：路由过多的时候，难以维护，查找起来不方便。
 - 分散式：
-    - 优点：比较有条理
-    - 缺点：找路由的时候不方便
+  - 优点：比较有条理
+  - 缺点：找路由的时候不方便
 
 #### 用分组路由来简化注册
 
@@ -143,7 +143,7 @@ emailExp := regexp.MustCompile(emailRegexPattern, regexp.None)
 ok, err := emailExp.MatchString(req.Email)
 ```
 
-#### 跨域问题
+##### 跨域问题
 
 我们的请求是从 `localhost:3000` 这个前端发送到后端 `localhost:8090` 的
 
@@ -200,7 +200,7 @@ services:
 #      - '6379:6379'
 ```
 
-###### Docker Compose 基本命令
+#### Docker Compose 基本命令
 
 - `docker compose up` ：初始化 `docker compose` 并启动。
 - `docker compose down` ：删除 `docker compose` 里面创建的各种容器。
@@ -217,7 +217,32 @@ services:
 
 同时，我们还需要一个 domain，代表领域对象。
 
+![image-20240105105347456](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105105347456.png)
 
+`dao` 中的 `User` 模型：注意到，`dao` 里面操作的不是 `domain.User` ，而是新定义了一个类型。
 
+这是因为：**`domain.User` 是业务概念，它不一定和数据库中表或者列完全对的上。而 `dao.User` 是直接映射到表里面的。**
 
+那么问题就来了：**如何建表？**
+
+![image-20240105112220350](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105112220350.png)
+
+#### 密码加密
+
+- 谁来加密？`service` 还是 `repository` 还是 `dao` ？
+- 怎么加密？怎么选择一个安全的加密算法？
+
+**PS：敏感信息应该是连日志都不能打**
+
+###### 加密的位置：
+
+![image-20240105113719864](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105113719864.png)
+
+###### 如何加密
+
+常见的加密算法（安全性逐步提高）：
+
+1. `md5` 之类的哈希算法
+2. 在 `1` 的基础上，引入了盐值(salt)，或者进行多次哈希。
+3. `PBKDFF2` 、`BCrypt` 这一类随机盐值加密算法，同样的密文加密后的结果都不同。
 

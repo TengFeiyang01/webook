@@ -1,4 +1,4 @@
-module gitee.com/geekbang/basic-go
+module webook
 
 go 1.20
 
