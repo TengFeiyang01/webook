@@ -1,0 +1,5 @@
+package diff
+
+func Hello() {
+
+}

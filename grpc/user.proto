@@ -1,0 +1,50 @@
+syntax = "proto3";
+option go_package = "gitee.com/geekbang/basic-go/grpc";
+
+// 这个会报错
+//option go_package = "grpc";
+
+message User {
+  // Protobuf 对前几个字段有性能优化，
+  int64 id = 1;
+  string name = 2;
+  // 可以不连续
+//  string avatar = 4;
+//  int64 age = 5;
+
+  map<string, string> attributes = 6;
+  optional int32 age = 7;
+  repeated string nicknames = 8;
+  Address address = 9;
+
+  oneof contacts {
+    string email = 10;
+    string phone = 11;
+  }
+  Gender gender = 12;
+}
+
+message Address {
+
+}
+
+enum Gender {
+  Unknown = 0;
+  Male = 1;
+  Female = 2;
+}
+
+service UserService {
+  rpc GetById(GetByIdRequest) returns (GetByIdResponse);
+  rpc GetByIdV1(GetByIdRequest) returns (GetByIdResponse);
+}
+
+message GetByIdRequest {
+  int64 id = 1;
+}
+
+message GetByIdResponse {
+  User user = 1;
+}
+
+// windows protoc `--go_out=. `--go_opt=paths=source_relative  `--go-grpc_out=. `--go-grpc_opt=paths=source_relative user.proto

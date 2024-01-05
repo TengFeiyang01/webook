@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: demojob
+spec:
+  schedule: "* * * * *" #	Run every minute
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: demojob
+              image: flycash/demojob:v0.0.2
+              imagePullPolicy: IfNotPresent
+          restartPolicy: OnFailure
