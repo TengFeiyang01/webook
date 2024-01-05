@@ -238,6 +238,8 @@ services:
 
 ![image-20240105113719864](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105113719864.png)
 
+这里我们选择在 `service` 加密。
+
 ###### 如何加密
 
 常见的加密算法（安全性逐步提高）：
@@ -245,4 +247,103 @@ services:
 1. `md5` 之类的哈希算法
 2. 在 `1` 的基础上，引入了盐值(salt)，或者进行多次哈希。
 3. `PBKDFF2` 、`BCrypt` 这一类随机盐值加密算法，同样的密文加密后的结果都不同。
+
+这里我们使用 `BCrypt` 加密，`BCrypt` 加密后无法解密，只能同时比较加密后的值来确定两者是否相等。
+
+优点：
+
+- **不需要自己去生成盐值。**
+- **不需要额外存储盐值。**
+- **可以通过控制 `cost` 来控制加密性能。**
+- **同样的文本，加密后的结果不同。**
+
+使用：`golang.org/x/crypto`。
+
+#### 怎么获得邮件冲突的错误？
+
+答案就是，我们需要拿到数据库的唯一索引冲突错误。我们需要使用 `MySQL GO` 驱动的 `error` 定义，找到准确的错误。
+
+具体而言，在 `dao` 这一层，我们转为了 `ErrUserDuplicateEmail` 错误，并且将这个错误一路网上返回。
+
+![image-20240105135814571](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105135814571.png)
+
+## 用户登录
+
+#### 实现登录功能
+
+![image-20240105144629664](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105144629664.png)
+
+#### 登录校验
+
+登陆成功之后，我要去 `/users/profile` 的时候， **我怎么知道用户登录没登陆**
+
+无状态的 `HTTP` 协议：`HTTP` 并不会记录你的登录状态，因此需要记录一下这个状态，于是就有两个东西 `Cookie` 和 `Session` 。
+
+`Cookie` 关键配置：
+
+- `Domain` ：也就是 `Cookie` 可以用在什么域名下，按最小化原则来设定。
+- `Path` ：`Cookie` 可以用在什么路径下，同样按最小化原则来设定。
+- `Max-Age` 和 `Expires` ：过期时间，只保留必要时间。
+- `Http-Only` ：设置为 `true` 的话，那么浏览器上的 `JS` 代码将无法使用这个 `Cookie` ，永远设置为 `true` 。
+- `Secure`：只能用于 `HTTPS` 协议，生产环境永远设置为 `true` 。
+- `SameSite` ：是否允许跨站发送 `Cookie` ，尽量避免。
+
+`Session` ：关键数据我们希望放在后端，这个存储的东西就叫做 `Session` 。
+
+![image-20240105162049868](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105162049868.png)
+
+![image-20240105162319316](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105162319316.png)
+
+#### 使用 `Gin` 的 `Session` 插件来实现登录功能
+
+`https://github.com/gin-contrib/sessions` ![image-20240105163223432](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105163223432.png)
+
+```go
+# 步骤一
+store := cookie.NewStore([]byte("secret"))
+server.Use(sessions.Sessions("mysession", store))
+```
+
+```go
+# 步骤二
+sess := sessions.Default(ctx)
+// 我可以随便设置值了 放在 session 里的值
+sess.Set("userId", user.Id)
+sess.Save()
+```
+
+```go
+func (l *LoginMiddleBuilder) IgnorePaths(path string) *LoginMiddleBuilder {
+	l.paths = append(l.paths, path)
+	return l
+}
+
+func (l *LoginMiddleBuilder) Build() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		for _, path := range l.paths {
+			if ctx.Request.URL.Path == path {
+				return
+			}
+		}
+
+		// 不需要登录校验的
+		if ctx.Request.URL.Path == "/users/login" || ctx.Request.URL.Path == "/users/signup" {
+			return
+		}
+
+		sess := sessions.Default(ctx)
+		id := sess.Get("UserId")
+		if id != nil {
+			// 没有登录
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+	}
+}
+
+# 步骤三
+server.Use(middleware.NewLoginMiddleBuilder().
+	IgnorePaths("/users/signup").
+	IgnorePaths("/users/login").Build())
+```
 
