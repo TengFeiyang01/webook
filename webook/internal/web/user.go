@@ -2,9 +2,11 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/service"
@@ -35,7 +37,8 @@ func (c *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
 
 	ug.POST("/signup", c.SignUp)
-	ug.POST("login", c.Login)
+	//ug.POST("login", c.Login)
+	ug.POST("/login", c.LoginJWT)
 	ug.POST("/edit", c.Edit)
 	ug.GET("/profile", c.Profile)
 }
@@ -127,25 +130,57 @@ func (c *UserHandler) Login(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "登录成功")
 }
 
+// LoginJWT jwt登录
+func (c *UserHandler) LoginJWT(ctx *gin.Context) {
+	type LoginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	var req LoginReq
+	// 当我们调用 Bind 方法的时候，如果有问题，Bind 方法已经直接写响应回去了
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	u, err := c.svc.Login(ctx.Request.Context(), req.Email, req.Password)
+	if errors.Is(err, service.ErrInvalidUserOrEmail) {
+		ctx.String(http.StatusOK, "用户名或者密码不正确，请重试")
+		return
+	}
+	// 在这里使用 JWT 设置登录态
+	// 生成一个 JWT token
+	token := jwt.New(jwt.SigningMethodHS256)
+	tokenStr, err := token.SignedString([]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"))
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	// 放进header里
+	ctx.Header("x-jwt-token", tokenStr)
+	fmt.Println(tokenStr, u)
+
+	ctx.String(http.StatusOK, "登录成功")
+}
+
 func (c *UserHandler) Edit(ctx *gin.Context) {
 
 }
 
 // Profile 用户详情
 func (c *UserHandler) Profile(ctx *gin.Context) {
-	type Profile struct {
-		Email string
-	}
-	sess := sessions.Default(ctx)
-	id := sess.Get(userIdKey).(int64)
-	u, err := c.svc.Profile(ctx, id)
-	if err != nil {
-		// 按照道理来说，这边 id 对应的数据肯定存在，所以要是没找到，
-		// 那就说明是系统出了问题。
-		ctx.String(http.StatusOK, "系统错误")
-		return
-	}
-	ctx.JSON(http.StatusOK, Profile{
-		Email: u.Email,
-	})
+	/*	type Profile struct {
+			Email string
+		}
+		sess := sessions.Default(ctx)
+		id := sess.Get(userIdKey).(int64)
+		u, err := c.svc.Profile(ctx, id)
+		if err != nil {
+			// 按照道理来说，这边 id 对应的数据肯定存在，所以要是没找到，
+			// 那就说明是系统出了问题。
+			ctx.String(http.StatusOK, "系统错误")
+			return
+		}
+		ctx.JSON(http.StatusOK, Profile{
+			Email: u.Email,
+		})*/
 }

@@ -1,14 +1,11 @@
 package main
 
 import (
-	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"strings"
-	"time"
 	"webook/webook/internal/repository"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/service"
@@ -29,21 +26,6 @@ func main() {
 func initWebServer() *gin.Engine {
 	server := gin.Default()
 
-	server.Use(cors.New(cors.Config{
-		AllowAllOrigins: false,
-		AllowOrigins:    []string{"http://localhost:3000"},
-		AllowOriginFunc: func(origin string) bool {
-			if strings.HasPrefix(origin, "http://localhost") {
-				return true
-			}
-			return strings.Contains(origin, "abc")
-		},
-		AllowMethods:     []string{"POST", "GET", "PUT"},
-		AllowHeaders:     []string{"Content-Type", "Authorization"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-
 	//store := cookie.NewStore([]byte("secret"))
 
 	// 这是基于内存的实现，第一个参数是 authentication key，最好是 32 或者 64 位
@@ -61,10 +43,13 @@ func initWebServer() *gin.Engine {
 
 	server.Use(sessions.Sessions("mysession", store))
 
-	server.Use(middleware.NewLoginMiddleBuilder().
+	//server.Use(middleware.NewLoginMiddleBuilder().
+	//	IgnorePaths("/users/signup").
+	//	IgnorePaths("/users/login").Build())
+
+	server.Use(middleware.NewLoginJWTMiddleBuilder().
 		IgnorePaths("/users/signup").
 		IgnorePaths("/users/login").Build())
-
 	return server
 }
 
