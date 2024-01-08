@@ -47,6 +47,12 @@ func (d *UserDAO) Insert(ctx context.Context, u User) error {
 	return err
 }
 
+func (d *UserDAO) FindById(ctx context.Context, id int64) (User, error) {
+	var u User
+	err := d.db.WithContext(ctx).First(&u, "id = ?", id).Error
+	return u, err
+}
+
 // User 直接对应数据库表结构
 // 有些人叫做 entity / model / PO(persistent object)
 type User struct {

@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -44,7 +44,21 @@ func initWebServer() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	store := cookie.NewStore([]byte("secret"))
+	//store := cookie.NewStore([]byte("secret"))
+
+	// 这是基于内存的实现，第一个参数是 authentication key，最好是 32 或者 64 位
+	// 第二个参数是 encryption key
+	//store := memstore.NewStore([]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"),
+	//	[]byte("o6jdlo2cb9f9pb6h46fjmllw481ldebj"))
+
+	store, err := redis.NewStore(16,
+		"tcp", "localhost:6379", "",
+		[]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"), []byte("o6jdlo2cb9f9pb6h46fjmllw481ldebj"))
+
+	if err != nil {
+		panic(err)
+	}
+
 	server.Use(sessions.Sessions("mysession", store))
 
 	server.Use(middleware.NewLoginMiddleBuilder().

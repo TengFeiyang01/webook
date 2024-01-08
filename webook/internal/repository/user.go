@@ -43,8 +43,13 @@ func (r *UserRepository) Create(ctx context.Context, u domain.User) error {
 	// 在这里操作缓存
 }
 
-func (r *UserRepository) FindById(int64) {
+func (r *UserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
 	// 先从 cache 找
 	// 再从 dao 里面找
 	// 找到了再往回写
+	u, err := r.dao.FindById(ctx, id)
+	return domain.User{
+		Email:    u.Email,
+		Password: u.Password,
+	}, err
 }
