@@ -4,9 +4,11 @@ import (
 	"encoding/gob"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"log"
 	"net/http"
 	"strings"
 	"time"
+	"webook/webook/internal/web"
 )
 
 // LoginJWTMiddleBuilder JWT 登录校验
@@ -52,7 +54,8 @@ func (l *LoginJWTMiddleBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		tokenStr := segs[1]
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		claims := &web.UserClaims{}
+		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"), nil
 		})
 		if err != nil {
@@ -60,10 +63,30 @@ func (l *LoginJWTMiddleBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
+		//claims.ExpiresAt.Time.Before(time.Now()) {
+		//	// 过期了
+		//}
+
 		// err 为 nil token 不为 nil
-		if token == nil || !token.Valid {
+		if token == nil || !token.Valid || claims.Uid == 0 {
+			// 没登陆
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+		// 每 十秒钟 刷新一次
+		now := time.Now()
+		if claims.ExpiresAt.Sub(now) < time.Second*50 {
+			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute))
+			tokenStr, err = token.SignedString([]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"))
+			if err != nil {
+				// 记录日志
+				log.Println("jwt 续约失败", err)
+			}
+			// 放进 header 中
+			ctx.Header("x-jwt-token", tokenStr)
+		}
+		ctx.Set("claims", claims)
+		//ctx.Set("userId", claims.Uid)
 	}
 }

@@ -2,12 +2,12 @@ package web
 
 import (
 	"errors"
-	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"time"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/service"
 )
@@ -40,7 +40,8 @@ func (c *UserHandler) RegisterRoutes(server *gin.Engine) {
 	//ug.POST("login", c.Login)
 	ug.POST("/login", c.LoginJWT)
 	ug.POST("/edit", c.Edit)
-	ug.GET("/profile", c.Profile)
+	//ug.GET("/profile", c.Profile)
+	ug.GET("profile", c.ProfileJWT)
 }
 
 func (c *UserHandler) SignUp(ctx *gin.Context) {
@@ -142,14 +143,24 @@ func (c *UserHandler) LoginJWT(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	u, err := c.svc.Login(ctx.Request.Context(), req.Email, req.Password)
+	user, err := c.svc.Login(ctx.Request.Context(), req.Email, req.Password)
 	if errors.Is(err, service.ErrInvalidUserOrEmail) {
 		ctx.String(http.StatusOK, "用户名或者密码不正确，请重试")
 		return
 	}
+
 	// 在这里使用 JWT 设置登录态
 	// 生成一个 JWT token
-	token := jwt.New(jwt.SigningMethodHS256)
+	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			// 一分钟过期
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+		},
+		Uid: user.Id,
+	}
+
+	//token := jwt.New(jwt.SigningMethodHS256)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString([]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"))
 	if err != nil {
 		ctx.String(http.StatusInternalServerError, "系统错误")
@@ -157,13 +168,32 @@ func (c *UserHandler) LoginJWT(ctx *gin.Context) {
 	}
 	// 放进header里
 	ctx.Header("x-jwt-token", tokenStr)
-	fmt.Println(tokenStr, u)
 
 	ctx.String(http.StatusOK, "登录成功")
 }
 
 func (c *UserHandler) Edit(ctx *gin.Context) {
 
+}
+
+// ProfileJWT 用户详情
+func (c *UserHandler) ProfileJWT(ctx *gin.Context) {
+	clm, ok := ctx.Get("claims")
+	// 你可以断定 必然有 claims
+	if !ok {
+		// 你可以考虑说监控住这里
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+	claims, ok := clm.(*UserClaims)
+	if !ok {
+		// 代码出问题了
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+	println(claims.Uid)
+	// 这边就是你补充 profile 的其他代码
+	ctx.String(http.StatusOK, "这是你的profile")
 }
 
 // Profile 用户详情
@@ -183,4 +213,11 @@ func (c *UserHandler) Profile(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, Profile{
 			Email: u.Email,
 		})*/
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims
+	// 声明你自己的要放进去 token 里面的数据。
+	Uid int64
+	// 自己随便加
 }
