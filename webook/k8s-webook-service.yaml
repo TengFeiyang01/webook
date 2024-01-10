@@ -5,6 +5,7 @@ metadata:
   name: webook
 spec:
 # 规格说明，也即是相信说明这个服务是一个怎样的服务
+# ClusterIP
   type: LoadBalancer
   selector:
     app: webook

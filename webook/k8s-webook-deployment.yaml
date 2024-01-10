@@ -20,6 +20,6 @@ spec:
     spec:
       containers:
         - name: webook
-          image: ytf/webook:v0.0.1
+          image: ytf0609/webook:v0.0.1
           ports:
             - containerPort: 8090
