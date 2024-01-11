@@ -561,7 +561,7 @@ curl.exe -LO "https://dl.k8s.io/release/v1.29.0/bin/windows/amd64/kubectl.exe"
 
 ![image-20240109130603713](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109130603713.png)
 
-##### 准备 `Kubernetes` 容器镜像
+#### 准备 `Kubernetes` 容器镜像
 
 - 首先在本地完成编译，生成一个可在 `Linux` 平台执行的 `webook` 可执行文件。（交叉编译）
 
@@ -578,12 +578,15 @@ curl.exe -LO "https://dl.k8s.io/release/v1.29.0/bin/windows/amd64/kubectl.exe"
   ```dockerfile
   # 基础镜像
   FROM ubuntu:latest
-  # 把编译后的打包进来这个镜像，放到工作目录 /app 你随便换
-  WORKDIR /app
-  COPY webook /app
+  
+  # 把编译后的打包进来这个镜像，放到工作目录 /app（你可以根据实际情况修改路径）
+  WORKDIR /app/
+  
+  # 复制应用程序文件到容器中
+  COPY webook /app/
   
   # CMD 是执行命令
-  # 最佳
+  # 指定应用程序作为入口命令
   ENTRYPOINT ["/app/webook"]
   ```
 
@@ -594,17 +597,19 @@ curl.exe -LO "https://dl.k8s.io/release/v1.29.0/bin/windows/amd64/kubectl.exe"
   ```makefile
   .PHONY: docker
   docker:
-  	@-del webook || true
-  	@set GOOS=linux
-  	@set GOARCH=arm
-  	@go build -o webook
-  	@docker rmi -f ytf/webook:v0.0.1 || true
-  	@docker build -t ytf/webook:v0.0.1 .
+  	# 把上次编译的东西删掉
+  	@rm webook || true
+  	@docker rmi -f ytf0609/webook:v0.0.1
+  	# 指定编译成在 ARM 架构的 linux 操作系统上运行的可执行文件，
+  	# 名字叫做 webook
+  	@GOOS=linux GOARCH=arm go build -tags=k8s -o webook .
+  	# 这里你可以随便改这个标签，记得对应的 k8s 部署里面也要改
+  	@docker build -t ytf0609/webook:v0.0.1 .
   ```
 
 处于方便的目的，我打包成了一个 `make docker` 命令，**如果没有安装 `make` 工具，你可以一个个命令在命令行单独执行。**
 
-##### 编写 Deployment
+##### 编写 `Deployment`
 
 ![image-20240109155544490](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109155544490.png)
 
@@ -663,7 +668,7 @@ spec:
 		- containerPort: 8090
 ```
 
-##### 编写Service
+##### 编写 `Service`
 
 ![image-20240109161042480](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109161042480.png)
 
@@ -702,3 +707,297 @@ kubernetes   ClusterIP      10.96.0.1     <none>        443/TCP        4h25m
 webook       LoadBalancer   10.97.2.153   localhost     80:32581/TCP   21s
 ```
 
+### 使用 `Kubernetes` 部署 `MySQL`
+
+`MySQl` 和前面的 `Go` 应用不同，他需要存储数据，也就是我们需要给他一个存储空间。
+
+在 `k8s` 里面，**存储空间被抽象为 `PersistentVolume` （持久化卷）。**
+
+![image-20240110090119102](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110090119102.png)
+
+`MySQL Service` 和 `MySQL Deployment`
+
+##### MySQL Service
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+# 代表我们的 webook 本体
+  name: webook
+spec:
+# 规格说明，也即是相信说明这个服务是一个怎样的服务
+  type: LoadBalancer
+  selector:
+    app: webook
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8090
+```
+
+##### MySQL Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook-mysql
+  labels:
+    app: webook-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webook-mysql
+  template:
+    metadata:
+      name: webook-mysql
+      labels:
+        app: webook-mysql
+    spec:
+      containers:
+        - name: webook-mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            # 这边要对应到 mysql 的数据存储的位置
+            - mountPath: /var/lib/mysql
+              name: mysql-storage
+          ports:
+            - containerPort: 3306
+      restartPolicy: Always
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: webook-mysql-claim-v4
+```
+
+![image-20240110095923347](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110095923347.png)
+
+##### PersistentVlolumeClaim
+
+一个容器需要什么存储资源，是通过 `PersistentVolumeClaim` 来声明的。
+
+```yaml
+ # pvc => PersistentVolumeClaim
+# 开始描述 mysql 需要的存储资源的特征
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+# 这个是指我 MySQL 要用的东西
+# 我 k8s 有什么
+  name: webook-mysql-claim
+  labels:
+    app: webook-mysql-claim
+spec:
+# 这里的 manual 其实是一个我们自己写的，只是用来维护
+  storageClassName: manual
+# 访问模式，这里是控制能不能被多个 pod 读写
+  accessModes:
+    - ReadWriteOnce
+# 究竟需要一些什么资源
+  resources:
+    requests:
+# 需要一个 G 的容量
+      storage: 1Gi
+```
+
+##### PersistentVolume
+
+**持久化卷，表达我是一个什么样的存储结构。**
+
+因此，**`PersistentVolume` 是存储本身说我有什么特性，而 `PersistentVolumeClaim` 是用的人说他需要什么特性。**
+
+```yaml
+# pvc => PersistentVolumeClaim
+# 开始描述 mysql 需要的存储资源的特征
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+# 这个是指我 MySQL 要用的东西
+# 我 k8s 有什么
+  name: webook-mysql-claim-v4
+spec:
+# 这里的 manual 其实是一个我们自己写的，只是用来维护
+  storageClassName: manualv4
+# 访问模式，这里是控制能不能被多个 pod 读写
+  accessModes:    
+    - ReadWriteOnce
+# 究竟需要一些什么资源
+  resources:
+    requests:
+# 需要一个 G 的容量
+      storage: 1Gi
+```
+
+```yaml
+apiVersion: v1
+# 这个指的是 我 k8s 有哪些 volume
+kind: PersistentVolume
+metadata:
+  name: my-local-pv-v4
+spec:
+# 这个名称必须和 pvc 中的一致
+  storageClassName: manualv4
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+#    - ReadOnlyMany
+#    - ReadWriteMany
+  hostPath:
+    path: "/mnt/live"
+```
+
+##### 整体调用流程及其对应关系
+
+![image-20240110110924769](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110110924769.png)
+
+![image-20240110111542977](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110111542977.png)
+
+![image-20240110111807109](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110111807109.png)
+
+![image-20240110111955990](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110111955990.png)
+
+>还有一个点是 测试的时候 填的数据库名应为 mysql 而非 webook
+
+### 使用 `Kubernetes` 部署 `Redis`
+
+部署最简单的单机 `Redis`。
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webook-redis
+spec:
+  selector:
+    app: webook-redis
+  ports:
+    - protocol: TCP
+      port: 11479
+      # 外部访问的端口，必须是 30000-32767 之间
+      nodePort: 30003
+      # pod 暴露的端口
+      targetPort: 6379
+  type: NodePort
+```
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook-redis
+  labels:
+    app: webook-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webook-redis
+  template:
+    metadata:
+      name: webook-redis
+      labels:
+        app: webook-redis
+    spec:
+      containers:
+        - name: webook-redis
+          image: redis:latest
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+```
+
+其中 `port`、`nodePort`和 `targetPort`的含义
+
+- `port`：是指 `Service`本身的，比如我们在 `Redis`里面连接信息用的就是 `demo-redis-service:6379`。
+- `nodePort`：是指我在 `k8s`集群之外访问的端口，比如说我执行 `redis-cli -p 30379`。
+- `targetPort`：是指 `Pod`上暴露的的端口。
+
+![image-20240110114546532](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110114546532.png)
+
+##### 测试 `Redis`
+
+```shell
+kubectl apply -f k8s-redis-deployment.yaml
+kubectl apply -f k8s-redis-service.yaml
+```
+
+可以试试外部访问，直接使用 `redis-cli -h localhost -p 30003`就可以。（30003是你 `service`中的nodePort）
+
+### Ingress 和 Ingress controller
+
+一个 `Ingress controller` 可以控制住整个集群内部的所有 `Ingress` （符合条件的 `Ingress`）
+
+或者这样说：
+
+- `Ingress` 是你的配置
+- `Ingress controller` 是执行这些配置的
+
+#### 安装 `helm` 和 `ingress-nignx`
+
+安装 `helm`：
+
+```shell
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+
+安装 `ingress-nignx`
+
+```shell
+helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx
+```
+
+![image-20240110132140779](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110132140779.png)
+
+运行 `kubectl apply -f k8s-ingress-nginx.yaml` ，然后去修改 `Hosts` 文件。
+
+```shell
+# localhost name resolution is handled within DNS itself.
+#	127.0.0.1       localhost
+#	::1             localhost
+127.0.0.1 live.webook.com
+```
+
+完毕后去浏览器，输入 `live.webook.com/hello` 查看连接情况（此处需要关闭 `VPN`）（还需要更改 `hosts`文件）
+
+## 集成 `Redis`、`MySQL` 启动。
+
+![image-20240110143207123](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110143207123.png)
+
+![image-20240110143224536](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110143224536.png)
+
+配置和 `main.go` 和 `config` 之后：
+
+```shell
+make docker
+kubectl delete deployment webook
+kubectl apply -f k8s-webook-deployment.yaml
+# 此时再去查看 pod信息
+kubectl get pods
+
+ytf@DESKTOP-GVQFSJF:~/webook/webook$ kubectl get pods
+NAME                            READY   STATUS    RESTARTS   AGE
+webook-7fcdc64bd8-8bcqm         1/1     Running   0          11m
+webook-7fcdc64bd8-hlqdp         1/1     Running   0          11m
+webook-7fcdc64bd8-s9ctb         1/1     Running   0          11m
+webook-mysql-6659b44c98-5mg6s   1/1     Running   0          16m
+webook-redis-c889fd9b-lg6fq     1/1     Running   0          15m
+```
+
+> 坑点1：`postman`发送请求时显示 `socket hangup` 之类。
+>
+> ​	解决方法：`setting->proxy` 关闭代理即可。
+>
+> 坑点2：`kubectl get pods` 出现 `CrashLoopBackOff` 问题，查看日志（方法：`kubectl logs webook-7fcdc64bd8-8xsvj`，其中最后的是 `podID`）发现 `panic: Error 1049 (42000): Unknown database 'webook'`。
+>
+> ​	解决方法：`create database webook`即可。
+>
+> 坑点3：去浏览器运行 `live.webook.com` 时出错。
+>
+> ​	解决方法：关闭 `VPN`。
