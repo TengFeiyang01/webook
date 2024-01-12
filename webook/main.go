@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"time"
 	"webook/webook/config"
 	"webook/webook/internal/repository"
+	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/service"
 	"webook/webook/internal/web"
@@ -89,7 +91,8 @@ func initWebServer() *gin.Engine {
 
 func initUser(db *gorm.DB) *web.UserHandler {
 	ud := dao.NewUserDAO(db)
-	repo := repository.NewUserRepository(ud)
+	ch := cache.NewUserCache(&redis.Client{}, 30*time.Minute)
+	repo := repository.NewUserRepository(ud, ch)
 	svc := service.NewUserService(repo)
 	u := web.NewUserHandler(svc)
 	return u
