@@ -49,7 +49,7 @@ func (d *UserDAO) Insert(ctx context.Context, u User) error {
 
 func (d *UserDAO) FindById(ctx context.Context, id int64) (User, error) {
 	var u User
-	err := d.db.WithContext(ctx).First(&u, "id = ?", id).Error
+	err := d.db.WithContext(ctx).Where(&u, "`id` = ?", id).First(&u).Error
 	return u, err
 }
 

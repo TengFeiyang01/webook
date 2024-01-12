@@ -2,10 +2,7 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"net/http"
@@ -17,7 +14,6 @@ import (
 	"webook/webook/internal/service"
 	"webook/webook/internal/web"
 	"webook/webook/internal/web/middleware"
-	"webook/webook/pkg/ginx/middlewares/ratelimit"
 )
 
 func main() {
@@ -39,18 +35,18 @@ func initWebServer() *gin.Engine {
 
 	// 初始化 redis
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: config.Config.Redis.Addr,
-	})
-
-	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
+	//redisClient := redis.NewClient(&redis.Options{
+	//	Addr: config.Config.Redis.Addr,
+	//})
+	//server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
 
 	//store := cookie.NewStore([]byte("secret"))
 
 	// 这是基于内存的实现，第一个参数是 authentication key，最好是 32 或者 64 位
 	// 第二个参数是 encryption key
-	store := memstore.NewStore([]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"),
-		[]byte("o6jdlo2cb9f9pb6h46fjmllw481ldebj"))
+
+	//store := memstore.NewStore([]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"),
+	//	[]byte("o6jdlo2cb9f9pb6h46fjmllw481ldebj"))
 
 	//store, err := redis.NewStore(16,
 	//	"tcp", "localhost:6379", "",
@@ -60,7 +56,7 @@ func initWebServer() *gin.Engine {
 	//	panic(err)
 	//}
 
-	server.Use(sessions.Sessions("mysession", store))
+	//server.Use(sessions.Sessions("mysession", store))
 
 	server.Use(cors.New(cors.Config{
 		AllowAllOrigins: false,
