@@ -21,7 +21,7 @@ type UserCache struct {
 // NewUserCache
 // A 用到了 B，B 一定是接口
 // A 用到了 B，B 一定是 A 的字段
-// A 用到了 B，A 绝对不初始化 B， 而是外面注入
+// A 用到了 B，A 绝对不初始化 B， 而是外面注入 => 保持依赖注入(DI, Dependency Injection)和依赖反转(IOC)
 func NewUserCache(client redis.Cmdable, expiration time.Duration) *UserCache {
 	return &UserCache{
 		client:     client,

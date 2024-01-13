@@ -1001,3 +1001,96 @@ webook-redis-c889fd9b-lg6fq     1/1     Running   0          15m
 > 坑点3：去浏览器运行 `live.webook.com` 时出错。
 >
 > ​	解决方法：关闭 `VPN`。
+
+# 登录性能优化
+
+## wrk安装
+
+```shell
+sudo apt install wrk
+cd ~/wrk
+make
+// 加入环境变量
+sudo mv wrk /usr/local/bin
+```
+
+### 压测前准备
+
+- 启用 `JWT` 来测试。
+- 修改 `/users/login` 对应的登录态保持时间。
+- 去除 `ratelimit` 限制
+
+#### 压测注册接口
+
+在项目根目录下执行：
+
+```shell
+wrk -t1 -d1s -c2 -s ./scripts/wrk/signup.lua http://localhost:8090/users/signup
+```
+
+- `-t`：后面跟着的是线程数量
+- `-d`：后面跟着的是持续时间
+- -`c`：后面跟着的是并发数
+- -`s`：后面跟着的是测试脚本
+
+#### 压测登录接口
+
+```shell
+wrk -t1 -d1s -c2 -s ./scripts/wrk/login.lua http://localhost:8090/users/login
+```
+
+需要实现注册一个账号，然后修改 `login.lua` 中的相关信息
+
+#### 压测 Profile 接口
+
+```shell
+wrk -t1 -d1s -c2 -s ./scripts/wrk/profile.lua http://localhost:8090/users/profile
+```
+
+需要修改 `User-Agent` 和 对应的 `Authorization`。
+
+## 性能优化
+
+前面的代码中，基本上性能瓶颈是出在两个地方：
+
+- **加密算法**：耗费CPU，会令CPU成为瓶颈。
+- **数据库查询**。
+
+因此我们考虑引入 `Redis` 来优化性能，用户**会先从 `Redis` 里面查询**，而后在缓存未命中的情况下，才会直接从数据库中查询。
+
+### 引入缓存
+
+但是，我们并不会之间 `Redis`，而是引入一个缓存，来避免上层业务直接操作 `Redis`，同时我们也不是引入一个通用的 `Cache`，而是为业务编写专门的 `Cache`。
+
+也就是 `UserCache`。
+
+![image-20240112113901609](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240112113901609.png)
+
+检测数据不存在的写法：
+
+![image-20240112114212810](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240112114212810.png)
+
+## Redis 数据结构
+
+`Redis` 数据结构主要有：
+
+- `string`：你存储的 `key` 是对应的值，是一个字符串。
+- `list`：你存储的 `key` 对应的值，就是一个链表。
+- `set`：你存储的 `key` 对应的值，是一个集合。
+- `sorted set`：你存储的 `key` 对应的值，是一个有序集合。
+- `hash`：你存储的 `key` 对应的值，是一个 `hash` 结构，也叫做字典结构、`map` 结构。
+
+# 短信验证码登录
+
+##  服务划分
+
+- **一个独立的短信发送服务。**
+- 在独立的短信发送服务基础上，**封装一个验证码功能。**
+- 在验证码功能的基础上，**封装一个登录功能。**
+
+这就是业务上的**超前半步设计**，也叫做**叠床架屋**。
+
+![image-20240112133138357](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240112133138357.png)
+
+![image-20240112142512058](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240112142512058.png)
+
