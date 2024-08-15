@@ -49,7 +49,7 @@ const SignupForm: React.FC = () => (
 
         <Form.Item
             label="确认密码"
-            name="confirmPassword"
+            name="confirm_password"
             rules={[{ required: true, message: '请确认密码' }]}
         >
             <Input.Password />

@@ -7,11 +7,12 @@ import (
 )
 
 func TestEncrypt(t *testing.T) {
-	password := "hello#world123"
-	encrypted, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	password := []byte("hello#123")
+	hash, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = bcrypt.CompareHashAndPassword(encrypted, []byte(password))
+	t.Log(string(hash))
+	err = bcrypt.CompareHashAndPassword(hash, password)
 	assert.NoError(t, err)
 }
