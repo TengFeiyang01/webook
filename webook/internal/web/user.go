@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/service"
 )
@@ -49,7 +51,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, "系统错误")
 		return
 	}
-	err := u.svc.Login(ctx, req.Email, req.Password)
+	user, err := u.svc.Login(ctx, req.Email, req.Password)
 	if errors.As(err, &service.ErrInvalidUserOrPassword) {
 		ctx.String(http.StatusUnauthorized, "用户名或密码不对")
 		return
@@ -58,6 +60,11 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, "系统错误")
 		return
 	}
+
+	// 登录成功
+	sess := sessions.Default(ctx)
+	sess.Set("user_id", user.ID)
+	_ = sess.Save()
 	ctx.String(http.StatusOK, "登陆成功")
 }
 
@@ -92,7 +99,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 
 	isPassword, err := u.passwordRegExp.MatchString(req.Password)
 	if err != nil {
-		ctx.String(http.StatusInternalServerError, err.Error())
+		ctx.String(http.StatusInternalServerError, "系统错误")
 		return
 	}
 
@@ -114,7 +121,21 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Edit(ctx *gin.Context) {
-
+	type EditReq struct {
+		Nickname string `json:"nickname"`
+		Birthday string `json:"birthday"`
+		AboutMe  string `json:"about_me"`
+	}
+	var req EditReq
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	_, err := time.Parse(time.DateOnly, req.Birthday)
+	if err != nil {
+		ctx.String(http.StatusOK, "生日格式不对")
+		return
+	}
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {

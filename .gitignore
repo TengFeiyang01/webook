@@ -2,3 +2,5 @@
 test.db
 go.work
 /webook/interactive/integration/data.sql
+/go.mod
+.gitignore
