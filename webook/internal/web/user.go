@@ -41,33 +41,6 @@ func (u *UserHandler) RegisterRoute(server *gin.Engine) {
 	ug.GET("/profile", u.Profile)
 }
 
-func (u *UserHandler) Login(ctx *gin.Context) {
-	type LoginReq struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
-	var req LoginReq
-	if err := ctx.ShouldBind(&req); err != nil {
-		ctx.String(http.StatusInternalServerError, "系统错误")
-		return
-	}
-	user, err := u.svc.Login(ctx, req.Email, req.Password)
-	if errors.As(err, &service.ErrInvalidUserOrPassword) {
-		ctx.String(http.StatusUnauthorized, "用户名或密码不对")
-		return
-	}
-	if err != nil {
-		ctx.String(http.StatusInternalServerError, "系统错误")
-		return
-	}
-
-	// 登录成功
-	sess := sessions.Default(ctx)
-	sess.Set("user_id", user.ID)
-	_ = sess.Save()
-	ctx.String(http.StatusOK, "登陆成功")
-}
-
 func (u *UserHandler) SignUp(ctx *gin.Context) {
 	type SignupReq struct {
 		Email           string `json:"email"`
@@ -120,6 +93,47 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "hello 注册成功")
 }
 
+func (u *UserHandler) Login(ctx *gin.Context) {
+	type LoginReq struct {
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+	var req LoginReq
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	user, err := u.svc.Login(ctx, req.Email, req.Password)
+	if errors.As(err, &service.ErrInvalidUserOrPassword) {
+		ctx.String(http.StatusUnauthorized, "用户名或密码不对")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+
+	// 登录成功
+	sess := sessions.Default(ctx)
+	sess.Set("user_id", user.ID)
+	sess.Options(sessions.Options{
+		MaxAge: 30,
+	})
+	_ = sess.Save()
+	ctx.String(http.StatusOK, "登陆成功")
+}
+
+func (u *UserHandler) Logout(ctx *gin.Context) {
+	sess := sessions.Default(ctx)
+	sess.Options(sessions.Options{
+		//Secure: true,
+		//HttpOnly: true,
+		MaxAge: -1,
+	})
+	_ = sess.Save()
+	ctx.String(http.StatusOK, "退出登录成功")
+}
+
 func (u *UserHandler) Edit(ctx *gin.Context) {
 	type EditReq struct {
 		Nickname string `json:"nickname"`
@@ -139,5 +153,5 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
-
+	ctx.String(200, "123")
 }
