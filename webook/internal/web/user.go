@@ -117,7 +117,12 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 
 	// 用 JWT 设置登录态
 	// 生成一个 JWT token
-	token := jwt.New(jwt.SigningMethodHS512)
+
+	claims := UserClaims{
+		Uid: user.ID,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenStr, err := token.SignedString([]byte("GpJCNEnLiNblrZj5xdY9aG5cgVdKHCxh"))
 	if err != nil {
 		ctx.String(http.StatusInternalServerError, "系统错误")
@@ -189,4 +194,9 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
 	ctx.String(200, "123")
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims
+	Uid int64
 }

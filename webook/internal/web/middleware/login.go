@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"webook/webook/internal/web"
 )
 
 type LoginMiddlewareBuilder struct {
@@ -51,7 +52,9 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			return
 		}
 		tokenStr := segs[1]
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		claims := &web.UserClaims{}
+		// 一定要传入指针
+		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte("GpJCNEnLiNblrZj5xdY9aG5cgVdKHCxh"), nil
 		})
 		// 格式对了内容不对
@@ -60,7 +63,7 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		if token == nil || !token.Valid {
+		if token == nil || !token.Valid || claims.Uid == 0 {
 			// 没登陆
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return

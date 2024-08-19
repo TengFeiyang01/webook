@@ -204,6 +204,13 @@ services:
 
 - `docker compose up` ：初始化 `docker compose` 并启动。
 - `docker compose down` ：删除 `docker compose` 里面创建的各种容器。
+- 若执行失败，没权限，执行以下命令即可
+```shell
+  sudo groupadd docker     #添加docker用户组
+  sudo gpasswd -a $USER docker     #将登陆用户加入到docker用户组中
+  newgrp docker     #更新用户组
+  docker ps    #测试docker命令是否可以使用sudo正常使用
+ ```
 
 ------------------------------------------------------------------------------------------------------
 
