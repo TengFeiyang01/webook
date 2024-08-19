@@ -10,6 +10,7 @@ const instance = axios.create({
 instance.interceptors.response.use(function (resp) {
     const newToken = resp.headers["x-jwt-token"]
     const newRefreshToken = resp.headers["x-refresh-token"]
+    console.log("resp.headers: ",resp.headers)
     if (newToken) {
         localStorage.setItem("token", newToken)
     }

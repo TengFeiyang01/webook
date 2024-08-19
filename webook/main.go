@@ -49,8 +49,9 @@ func initWebServer() *gin.Engine {
 	server.Use(cors.New(cors.Config{
 		//AllowOrigins: []string{"http://localhost:3000"},
 		//AllowMethods:  []string{"GET", "POST", "PUT", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowHeaders: []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		// ExposeHeaders 中的才是前端才能拿到的
+		ExposeHeaders:    []string{"Content-Length", "x-jwt-token"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			if strings.HasPrefix(origin, "http://localhost") {
@@ -73,7 +74,11 @@ func initWebServer() *gin.Engine {
 		panic(err)
 	}
 	server.Use(sessions.Sessions("ssid", store))
-	server.Use(middleware.NewLoginMiddlewareBuilder().
+	//server.Use(middleware.NewLoginMiddlewareBuilder().
+	//	IgnorePaths("/users/login").
+	//	IgnorePaths("/users/signup").
+	//	Build())
+	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
 		IgnorePaths("/users/login").
 		IgnorePaths("/users/signup").
 		Build())
