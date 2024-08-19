@@ -40,7 +40,7 @@ func (u *UserHandler) RegisterRoute(server *gin.Engine) {
 	ug.POST("/login", u.LoginJWT)
 	ug.POST("/signup", u.SignUp)
 	ug.POST("/edit", u.Edit)
-	ug.GET("/profile", u.Profile)
+	ug.GET("/profile", u.ProfileJWT)
 }
 
 func (u *UserHandler) SignUp(ctx *gin.Context) {
@@ -192,7 +192,25 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 	}
 }
 
+func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
+	c, ok := ctx.Get("claims")
+	// 必然有 claims
+	if !ok {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	claims, ok := c.(*UserClaims)
+	if !ok {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	println(claims.Uid)
+	ctx.String(200, "123")
+}
+
 func (u *UserHandler) Profile(ctx *gin.Context) {
+	sess := sessions.Default(ctx)
+	sess.Get("user_id")
 	ctx.String(200, "123")
 }
 
