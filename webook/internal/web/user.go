@@ -41,6 +41,7 @@ func (u *UserHandler) RegisterRoute(server *gin.Engine) {
 	ug.POST("/signup", u.SignUp)
 	ug.POST("/edit", u.Edit)
 	ug.GET("/profile", u.ProfileJWT)
+	ug.POST("/logout", u.Logout)
 }
 
 func (u *UserHandler) SignUp(ctx *gin.Context) {
@@ -119,6 +120,10 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	// 生成一个 JWT token
 
 	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			// 过期时间
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+		},
 		Uid: user.ID,
 	}
 
@@ -171,6 +176,7 @@ func (u *UserHandler) Logout(ctx *gin.Context) {
 		MaxAge: -1,
 	})
 	_ = sess.Save()
+
 	ctx.String(http.StatusOK, "退出登录成功")
 }
 

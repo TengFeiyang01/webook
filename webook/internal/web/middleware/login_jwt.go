@@ -3,8 +3,10 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 	"webook/webook/internal/web"
 )
 
@@ -56,13 +58,26 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+		// !token.Valid 自动检测过期
 		if token == nil || !token.Valid || claims.Uid == 0 {
 			// 没登陆
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		// 此时 jwt 校验成功
+		// 每十秒刷新一次 x-jwt-token
+		now := time.Now()
+		if claims.ExpiresAt.Sub(now) < time.Second*50 {
+			claims.ExpiresAt = jwt.NewNumericDate(now.Add(time.Minute))
+			tokenStr, err = token.SignedString([]byte("GpJCNEnLiNblrZj5xdY9aG5cgVdKHCxh"))
+
+			if err != nil {
+				// 记录日志
+				log.Println("jwt 续约失败", err)
+			}
+			ctx.Header("x-jwt-token", tokenStr)
+		}
 		ctx.Set("claims", claims)
-		ctx.Set("user_id", claims.Uid)
+		//ctx.Set("user_id", claims.Uid)
 	}
 }
