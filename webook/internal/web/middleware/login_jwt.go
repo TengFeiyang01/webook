@@ -64,6 +64,13 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+		if claims.UserAgent != ctx.Request.UserAgent() {
+			// 严重的安全问题
+			// 你要加监控
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
 		// 此时 jwt 校验成功
 		// 每十秒刷新一次 x-jwt-token
 		now := time.Now()
