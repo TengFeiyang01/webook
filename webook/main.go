@@ -19,11 +19,15 @@ import (
 )
 
 func main() {
-	db := initDB()
-	u := initUser(db)
-	server := initWebServer()
-
-	u.RegisterRoute(server)
+	//db := initDB()
+	//server := initWebServer()
+	//u := initUser(db)
+	//
+	//u.RegisterRoute(server)
+	server := gin.Default()
+	server.GET("/hello", func(ctx *gin.Context) {
+		ctx.String(200, "hello world")
+	})
 	_ = server.Run(":8080")
 }
 

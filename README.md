@@ -544,7 +544,7 @@ server.Use(cors.New(cors.Config{
 
 #### 安装 `kubectl` 工具
 
-打开 https://kubernetes.io/docs/tasks/tools/，找到对应的平台，下载即可。
+打开 https://kubernetes.io/docs/tasks/tools/ 找到对应的平台，下载即可。
 
 如果安装了 `curl`，使用如下命令即可：
 
