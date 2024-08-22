@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webook-ingress
+spec:
+#  我要使用 nginx
+  ingressClassName: nginx
+#  转发规则
+  rules:
+#    host路径 是 dev.webook.com 的时候 命中这个
+    - host: dev.webook.com
+      http:
+        paths:
+#         - 请求路径的前缀是 / 的时候
+#         -  将流量转发过去后面的 webook
+#         -  端口是 81
+          - backend:
+              service:
+                name: webook-dev
+                port:
+                  number: 80
+            pathType: Prefix
+            path: /

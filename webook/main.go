@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"strings"
 	"time"
+	"webook/webook/config"
 	"webook/webook/internal/repository"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/service"
@@ -19,12 +20,12 @@ import (
 )
 
 func main() {
-	//db := initDB()
-	//server := initWebServer()
-	//u := initUser(db)
-	//
-	//u.RegisterRoute(server)
-	server := gin.Default()
+	db := initDB()
+	server := initWebServer()
+	u := initUser(db)
+
+	u.RegisterRoute(server)
+
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(200, "hello world")
 	})
@@ -32,7 +33,7 @@ func main() {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +55,7 @@ func initWebServer() *gin.Engine {
 	server := gin.Default()
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: config.Config.Redis.Addr,
 	})
 	server.Use(ratelimit.NewBuilder(redisClient, time.Minute, 100).Build())
 	server.Use(cors.New(cors.Config{
@@ -65,7 +66,7 @@ func initWebServer() *gin.Engine {
 		ExposeHeaders:    []string{"Content-Length", "x-jwt-token"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			if strings.HasPrefix(origin, "http://localhost") {
+			if strings.HasPrefix(origin, "http://localhost") || strings.Contains(origin, "dev.webook.com") {
 				return true
 			}
 			return false

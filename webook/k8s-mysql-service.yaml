@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webook-mysql
+spec:
+  selector:
+    app: webook-mysql
+  ports:
+    - protocol: TCP
+#      你访问的端口, 如果声明为 NodePort，这个 port 无效
+      port: 11309
+#      这是mysql本身的port
+      targetPort: 3306
+#      如果声明为 NodePort，那mysql对外的端口就成了 30001
+#      这是外部访问的port
+      nodePort: 30001
+  type: NodePort
+  
