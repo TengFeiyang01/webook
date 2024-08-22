@@ -6,7 +6,8 @@ package config
 
 var Config = config{
 	DB: DBConfig{
-		DSN: "root:root@tcp(webook-mysql:11309)/webook",
+		// 后面是mysql是因为默认没有webook这个数据库 如果想要的话 需要自己先创建
+		DSN: "root:root@tcp(webook-mysql:11309)/mysql",
 	},
 	Redis: RedisConfig{
 		Addr: "webook-redis:11379",
