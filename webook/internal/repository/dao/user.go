@@ -31,7 +31,7 @@ func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 	now := time.Now().UnixMilli()
 	u.Utime = now
 	u.Ctime = now
-	err := dao.db.Create(&u).Error
+	err := dao.db.WithContext(ctx).Create(&u).Error
 	var mysqlErr *mysql.MySQLError
 	if errors.As(err, &mysqlErr) {
 		const uniqueConflictErrNo uint16 = 1062
@@ -41,6 +41,12 @@ func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 		}
 	}
 	return err
+}
+
+func (dao *UserDAO) FindByID(ctx context.Context, id int64) (*User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("id = ?", id).First(&u).Error
+	return &u, err
 }
 
 // User 对应数据库表

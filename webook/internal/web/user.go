@@ -55,7 +55,6 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, "系统错误")
 		return
 	}
-	fmt.Println(req)
 
 	isEmail, err := u.emailRegExp.MatchString(req.Email)
 	if err != nil {
@@ -122,7 +121,7 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			// 过期时间
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 		},
 		Uid:       user.ID,
 		UserAgent: ctx.Request.UserAgent(),
@@ -212,13 +211,23 @@ func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 		return
 	}
 	println(claims.Uid)
-	ctx.String(http.StatusOK, "你的 profile")
+	user, err := u.svc.Profile(ctx, claims.Uid)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	ctx.String(http.StatusOK, fmt.Sprintf("%v", user))
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
 	sess := sessions.Default(ctx)
-	sess.Get("user_id")
-	ctx.String(200, "123")
+	id := sess.Get("user_id").(int64)
+	user, err := u.svc.Profile(ctx, id)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	ctx.String(200, fmt.Sprintf("%v", user))
 }
 
 type UserClaims struct {
