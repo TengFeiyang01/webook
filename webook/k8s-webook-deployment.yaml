@@ -1,25 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-# 名称
+# 这是一个 Deployment
   name: webook
-# 规格说明
 spec:
-# 副本数量
+#  副本数量
   replicas: 3
   selector:
     matchLabels:
       app: webook
-      # template 描述的是 你的 POD 是什么样子的
+# template 描述的是你的 POD 是什么样的
   template:
     metadata:
+      name: webook
+#     这个标签和上面的 matchLabels 的要对的上
       labels:
-        # 按标签找
+#        上面 selector 里面找的就是这个 label
         app: webook
 #   POD 的具体信息
     spec:
+#     pod 里面运行的 container
       containers:
         - name: webook
-          image: ytf0609/webook:v0.0.1
+          image: sparrow/webook:v0.0.1
           ports:
-            - containerPort: 8090
+            # main 函数中写死了 8080
+            - containerPort: 8080

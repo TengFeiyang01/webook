@@ -1,5 +1,0 @@
-package diff
-
-func Hello() {
-
-}

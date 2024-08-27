@@ -9,12 +9,12 @@ import (
 )
 
 var (
-	ErrSetCodeTooMany         = errors.New("发送验证码太频繁")
+	ErrCodeSendTooMany        = errors.New("发生太频繁")
 	ErrCodeVerifyTooManyTimes = errors.New("验证次数太多")
-	ErrUnknowErrCode          = errors.New("我也不知道发生什么，反正是和code有关")
+	ErrUnknownForCode         = errors.New("我不知道哪错了")
 )
 
-// 编译器会在编译的时候，把 set_code 的代码放进来这个 luaSetCode 变量里面
+// 编译器在编译的时候，把 set_code 里面的代码放进来
 //
 //go:embed lua/set_code.lua
 var luaSetCode string
@@ -27,9 +27,7 @@ type CodeCache struct {
 }
 
 func NewCodeCache(client redis.Cmdable) *CodeCache {
-	return &CodeCache{
-		client: client,
-	}
+	return &CodeCache{client: client}
 }
 
 func (c *CodeCache) Set(ctx context.Context, biz, phone, code string) error {
@@ -39,15 +37,14 @@ func (c *CodeCache) Set(ctx context.Context, biz, phone, code string) error {
 	}
 	switch res {
 	case 0:
-	// 毫无问题
+		return nil
 	case -1:
-		// 发送太频繁
-		return ErrSetCodeTooMany
+		// 太频繁
+		return ErrCodeSendTooMany
 	default:
 		// 系统错误
 		return errors.New("系统错误")
 	}
-	return err
 }
 
 func (c *CodeCache) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
@@ -59,12 +56,12 @@ func (c *CodeCache) Verify(ctx context.Context, biz, phone, inputCode string) (b
 	case 0:
 		return true, nil
 	case -1:
-		// 正常来说，如果频繁出现这个错误，你需要告警，因为有人告你
+		// 正常来说，频繁出现，报警
 		return false, ErrCodeVerifyTooManyTimes
 	case -2:
 		return false, nil
 	default:
-		return false, ErrUnknowErrCode
+		return false, ErrUnknownForCode
 	}
 }
 

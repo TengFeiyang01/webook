@@ -1,5 +1,8 @@
 //go:build !k8s
 
+//todo go:build dev
+//todo go:build prod
+
 package config
 
 var Config = config{

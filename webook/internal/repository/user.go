@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/dao"
@@ -17,10 +18,10 @@ type UserRepository struct {
 	cache *cache.UserCache
 }
 
-func NewUserRepository(d *dao.UserDAO, c *cache.UserCache) *UserRepository {
+func NewUserRepository(dao *dao.UserDAO, cache *cache.UserCache) *UserRepository {
 	return &UserRepository{
-		dao:   d,
-		cache: c,
+		dao:   dao,
+		cache: cache,
 	}
 }
 
@@ -30,44 +31,52 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (domain.
 		return domain.User{}, err
 	}
 	return domain.User{
-		Id:       u.Id,
+		ID:       u.ID,
 		Email:    u.Email,
 		Password: u.Password,
 	}, nil
 }
 
 func (r *UserRepository) Create(ctx context.Context, u domain.User) error {
-	return r.dao.Insert(ctx, dao.User{
-		Email:    u.Email,
-		Password: u.Password,
-	})
-	// 在这里操作缓存
+	return r.dao.Insert(ctx, dao.User{Email: u.Email, Password: u.Password})
 }
 
-// FindById
-// 缺点：只要缓存返回了 error，就直接取数据库查询。
-//
-//	回写缓存的时候，忽略掉了错误
-func (r *UserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
+func (r *UserRepository) FindByID(ctx context.Context, id int64) (domain.User, error) {
+	// 先从cache找
+	// 再从dao里面找
+	// 找到了写回cache
 	u, err := r.cache.Get(ctx, id)
-
-	switch err {
-	case nil:
+	if err == nil {
 		return u, err
-	case cache.ErrKeyNotExist:
-		ue, err := r.dao.FindById(ctx, id)
-		if err != nil {
-			return domain.User{}, err
-		}
+	}
+	if errors.Is(err, cache.ErrKeyNotExist) {
+		// 去数据库加载
+	}
 
-		u = domain.User{
-			Id:       ue.Id,
-			Email:    ue.Email,
-			Password: ue.Password,
-		}
-		_ = r.cache.Set(ctx, u)
-		return u, nil
-	default:
+	// 这里怎么办? err = io.EOF
+
+	// 加载 —— 做好兜底, 万一 Redis 真的崩了, 你要保护住你的数据库
+	// 我数据库限流
+
+	// 不加载 —— 用户体验差一些
+
+	ue, err := r.dao.FindByID(ctx, id)
+	if err != nil {
 		return domain.User{}, err
 	}
+
+	u = domain.User{
+		ID:       ue.ID,
+		Email:    ue.Email,
+		Password: ue.Password,
+	}
+
+	go func() {
+		err = r.cache.Set(ctx, u)
+		if err != nil {
+			// 打日志, 做监控
+		}
+	}()
+
+	return u, nil
 }

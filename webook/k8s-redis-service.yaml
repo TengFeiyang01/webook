@@ -7,9 +7,11 @@ spec:
     app: webook-redis
   ports:
     - protocol: TCP
-      port: 11479
-      # 外部访问的端口，必须是 30000-32767 之间
-      nodePort: 30003
-      # pod 暴露的端口
+#      k8s内部访问的端口
+      port: 11379
+#      Redis默认端口
       targetPort: 6379
+#      nodePort: 外部访问的端口 30000-32767 之间
+      nodePort: 30002
   type: NodePort
+  

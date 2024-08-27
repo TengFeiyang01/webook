@@ -4,13 +4,13 @@ kind: PersistentVolume
 metadata:
   name: my-local-pv
 spec:
-# 这个名称必须和 pvc 中的一致
+  # 这个名称必须和 pvc 中的一致
   storageClassName: manual
   capacity:
     storage: 512Mi
   accessModes:
     - ReadWriteOnce
-#    - ReadOnlyMany
-#    - ReadWriteMany
+  #    - ReadOnlyMany
+  #    - ReadWriteMany
   hostPath:
-    path: "/mnt/live"
+    path: "/mnt/webook"

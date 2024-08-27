@@ -204,6 +204,13 @@ services:
 
 - `docker compose up` ：初始化 `docker compose` 并启动。
 - `docker compose down` ：删除 `docker compose` 里面创建的各种容器。
+- 若执行失败，没权限，执行以下命令即可
+```shell
+  sudo groupadd docker     #添加docker用户组
+  sudo gpasswd -a $USER docker     #将登陆用户加入到docker用户组中
+  newgrp docker     #更新用户组
+  docker ps    #测试docker命令是否可以使用sudo正常使用
+ ```
 
 ------------------------------------------------------------------------------------------------------
 
@@ -537,7 +544,7 @@ server.Use(cors.New(cors.Config{
 
 #### 安装 `kubectl` 工具
 
-打开 https://kubernetes.io/docs/tasks/tools/，找到对应的平台，下载即可。
+打开 https://kubernetes.io/docs/tasks/tools/ 找到对应的平台，下载即可。
 
 如果安装了 `curl`，使用如下命令即可：
 
@@ -1007,11 +1014,11 @@ webook-redis-c889fd9b-lg6fq     1/1     Running   0          15m
 ## wrk安装
 
 ```shell
-sudo apt install wrk
-cd ~/wrk
+sudo apt install script
+cd ~/script
 make
 // 加入环境变量
-sudo mv wrk /usr/local/bin
+sudo mv script /usr/local/bin
 ```
 
 ### 压测前准备
@@ -1025,7 +1032,7 @@ sudo mv wrk /usr/local/bin
 在项目根目录下执行：
 
 ```shell
-wrk -t1 -d1s -c2 -s ./scripts/wrk/signup.lua http://localhost:8090/users/signup
+script -t1 -d1s -c2 -s ./scripts/script/signup.lua http://localhost:8090/users/signup
 ```
 
 - `-t`：后面跟着的是线程数量
@@ -1036,7 +1043,7 @@ wrk -t1 -d1s -c2 -s ./scripts/wrk/signup.lua http://localhost:8090/users/signup
 #### 压测登录接口
 
 ```shell
-wrk -t1 -d1s -c2 -s ./scripts/wrk/login.lua http://localhost:8090/users/login
+script -t1 -d1s -c2 -s ./scripts/script/login.lua http://localhost:8090/users/login
 ```
 
 需要实现注册一个账号，然后修改 `login.lua` 中的相关信息
@@ -1044,7 +1051,7 @@ wrk -t1 -d1s -c2 -s ./scripts/wrk/login.lua http://localhost:8090/users/login
 #### 压测 Profile 接口
 
 ```shell
-wrk -t1 -d1s -c2 -s ./scripts/wrk/profile.lua http://localhost:8090/users/profile
+script -t1 -d1s -c2 -s ./scripts/script/profile.lua http://localhost:8090/users/profile
 ```
 
 需要修改 `User-Agent` 和 对应的 `Authorization`。

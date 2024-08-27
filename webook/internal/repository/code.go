@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrCodeSendToMany         = cache.ErrSetCodeTooMany
+	ErrCodeSendTooMany        = cache.ErrCodeSendTooMany
 	ErrCodeVerifyTooManyTimes = cache.ErrCodeVerifyTooManyTimes
 )
 
@@ -24,6 +24,6 @@ func (repo *CodeRepository) Store(ctx context.Context, biz, phone, code string) 
 	return repo.cache.Set(ctx, biz, phone, code)
 }
 
-func (repo *CodeRepository) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
-	return repo.cache.Verify(ctx, biz, phone, inputCode)
+func (repo *CodeRepository) Verify(ctx context.Context, biz, phone, code string) (bool, error) {
+	return repo.cache.Verify(ctx, biz, phone, code)
 }

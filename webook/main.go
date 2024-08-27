@@ -6,7 +6,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"net/http"
 	"strings"
 	"time"
 	"webook/webook/config"
@@ -14,101 +13,102 @@ import (
 	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/service"
+	"webook/webook/internal/service/sms/memory"
 	"webook/webook/internal/web"
 	"webook/webook/internal/web/middleware"
 )
 
 func main() {
 	db := initDB()
+	rdb := initRedis()
 	server := initWebServer()
+	u := initUser(db, rdb)
 
-	u := initUser(db)
-	u.RegisterRoutes(server)
-	//
-	//server := gin.Default()
+	u.RegisterRoute(server)
+
 	server.GET("/hello", func(ctx *gin.Context) {
-		ctx.String(http.StatusOK, "你好，你来了！")
+		ctx.String(200, "hello world")
 	})
-	server.Run(":8090")
+	_ = server.Run(":8080")
 }
 
-func initWebServer() *gin.Engine {
-	server := gin.Default()
-
-	// 初始化 redis
-
-	//redisClient := redis.NewClient(&redis.Options{
-	//	Addr: config.Config.Redis.Addr,
-	//})
-	//server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
-
-	//store := cookie.NewStore([]byte("secret"))
-
-	// 这是基于内存的实现，第一个参数是 authentication key，最好是 32 或者 64 位
-	// 第二个参数是 encryption key
-
-	//store := memstore.NewStore([]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"),
-	//	[]byte("o6jdlo2cb9f9pb6h46fjmllw481ldebj"))
-
-	//store, err := redis.NewStore(16,
-	//	"tcp", "localhost:6379", "",
-	//	[]byte("moyn8y9abnd7q4zkq2m73yw8tu9j5ixm"), []byte("o6jdlo2cb9f9pb6h46fjmllw481ldebj"))
-	//
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	//server.Use(sessions.Sessions("mysession", store))
-
-	server.Use(cors.New(cors.Config{
-		AllowAllOrigins: false,
-		AllowOrigins:    []string{"http://localhost:3000"},
-		// 在使用 JWT 的时候，因为我们使用了 Authorizaition 的头部，所以需要加上
-		AllowHeaders: []string{"Content-Type", "Authorization"},
-		// 为了 JWT
-		ExposeHeaders:    []string{"x-jwt-token", "Authorization"},
-		AllowMethods:     []string{"POST", "GET", "PUT"},
-		AllowCredentials: true,
-		// 你不加这个 前端是拿不到的
-		AllowOriginFunc: func(origin string) bool {
-			if strings.HasPrefix(origin, "http://localhost") {
-				return true
-			}
-			return strings.Contains(origin, "abc")
-		},
-		MaxAge: 12 * time.Hour,
-	}))
-
-	//server.Use(middleware.NewLoginMiddleBuilder().
-	//	IgnorePaths("/users/signup").
-	//	IgnorePaths("/users/login").Build())
-
-	server.Use(middleware.NewLoginJWTMiddleBuilder().
-		IgnorePaths("/users/signup").
-		IgnorePaths("/users/login").Build())
-	return server
-}
-
-func initUser(db *gorm.DB) *web.UserHandler {
-	ud := dao.NewUserDAO(db)
-	ch := cache.NewUserCache(&redis.Client{}, 30*time.Minute)
-	repo := repository.NewUserRepository(ud, ch)
-	svc := service.NewUserService(repo)
-	u := web.NewUserHandler(svc)
-	return u
+func initRedis() redis.Cmdable {
+	return redis.NewClient(&redis.Options{
+		Addr: config.Config.Redis.Addr,
+	})
 }
 
 func initDB() *gorm.DB {
 	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {
-		// 我只会在初始化过程 panic
-		// 一旦初始化过程出错，应用就不要启动了
 		panic(err)
 	}
-
-	err = dao.InitTable(db)
-	if err != nil {
+	if err := dao.InitTable(db); err != nil {
 		panic(err)
 	}
 	return db
+}
+
+func initUser(db *gorm.DB, rdb redis.Cmdable) *web.UserHandler {
+	ud := dao.NewUserDAO(db)
+	uc := cache.NewUserCache(rdb)
+	repo := repository.NewUserRepository(ud, uc)
+	codeCache := cache.NewCodeCache(rdb)
+	codeRepo := repository.NewCodeRepository(codeCache)
+	smsSvc := memory.NewService()
+	codeSvc := service.NewCodeService(codeRepo, smsSvc)
+	svc := service.NewUserService(repo)
+	u := web.NewUserHandler(svc, codeSvc)
+	return u
+}
+
+func initWebServer() *gin.Engine {
+	server := gin.Default()
+
+	//redisClient := redis.NewClient(&redis.Options{
+	//	Addr: config.Config.Redis.Addr,
+	//})
+	//server.Use(ratelimit.NewBuilder(redisClient, time.Minute, 100).Build())
+
+	server.Use(cors.New(cors.Config{
+		//AllowOrigins: []string{"http://localhost:3000"},
+		//AllowMethods:  []string{"GET", "POST", "PUT", "PATCH"},
+		AllowHeaders: []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		// ExposeHeaders 中的才是前端才能拿到的
+		ExposeHeaders:    []string{"Content-Length", "x-jwt-token"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			if strings.HasPrefix(origin, "http://localhost") || strings.Contains(origin, "dev.webook.com") {
+				return true
+			}
+			return false
+		},
+		MaxAge: 12 * time.Hour,
+	}))
+
+	// 基于Cookie
+	//store := cookie.NewStore([]byte("secret"))
+	// 基于memstore
+	//store := memstore.NewStore([]byte("llCKQpJfsx6SEEiGdeWbQTC5YgIb6vZbbNNVkJ3Im3gSpkxSxwtNOnxL1lq6WCgr"),
+	//	[]byte("iGHc43BcUmP96dQQwqs1lkW6aqmGupT470Jsj4Sy5BQeyvoZjJghLluVSSwjJxxU"))
+	// 基于Redis
+	//store, err := redis.NewStore(16, "tcp", "localhost:6379", "", []byte("YnfSjT0y1pCwhdkMBCyLCve19jZ7xqXV"),
+	//	[]byte("GpJCNEnLiNblrZj5xdY9aG5cgVdKHCxh"))
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//server.Use(sessions.Sessions("ssid", store))
+	//server.Use(middleware.NewLoginMiddlewareBuilder().
+	//	IgnorePaths("/users/login").
+	//	IgnorePaths("/users/signup").
+	//	Build())
+	server.Use(middleware.NewLoginJWTMiddlewareBuilder().
+		IgnorePaths("/users/login").
+		IgnorePaths("/users/signup").
+		IgnorePaths("/users/login_sms").
+		IgnorePaths("/users/login_sms/code/send").
+		Build())
+
+	return server
 }

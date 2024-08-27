@@ -18,26 +18,22 @@ type UserDAO struct {
 }
 
 func NewUserDAO(db *gorm.DB) *UserDAO {
-	return &UserDAO{
-		db: db,
-	}
+	return &UserDAO{db: db}
 }
 
-func (d *UserDAO) FindByEmail(ctx context.Context, email string) (User, error) {
+func (dao *UserDAO) FindByEmail(ctx context.Context, email string) (*User, error) {
 	var u User
-	err := d.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
-	//err := dao.db.WithContext(ctx).First("email = ?", email).Error
-	return u, err
+	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
+	return &u, err
 }
 
-func (d *UserDAO) Insert(ctx context.Context, u User) error {
-	// 存毫秒数
+func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 	now := time.Now().UnixMilli()
-
-	u.Ctime = now
 	u.Utime = now
-	err := d.db.WithContext(ctx).Create(&u).Error
-	if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+	u.Ctime = now
+	err := dao.db.WithContext(ctx).Create(&u).Error
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) {
 		const uniqueConflictErrNo uint16 = 1062
 		if mysqlErr.Number == uniqueConflictErrNo {
 			// 邮箱冲突
@@ -47,22 +43,17 @@ func (d *UserDAO) Insert(ctx context.Context, u User) error {
 	return err
 }
 
-func (d *UserDAO) FindById(ctx context.Context, id int64) (User, error) {
+func (dao *UserDAO) FindByID(ctx context.Context, id int64) (*User, error) {
 	var u User
-	err := d.db.WithContext(ctx).Where(&u, "`id` = ?", id).First(&u).Error
-	return u, err
+	err := dao.db.WithContext(ctx).Where("id = ?", id).First(&u).Error
+	return &u, err
 }
 
-// User 直接对应数据库表结构
-// 有些人叫做 entity / model / PO(persistent object)
+// User 对应数据库表
 type User struct {
-	Id int64 `gorm:"primaryKey,autoIncrement"`
-	// 全部用户唯一
-	Email    string `gorm:"unique"`
+	ID       int64  `gorm:"primaryKey,autoIncrement"`
+	Email    string `gorm:"unique;type:varchar(128);not null;column:email;comment:邮箱"`
 	Password string
-
-	// 创建时间 毫秒数
-	Ctime int64
-	// 更新时间 毫秒数
-	Utime int64
+	Ctime    int64
+	Utime    int64
 }

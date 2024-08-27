@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-# 代表我们的 webook 本体
+#  代表这是我们的 webook 本体
   name: webook
+#  规格说明，怎样的服务
 spec:
-# 规格说明，也即是相信说明这个服务是一个怎样的服务
-# ClusterIP
+  # 负载均衡
   type: LoadBalancer
   selector:
     app: webook
   ports:
-    - name: http
-      protocol: TCP
+    - protocol: TCP
+      name: http
       port: 80
-      targetPort: 8090
+      targetPort: 8080

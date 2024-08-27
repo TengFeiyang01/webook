@@ -1,12 +1,10 @@
 # 基础镜像
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
-# 把编译后的打包进来这个镜像，放到工作目录 /app（你可以根据实际情况修改路径）
-WORKDIR /app/
-
-# 复制应用程序文件到容器中
-COPY webook /app/
-
+# 把编译后的 webook 打包近来这个镜像，放到 /app 里面
+COPY webook /app/webook
+# 设置工作目录
+WORKDIR /app
 # CMD 是执行命令
-# 指定应用程序作为入口命令
+# 最佳
 ENTRYPOINT ["/app/webook"]
