@@ -13,6 +13,8 @@ import (
 	"webook/webook/internal/service"
 )
 
+const biz = "login"
+
 // UserHandler 和用户有关的路由
 type UserHandler struct {
 	svc            *service.UserService
@@ -242,12 +244,13 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 	if err := ctx.ShouldBind(&req); err != nil {
 		return
 	}
-	const biz = "login"
+	// 是不是一个合法的手机号码
+	// 考虑正则表达式
 	err := u.codeSvc.Send(ctx, biz, req.Phone)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, Result{
 			Code: http.StatusInternalServerError,
-			Msg:  "系统错误",
+			Msg:  "输入有误",
 		})
 		return
 	}
@@ -258,7 +261,35 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 }
 
 func (u *UserHandler) LoginSMS(ctx *gin.Context) {
-
+	type Req struct {
+		Phone string `json:"phone"`
+		Code  string `json:"code"`
+	}
+	var req Req
+	if err := ctx.ShouldBind(&req); err != nil {
+		return
+	}
+	fmt.Println(req.Phone, req.Code)
+	ok, err := u.codeSvc.Verify(ctx, biz, req.Phone, req.Code)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, Result{
+			Code: http.StatusInternalServerError,
+			Msg:  "系统错误",
+		})
+		return
+	}
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, Result{
+			Code: http.StatusUnauthorized,
+			Msg:  "验证码不正确",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Code: http.StatusOK,
+		Msg:  "验证码校验成功",
+	})
+	//jwt.NewWithClaims(jwt.SigningMethodHS512, UserClaims{})
 }
 
 type UserClaims struct {
