@@ -13,14 +13,17 @@ import (
 	"webook/webook/internal/service"
 )
 
+const biz = "login"
+
 // UserHandler 和用户有关的路由
 type UserHandler struct {
 	svc            *service.UserService
+	codeSvc        *service.CodeService
 	emailRegExp    *regexp.Regexp
 	passwordRegExp *regexp.Regexp
 }
 
-func NewUserHandler(svc *service.UserService) *UserHandler {
+func NewUserHandler(svc *service.UserService, codeSvc *service.CodeService) *UserHandler {
 	const (
 		emailRegexPattern = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
 		// 和上面比起来，用 ` 看起来就比较清爽
@@ -28,6 +31,7 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 	)
 	return &UserHandler{
 		svc:            svc,
+		codeSvc:        codeSvc,
 		emailRegExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
 	}
@@ -42,6 +46,8 @@ func (u *UserHandler) RegisterRoute(server *gin.Engine) {
 	ug.POST("/edit", u.Edit)
 	ug.GET("/profile", u.ProfileJWT)
 	ug.POST("/logout", u.Logout)
+	ug.POST("/login_sms/code/send", u.SendLoginSMSCode)
+	ug.POST("/login_sms", u.LoginSMS)
 }
 
 func (u *UserHandler) SignUp(ctx *gin.Context) {
@@ -228,6 +234,62 @@ func (u *UserHandler) Profile(ctx *gin.Context) {
 		return
 	}
 	ctx.String(200, fmt.Sprintf("%v", user))
+}
+
+func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
+	type Req struct {
+		Phone string `json:"phone"`
+	}
+	var req Req
+	if err := ctx.ShouldBind(&req); err != nil {
+		return
+	}
+	// 是不是一个合法的手机号码
+	// 考虑正则表达式
+	err := u.codeSvc.Send(ctx, biz, req.Phone)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, Result{
+			Code: http.StatusInternalServerError,
+			Msg:  "输入有误",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Code: http.StatusOK,
+		Msg:  "发送成功",
+	})
+}
+
+func (u *UserHandler) LoginSMS(ctx *gin.Context) {
+	type Req struct {
+		Phone string `json:"phone"`
+		Code  string `json:"code"`
+	}
+	var req Req
+	if err := ctx.ShouldBind(&req); err != nil {
+		return
+	}
+	fmt.Println(req.Phone, req.Code)
+	ok, err := u.codeSvc.Verify(ctx, biz, req.Phone, req.Code)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, Result{
+			Code: http.StatusInternalServerError,
+			Msg:  "系统错误",
+		})
+		return
+	}
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, Result{
+			Code: http.StatusUnauthorized,
+			Msg:  "验证码不正确",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Code: http.StatusOK,
+		Msg:  "验证码校验成功",
+	})
+	//jwt.NewWithClaims(jwt.SigningMethodHS512, UserClaims{})
 }
 
 type UserClaims struct {
