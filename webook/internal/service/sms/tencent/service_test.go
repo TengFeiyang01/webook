@@ -2,6 +2,7 @@ package tencent
 
 import (
 	"context"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
@@ -19,6 +20,7 @@ func TestService_Send(t *testing.T) {
 	if !ok {
 		t.Fatal("SMS_SECRET_KEY not set")
 	}
+	fmt.Println(secretID, secretKey)
 	c, err := sms.NewClient(common.NewCredential(secretID, secretKey),
 		"ap-nanjing",
 		profile.NewClientProfile())
@@ -27,7 +29,7 @@ func TestService_Send(t *testing.T) {
 	}
 
 	// todo: 换成自己的
-	s := NewService(c, "1400842696", "")
+	s := NewService(c, "1400933146", "f8f771e40fb513565430580b343500c8")
 
 	testCases := []struct {
 		name    string
@@ -38,14 +40,14 @@ func TestService_Send(t *testing.T) {
 	}{
 		{
 			name:    "发送验证码",
-			tplID:   "",
+			tplID:   "1877556",
 			params:  []string{"123456"},
-			numbers: []string{"15261"},
+			numbers: []string{"13219820609"},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			er := s.Send(context.Background(), tc.tplID, tc.params)
+			er := s.Send(context.Background(), tc.tplID, tc.params, tc.numbers...)
 			assert.Equal(t, tc.wantErr, er)
 		})
 	}
