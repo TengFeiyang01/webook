@@ -15,6 +15,11 @@ import (
 
 const biz = "login"
 
+// 确保 UserHandler 实现了 handler 的接口
+// var _ handler = &UserHandler{}
+// 这个更优雅
+var _ handler = (*UserHandler)(nil)
+
 // UserHandler 和用户有关的路由
 type UserHandler struct {
 	svc            *service.UserService
@@ -40,7 +45,7 @@ func NewUserHandler(svc *service.UserService, codeSvc *service.CodeService) *Use
 	}
 }
 
-func (u *UserHandler) RegisterRoute(server *gin.Engine) {
+func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
 
 	//ug.POST("/login", u.Login)
