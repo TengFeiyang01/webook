@@ -10,8 +10,10 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/stretchr/testify v1.8.4
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.989
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.989
 	golang.org/x/crypto v0.16.0
 	gorm.io/driver/mysql v1.5.1
