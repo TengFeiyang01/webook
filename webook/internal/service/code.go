@@ -8,7 +8,10 @@ import (
 	"webook/webook/internal/service/sms"
 )
 
-var ErrCodeSendTooMany = repository.ErrCodeSendTooMany
+var (
+	ErrCodeSendTooMany        = repository.ErrCodeSendTooMany
+	ErrCodeVerifyTooManyTimes = repository.ErrCodeVerifyTooManyTimes
+)
 
 const codeTplID = "123125125"
 
@@ -54,5 +57,5 @@ func (svc *CodeService) Verify(ctx context.Context, biz string,
 
 func (svc *CodeService) generateCode() string {
 	num := rand.Intn(1000000)
-	return fmt.Sprintf("%6d", num)
+	return fmt.Sprintf("%06d", num)
 }

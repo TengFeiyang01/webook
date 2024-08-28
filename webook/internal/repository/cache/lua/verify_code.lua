@@ -1,6 +1,6 @@
 local key = KEYS[1]
 -- 用户输入的
-local cntKey = key.."cnt"
+local cntKey = key .. ":cnt"
 -- 用户输入的验证码
 local expectedCode = ARGV[1]
 
@@ -11,7 +11,9 @@ if cnt == nil or cnt <= 0 then
     -- 说明一直输入错误
     -- 或者已经用过了
     return -1
-elseif expectedCode == code then
+end
+
+if expectedCode == code then
     -- 输入对了
     -- 用完，不能用了
     redis.call("set", cntKey, 0)

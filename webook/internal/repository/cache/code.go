@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrCodeSendTooMany        = errors.New("发生太频繁")
+	ErrCodeSendTooMany        = errors.New("发送太频繁")
 	ErrCodeVerifyTooManyTimes = errors.New("验证次数太多")
 	ErrUnknownForCode         = errors.New("我不知道哪错了")
 )
