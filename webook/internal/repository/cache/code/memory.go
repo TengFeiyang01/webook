@@ -1,26 +1,28 @@
-package cache
+package code
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/patrickmn/go-cache"
+	memcache "github.com/patrickmn/go-cache"
 	"time"
+	"webook/webook/internal/repository/cache"
 )
 
 const expiration = 10 * time.Minute
 
-type CodeMemoryCache struct {
-	cache *cache.Cache
+type MemoryCodeCache struct {
+	cache *memcache.Cache
 }
 
-func NewCodeMemoryCache() *CodeMemoryCache {
-	return &CodeMemoryCache{
-		cache: cache.New(expiration, expiration),
+func NewMemoryCodeCache() cache.CodeCache {
+	return &MemoryCodeCache{
+		cache: memcache.New(expiration, expiration),
 	}
 }
 
-func (mc *CodeMemoryCache) Set(ctx context.Context, biz, phone, code string) error {
+func (mc *MemoryCodeCache) Set(ctx context.Context, biz, phone, code string) error {
+	_ = ctx
 	_, t, ok := mc.cache.GetWithExpiration(mc.key(biz, phone))
 	if ok && time.Now().After(t) {
 		return errors.New("系统错误")
@@ -33,7 +35,8 @@ func (mc *CodeMemoryCache) Set(ctx context.Context, biz, phone, code string) err
 	return ErrCodeSendTooMany
 }
 
-func (mc *CodeMemoryCache) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
+func (mc *MemoryCodeCache) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
+	_ = ctx
 	cntKey := mc.cntKey(biz, phone)
 	cnt, ok := mc.cache.Get(cntKey)
 	if !ok || cnt.(int) <= 0 {
@@ -48,10 +51,10 @@ func (mc *CodeMemoryCache) Verify(ctx context.Context, biz, phone, inputCode str
 	}
 }
 
-func (mc *CodeMemoryCache) key(biz, phone string) string {
+func (mc *MemoryCodeCache) key(biz, phone string) string {
 	return fmt.Sprintf("phone_code:%s:%s", biz, phone)
 }
 
-func (mc *CodeMemoryCache) cntKey(biz, phone string) string {
+func (mc *MemoryCodeCache) cntKey(biz, phone string) string {
 	return fmt.Sprintf("phone_code:%s:%s:cnt", biz, phone)
 }

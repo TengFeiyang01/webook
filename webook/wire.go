@@ -6,7 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"webook/webook/internal/repository"
-	"webook/webook/internal/repository/cache"
+	"webook/webook/internal/repository/cache/code"
+	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/service"
 	"webook/webook/internal/web"
@@ -22,9 +23,9 @@ func InitWebUser() *gin.Engine {
 		dao.NewUserDAO,
 
 		// 初始化 cache
-		cache.NewUserCache,
-		//cache.NewCodeMemoryCache,
-		cache.NewCodeRedisCache,
+		user.NewRedisUserCache,
+		//cache.NewMemoryCodeCache,
+		code.NewRedisCodeCache,
 
 		// 初始化 repository
 		repository.NewUserRepository,

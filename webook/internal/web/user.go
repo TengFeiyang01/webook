@@ -22,14 +22,14 @@ var _ handler = (*UserHandler)(nil)
 
 // UserHandler 和用户有关的路由
 type UserHandler struct {
-	svc            *service.UserService
-	codeSvc        *service.CodeService
+	svc            service.UserService
+	codeSvc        service.CodeService
 	emailRegExp    *regexp.Regexp
 	passwordRegExp *regexp.Regexp
 	phoneRegExp    *regexp.Regexp
 }
 
-func NewUserHandler(svc *service.UserService, codeSvc *service.CodeService) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserHandler {
 	const (
 		emailRegexPattern = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
 		// 和上面比起来，用 ` 看起来就比较清爽

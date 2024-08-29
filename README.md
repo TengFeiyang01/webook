@@ -1097,7 +1097,5 @@ script -t1 -d1s -c2 -s ./scripts/script/profile.lua http://localhost:8090/users/
 
 这就是业务上的**超前半步设计**，也叫做**叠床架屋**。
 
-![image-20240112133138357](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240112133138357.png)
 
-![image-20240112142512058](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240112142512058.png)
 

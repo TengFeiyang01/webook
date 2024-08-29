@@ -13,16 +13,16 @@ var (
 	ErrInvalidUserOrPassword = errors.New("邮箱或密码不对")
 )
 
-type UserService struct {
-	repo *repository.UserRepository
+type userService struct {
+	repo repository.UserRepository
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo repository.UserRepository) UserService {
+	return &userService{repo: repo}
 }
 
 // SignUp 注册
-func (svc *UserService) SignUp(ctx context.Context, u domain.User) error {
+func (svc *userService) SignUp(ctx context.Context, u domain.User) error {
 	// 密码加密
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -36,7 +36,7 @@ func (svc *UserService) SignUp(ctx context.Context, u domain.User) error {
 	return nil
 }
 
-func (svc *UserService) Login(ctx context.Context, email, password string) (domain.User, error) {
+func (svc *userService) Login(ctx context.Context, email, password string) (domain.User, error) {
 	u, err := svc.repo.FindByEmail(ctx, email)
 	if errors.As(err, &repository.ErrUserNotFound) {
 		return domain.User{}, ErrInvalidUserOrPassword
@@ -51,7 +51,7 @@ func (svc *UserService) Login(ctx context.Context, email, password string) (doma
 	return u, nil
 }
 
-func (svc *UserService) FindOrCreate(ctx context.Context, phone string) (domain.User, error) {
+func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.User, error) {
 	// 这时候呢, 这个地方怎么做
 	u, err := svc.repo.FindByPhone(ctx, phone)
 	// 要判断有没有这个用户
@@ -74,7 +74,7 @@ func (svc *UserService) FindOrCreate(ctx context.Context, phone string) (domain.
 	return svc.repo.FindByPhone(ctx, phone)
 }
 
-func (svc *UserService) Profile(ctx context.Context, id int64) (domain.User, error) {
+func (svc *userService) Profile(ctx context.Context, id int64) (domain.User, error) {
 	// 先从缓存找
 	u, err := svc.repo.FindByID(ctx, id)
 	if err != nil {
