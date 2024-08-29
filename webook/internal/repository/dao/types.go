@@ -7,4 +7,5 @@ type UserDAO interface {
 	FindByPhone(ctx context.Context, phone string) (User, error)
 	Insert(ctx context.Context, u User) error
 	FindByID(ctx context.Context, id int64) (User, error)
+	UpdateByID(ctx context.Context, id int64, u User) error
 }

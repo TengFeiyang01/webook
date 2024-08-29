@@ -56,6 +56,14 @@ func (dao *GORMUserDAO) FindByID(ctx context.Context, id int64) (User, error) {
 	return u, err
 }
 
+func (dao *GORMUserDAO) UpdateByID(ctx context.Context, id int64, u User) error {
+	err := dao.db.WithContext(ctx).Where("id = ?", id).Updates(&u).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // User 对应数据库表
 type User struct {
 	ID       int64          `gorm:"primaryKey,autoIncrement"`

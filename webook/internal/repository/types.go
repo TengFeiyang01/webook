@@ -17,4 +17,5 @@ type UserRepository interface {
 	FindByPhone(ctx context.Context, phone string) (domain.User, error)
 	Create(ctx context.Context, u domain.User) error
 	FindByID(ctx context.Context, id int64) (domain.User, error)
+	UpdateByID(ctx context.Context, id int64, u domain.User) error
 }

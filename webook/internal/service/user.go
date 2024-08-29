@@ -76,9 +76,9 @@ func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.
 
 func (svc *userService) Profile(ctx context.Context, id int64) (domain.User, error) {
 	// 先从缓存找
-	u, err := svc.repo.FindByID(ctx, id)
-	if err != nil {
-		return domain.User{}, err
-	}
-	return u, nil
+	return svc.repo.FindByID(ctx, id)
+}
+
+func (svc *userService) UpdateByID(ctx context.Context, id int64, u domain.User) error {
+	return svc.repo.UpdateByID(ctx, id, u)
 }

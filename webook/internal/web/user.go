@@ -205,10 +205,14 @@ func (u *UserHandler) Logout(ctx *gin.Context) {
 
 func (u *UserHandler) Edit(ctx *gin.Context) {
 	type EditReq struct {
+		Email    string
+		Phone    string
 		Nickname string `json:"nickname"`
 		Birthday string `json:"birthday"`
 		AboutMe  string `json:"about_me"`
 	}
+	sess := sessions.Default(ctx)
+	id := sess.Get("user_id").(int64)
 	var req EditReq
 	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.String(http.StatusInternalServerError, "系统错误")
@@ -219,6 +223,7 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "生日格式不对")
 		return
 	}
+	fmt.Println(id)
 }
 
 func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
@@ -243,6 +248,9 @@ func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
+	type Profile struct {
+		Email string `json:"email"`
+	}
 	sess := sessions.Default(ctx)
 	id := sess.Get("user_id").(int64)
 	user, err := u.svc.Profile(ctx, id)
@@ -250,7 +258,9 @@ func (u *UserHandler) Profile(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, "系统错误")
 		return
 	}
-	ctx.String(200, fmt.Sprintf("%v", user))
+	ctx.JSON(http.StatusOK, Profile{
+		Email: user.Email,
+	})
 }
 
 func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {

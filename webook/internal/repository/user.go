@@ -84,6 +84,11 @@ func (r *CachedUserRepository) FindByID(ctx context.Context, id int64) (domain.U
 	return u, nil
 }
 
+func (r *CachedUserRepository) UpdateByID(ctx context.Context, id int64, u domain.User) error {
+	err := r.dao.UpdateByID(ctx, id, r.domainToEntity(u))
+	return err
+}
+
 func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
 	return dao.User{
 		ID: u.ID,
