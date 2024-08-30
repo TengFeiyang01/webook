@@ -48,7 +48,7 @@ func (r *CachedUserRepository) Create(ctx context.Context, u domain.User) error 
 	return r.dao.Insert(ctx, r.domainToEntity(u))
 }
 
-func (r *CachedUserRepository) FindByID(ctx context.Context, id int64) (domain.User, error) {
+func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
 	// 先从cache找
 	// 再从dao里面找
 	// 找到了写回cache
@@ -67,7 +67,7 @@ func (r *CachedUserRepository) FindByID(ctx context.Context, id int64) (domain.U
 
 	// 不加载 —— 用户体验差一些
 
-	ue, err := r.dao.FindByID(ctx, id)
+	ue, err := r.dao.FindById(ctx, id)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -84,9 +84,23 @@ func (r *CachedUserRepository) FindByID(ctx context.Context, id int64) (domain.U
 	return u, nil
 }
 
-func (r *CachedUserRepository) UpdateByID(ctx context.Context, id int64, u domain.User) error {
-	err := r.dao.UpdateByID(ctx, id, r.domainToEntity(u))
+func (r *CachedUserRepository) UpdateById(ctx context.Context, u domain.User) error {
+	err := r.dao.UpdateById(ctx, r.domainToEntity(u))
 	return err
+}
+
+func (r *CachedUserRepository) UpdateNonZeroFields(ctx context.Context,
+	user domain.User) error {
+	// 更新 DB 之后，删除
+	err := r.dao.UpdateById(ctx, r.domainToEntity(user))
+	if err != nil {
+		return err
+	}
+	// 延迟一秒
+	time.AfterFunc(time.Second, func() {
+		_ = r.cache.Del(ctx, user.ID)
+	})
+	return r.cache.Del(ctx, user.ID)
 }
 
 func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
@@ -101,7 +115,10 @@ func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
 			String: u.Phone,
 			Valid:  u.Phone != "",
 		},
-		Ctime: u.Ctime.UnixMilli(),
+		NickName: u.NickName,
+		BirthDay: u.BirthDay,
+		AboutMe:  u.AboutMe,
+		Ctime:    u.Ctime.UnixMilli(),
 	}
 }
 
@@ -111,6 +128,9 @@ func (r *CachedUserRepository) entityToDomain(u dao.User) domain.User {
 		Email:    u.Email.String,
 		Password: u.Password,
 		Phone:    u.Phone.String,
+		NickName: u.NickName,
+		BirthDay: u.BirthDay,
+		AboutMe:  u.AboutMe,
 		Ctime:    time.UnixMilli(u.Ctime),
 	}
 }

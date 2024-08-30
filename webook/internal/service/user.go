@@ -76,9 +76,13 @@ func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.
 
 func (svc *userService) Profile(ctx context.Context, id int64) (domain.User, error) {
 	// 先从缓存找
-	return svc.repo.FindByID(ctx, id)
+	return svc.repo.FindById(ctx, id)
 }
 
-func (svc *userService) UpdateByID(ctx context.Context, id int64, u domain.User) error {
-	return svc.repo.UpdateByID(ctx, id, u)
+func (svc *userService) UpdateById(ctx context.Context, u domain.User) error {
+	return svc.repo.UpdateById(ctx, u)
+}
+
+func (svc *userService) UpdateNonSensitiveInfo(ctx context.Context, u domain.User) error {
+	return svc.repo.UpdateById(ctx, u)
 }

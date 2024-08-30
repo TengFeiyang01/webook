@@ -16,7 +16,7 @@ var ErrKeyNotExist = redis.Nil
 type RedisUserCache struct {
 	// 传单机 Redis 可以
 	// 传单机 cluster 的 Redis 也可以
-	client     redis.Cmdable
+	cmd        redis.Cmdable
 	expiration time.Duration
 }
 
@@ -26,7 +26,7 @@ type RedisUserCache struct {
 
 func NewRedisUserCache(client redis.Cmdable) cache.UserCache {
 	return &RedisUserCache{
-		client:     client,
+		cmd:        client,
 		expiration: time.Minute * 15,
 	}
 }
@@ -36,7 +36,7 @@ func NewRedisUserCache(client redis.Cmdable) cache.UserCache {
 func (cache *RedisUserCache) Get(ctx context.Context, id int64) (domain.User, error) {
 	key := cache.key(id)
 	// 数据不存在
-	result, err := cache.client.Get(ctx, key).Bytes()
+	result, err := cache.cmd.Get(ctx, key).Bytes()
 	if errors.Is(err, redis.Nil) {
 		return domain.User{}, err
 	}
@@ -51,7 +51,11 @@ func (cache *RedisUserCache) Set(ctx context.Context, u domain.User) error {
 		return err
 	}
 	key := cache.key(u.ID)
-	return cache.client.Set(ctx, key, val, cache.expiration).Err()
+	return cache.cmd.Set(ctx, key, val, cache.expiration).Err()
+}
+
+func (cache *RedisUserCache) Del(ctx context.Context, id int64) error {
+	return cache.cmd.Del(ctx, cache.key(id)).Err()
 }
 
 func (cache *RedisUserCache) key(id int64) string {

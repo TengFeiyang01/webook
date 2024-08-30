@@ -15,4 +15,5 @@ type CodeCache interface {
 type UserCache interface {
 	Set(ctx context.Context, u domain.User) error
 	Get(ctx context.Context, id int64) (domain.User, error)
+	Del(ctx context.Context, id int64) error
 }

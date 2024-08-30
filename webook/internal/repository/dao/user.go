@@ -50,18 +50,23 @@ func (dao *GORMUserDAO) Insert(ctx context.Context, u User) error {
 	return err
 }
 
-func (dao *GORMUserDAO) FindByID(ctx context.Context, id int64) (User, error) {
+func (dao *GORMUserDAO) FindById(ctx context.Context, id int64) (User, error) {
 	var u User
 	err := dao.db.WithContext(ctx).Where("id = ?", id).First(&u).Error
 	return u, err
 }
 
-func (dao *GORMUserDAO) UpdateByID(ctx context.Context, id int64, u User) error {
-	err := dao.db.WithContext(ctx).Where("id = ?", id).Updates(&u).Error
-	if err != nil {
-		return err
-	}
-	return nil
+func (dao *GORMUserDAO) UpdateById(ctx context.Context, entity User) error {
+	// 这种写法依赖于 GORM 的零值和主键更新特性
+	// Update 非零值 WHERE id = ?
+	//return dao.db.WithContext(ctx).Updates(&entity).Error
+	return dao.db.WithContext(ctx).Model(&entity).Where("id = ?", entity.ID).
+		Updates(map[string]any{
+			"utime":     time.Now().UnixMilli(),
+			"nick_name": entity.NickName,
+			"birth_day": entity.BirthDay,
+			"about_me":  entity.AboutMe,
+		}).Error
 }
 
 // User 对应数据库表
@@ -72,7 +77,10 @@ type User struct {
 
 	// 唯一索引允许有多个空值
 	// 但是不能有多个 ""
-	Phone sql.NullString `gorm:"unique"`
+	Phone    sql.NullString `gorm:"unique"`
+	NickName string
+	BirthDay time.Time
+	AboutMe  string
 
 	// 创建时间
 	Ctime int64

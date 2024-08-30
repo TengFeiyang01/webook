@@ -205,28 +205,65 @@ func (u *UserHandler) Logout(ctx *gin.Context) {
 
 func (u *UserHandler) Edit(ctx *gin.Context) {
 	type EditReq struct {
-		Email    string
-		Phone    string
+		Email    string `json:"Email,omitempty"`
+		Nickname string `json:"nickname" json:"Nickname,omitempty"`
+		Birthday string `json:"birthday" json:"Birthday,omitempty"`
+		AboutMe  string `json:"about_me" json:"AboutMe,omitempty"`
+	}
+
+	var req EditReq
+	if err := ctx.Bind(&req); err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	if req.Nickname == "" {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "昵称不能为空",
+		})
+		return
+	}
+	birthday, err := time.Parse(time.DateOnly, req.Birthday)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "日期格式不对",
+		})
+		return
+	}
+	if len(req.Nickname) > 1024 {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "关于我太长",
+		})
+	}
+
+	uc := ctx.MustGet("user").(UserClaims)
+	err = u.svc.UpdateNonSensitiveInfo(ctx, domain.User{
+		ID:       uc.Uid,
+		NickName: req.Nickname,
+		BirthDay: birthday,
+		AboutMe:  req.AboutMe,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Msg: "OK",
+	})
+}
+
+func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
+	type Profile struct {
+		Email    string `json:"email"`
+		Phone    string `json:"phone"`
 		Nickname string `json:"nickname"`
 		Birthday string `json:"birthday"`
 		AboutMe  string `json:"about_me"`
 	}
-	sess := sessions.Default(ctx)
-	id := sess.Get("user_id").(int64)
-	var req EditReq
-	if err := ctx.ShouldBind(&req); err != nil {
-		ctx.String(http.StatusInternalServerError, "系统错误")
-		return
-	}
-	_, err := time.Parse(time.DateOnly, req.Birthday)
-	if err != nil {
-		ctx.String(http.StatusOK, "生日格式不对")
-		return
-	}
-	fmt.Println(id)
-}
-
-func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 	c, ok := ctx.Get("claims")
 	// 必然有 claims
 	if !ok {
@@ -238,18 +275,27 @@ func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, "系统错误")
 		return
 	}
-	println(claims.Uid)
 	user, err := u.svc.Profile(ctx, claims.Uid)
 	if err != nil {
 		ctx.String(http.StatusInternalServerError, "系统错误")
 		return
 	}
-	ctx.String(http.StatusOK, fmt.Sprintf("%v", user))
+	ctx.JSON(http.StatusOK, Profile{
+		Email:    user.Email,
+		Phone:    user.Phone,
+		Nickname: user.NickName,
+		Birthday: user.BirthDay.Format(time.DateOnly),
+		AboutMe:  user.AboutMe,
+	})
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
 	type Profile struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Phone    string `json:"phone"`
+		Nickname string `json:"nickname"`
+		Birthday string `json:"birthday"`
+		AboutMe  string `json:"about_me"`
 	}
 	sess := sessions.Default(ctx)
 	id := sess.Get("user_id").(int64)
@@ -259,7 +305,11 @@ func (u *UserHandler) Profile(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, Profile{
-		Email: user.Email,
+		Email:    user.Email,
+		Phone:    user.Phone,
+		Nickname: user.NickName,
+		Birthday: user.BirthDay.Format(time.DateOnly),
+		AboutMe:  user.AboutMe,
 	})
 }
 

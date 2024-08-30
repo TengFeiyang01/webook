@@ -20,5 +20,6 @@ type UserService interface {
 	Login(ctx context.Context, email, password string) (domain.User, error)
 	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
 	Profile(ctx context.Context, id int64) (domain.User, error)
-	UpdateByID(ctx context.Context, id int64, u domain.User) error
+	UpdateById(ctx context.Context, u domain.User) error
+	UpdateNonSensitiveInfo(ctx context.Context, u domain.User) error
 }
