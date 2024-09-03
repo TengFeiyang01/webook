@@ -10,10 +10,14 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/google/wire v0.6.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/stretchr/testify v1.8.4
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.989
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.989
-	golang.org/x/crypto v0.16.0
+	go.uber.org/mock v0.4.0
+	golang.org/x/crypto v0.18.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.2
 )
@@ -47,8 +51,8 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.31.1-0.20231027082548-f4a6c1f6e5c1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -9,20 +9,20 @@ import (
 )
 
 var (
-	ErrUserDuplicateEmail    = repository.ErrUserDuplicateEmail
+	ErrUserDuplicate         = repository.ErrUserDuplicate
 	ErrInvalidUserOrPassword = errors.New("邮箱或密码不对")
 )
 
-type UserService struct {
-	repo *repository.UserRepository
+type userService struct {
+	repo repository.UserRepository
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo repository.UserRepository) UserService {
+	return &userService{repo: repo}
 }
 
 // SignUp 注册
-func (svc *UserService) SignUp(ctx context.Context, u domain.User) error {
+func (svc *userService) SignUp(ctx context.Context, u domain.User) error {
 	// 密码加密
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -36,7 +36,7 @@ func (svc *UserService) SignUp(ctx context.Context, u domain.User) error {
 	return nil
 }
 
-func (svc *UserService) Login(ctx context.Context, email, password string) (domain.User, error) {
+func (svc *userService) Login(ctx context.Context, email, password string) (domain.User, error) {
 	u, err := svc.repo.FindByEmail(ctx, email)
 	if errors.As(err, &repository.ErrUserNotFound) {
 		return domain.User{}, ErrInvalidUserOrPassword
@@ -51,11 +51,38 @@ func (svc *UserService) Login(ctx context.Context, email, password string) (doma
 	return u, nil
 }
 
-func (svc *UserService) Profile(ctx context.Context, id int64) (domain.User, error) {
-	// 先从缓存找
-	u, err := svc.repo.FindByID(ctx, id)
-	if err != nil {
-		return domain.User{}, err
+func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.User, error) {
+	// 这时候呢, 这个地方怎么做
+	u, err := svc.repo.FindByPhone(ctx, phone)
+	// 要判断有没有这个用户
+	// 这个叫做快路径
+	if !errors.Is(err, repository.ErrUserNotFound) {
+		// nil、不为ErrUserNotFound 都会进来这里
+		return u, err
 	}
-	return u, nil
+
+	// 这个叫做慢路径
+	// 明确知道, 没有这个用户
+	u = domain.User{
+		Phone: phone,
+	}
+	err = svc.repo.Create(ctx, u)
+	if err != nil && !errors.Is(err, repository.ErrUserDuplicate) {
+		return u, err
+	}
+	// 因为这里会遇到主从延迟的问题
+	return svc.repo.FindByPhone(ctx, phone)
+}
+
+func (svc *userService) Profile(ctx context.Context, id int64) (domain.User, error) {
+	// 先从缓存找
+	return svc.repo.FindById(ctx, id)
+}
+
+func (svc *userService) UpdateById(ctx context.Context, u domain.User) error {
+	return svc.repo.UpdateById(ctx, u)
+}
+
+func (svc *userService) UpdateNonSensitiveInfo(ctx context.Context, u domain.User) error {
+	return svc.repo.UpdateById(ctx, u)
 }
