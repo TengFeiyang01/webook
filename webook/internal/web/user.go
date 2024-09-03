@@ -97,7 +97,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 	err = u.svc.SignUp(ctx, domain.User{Email: req.Email, Password: req.Password})
-	if errors.As(err, &service.ErrUserDuplicate) {
+	if errors.Is(err, service.ErrUserDuplicate) {
 		ctx.String(http.StatusOK, "邮箱冲突")
 		return
 	}
@@ -120,7 +120,7 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 		return
 	}
 	user, err := u.svc.Login(ctx, req.Email, req.Password)
-	if errors.As(err, &service.ErrInvalidUserOrPassword) {
+	if errors.Is(err, service.ErrInvalidUserOrPassword) {
 		ctx.String(http.StatusUnauthorized, "用户名或密码不对")
 		return
 	}
@@ -172,7 +172,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 	user, err := u.svc.Login(ctx, req.Email, req.Password)
-	if errors.As(err, &service.ErrInvalidUserOrPassword) {
+	if errors.Is(err, service.ErrInvalidUserOrPassword) {
 		ctx.String(http.StatusUnauthorized, "用户名或密码不对")
 		return
 	}
