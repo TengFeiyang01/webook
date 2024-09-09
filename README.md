@@ -210,7 +210,7 @@ services:
   sudo gpasswd -a $USER docker     #将登陆用户加入到docker用户组中
   newgrp docker     #更新用户组
   docker ps    #测试docker命令是否可以使用sudo正常使用
- ```
+```
 
 ------------------------------------------------------------------------------------------------------
 
@@ -1244,3 +1244,474 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id int64) (domain.User, error)
 }
 ```
+# 单元测试
+
+![image-20240904094757357](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409040947176.png)
+
+## 安装 mock 工具
+
+命令行安装：
+
+```shell
+go install go.uber.org/mock/mockgen@latest
+```
+
+测试是否安装：
+
+```bash
+mockgen -version
+```
+
+如果失败，确保 `GOPATH/bin` 在你的 `PATH` 中：
+
+```sh
+export PATH=$PATH:$(go env GOPATH)/bin
+```
+
+## 使用
+
+首先确保你已经安装了`gomock` ，并且在项目中执行了`go mod tidy`
+
+### 指定三个参数
+
+在使用 `mockgen` 生成模拟对象（Mock Objects）时，通常需要指定三个主要参数：
+
+- `source`：这是你想要生成模拟对象的接口定义所在的文件路径。
+- `destination`：这是你想要生成模拟对象代码的目标路径。
+- `package`：这是生成代码的包名。
+
+### 使用命令为接口生成 mock 实现
+
+一旦你指定了上述参数，`mockgen` 就会为你提供的接口生成模拟实现。生成的模拟实现将包含一个 `EXPECT` 方法，用于设置预期的行为，以及一些方法实现，这些实现将返回默认值或调用真实的实现。
+
+例如，如果你的接口定义在 `./webook/internal/service/user.go` 文件中，你可以使用以下命令来生成模拟对象：
+
+```bash
+mockgen -source=./webook/internal/service/user.go -package=svcmocks destination=./webook/internal/service/mocks/user.mock.go
+```
+
+### 使用make 命令封装处理mock
+
+在实际项目中，你可能会使用 `make` 命令来自动化构建过程，包括生成模拟对象。你可以创建一个 `Makefile` 或 `make.bash` 文件，并添加一个目标来处理 `mockgen` 的调用。例如：
+
+```makefile
+# Makefile 示例
+# mock 目标 ，可以直接使用 make mock命令
+.PHONY: mock
+# 生成模拟对象
+mock:
+	@mockgen -source=webook/internal/service/types.go -package=svcmocks -destination=webook/internal/service/mocks/service.mock.go
+	@mockgen -source=webook/internal/repository/types.go -package=repomocks -destination=webook/internal/repository/mocks/repository.mock.go
+	@go mod tidy
+```
+
+最后，只要我们执行`make mock` 命令，就会生成`mock`文件。
+
+## Web 层单元测试
+
+这里我们已注册接口为例子，代码如下：
+
+```go
+
+func (u *UserHandler) SignUp(ctx *gin.Context) {
+	type SignupReq struct {
+		Email           string `json:"email"`
+		Password        string `json:"password"`
+		ConfirmPassword string `json:"confirm_password"`
+	}
+	var req SignupReq
+	if err := ctx.Bind(&req); err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+
+	isEmail, err := u.emailRegExp.MatchString(req.Email)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+
+	if !isEmail {
+		ctx.String(http.StatusUnauthorized, "你的邮箱格式不对")
+		return
+	}
+
+	if req.Password != req.ConfirmPassword {
+		ctx.String(http.StatusUnauthorized, "两次输入的密码不一致")
+		return
+	}
+
+	isPassword, err := u.passwordRegExp.MatchString(req.Password)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+
+	if !isPassword {
+		ctx.String(http.StatusBadRequest, "密码必须包含数字、特殊字符，并且长度不能小于 8 位")
+		return
+	}
+	err = u.svc.SignUp(ctx, domain.User{Email: req.Email, Password: req.Password})
+	if errors.Is(err, service.ErrUserDuplicate) {
+		ctx.String(http.StatusOK, "邮箱冲突")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统异常")
+		return
+	}
+
+	ctx.String(http.StatusOK, "hello 注册成功")
+}
+```
+
+执行命令，生成 `mock` 文件：
+
+```bash
+@mockgen -source=webook/internal/service/types.go -package=svcmocks -destination=webook/internal/service/mocks/service.mock.go
+```
+
+接着我们编写单元测试，代码如下：
+
+```go
+package web
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+	"golang.org/x/crypto/bcrypt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"webook/webook/internal/domain"
+	"webook/webook/internal/service"
+	svcmocks "webook/webook/internal/service/mocks"
+)
+
+func TestEncrypt(t *testing.T) {
+	password := []byte("hello#123")
+	hash, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(hash))
+	err = bcrypt.CompareHashAndPassword(hash, password)
+	assert.NoError(t, err)
+}
+
+func TestUserHandler_SignUp(t *testing.T) {
+	type args struct {
+		ctx *gin.Context
+	}
+	tests := []struct {
+		name    string
+		mock    func(ctrl *gomock.Controller) service.UserService
+		reqBody string
+
+		wantCode int
+		wantBody string
+	}{
+		{
+			name: "注册成功",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				userSvc := svcmocks.NewMockUserService(ctrl)
+				userSvc.EXPECT().SignUp(gomock.Any(), domain.User{
+					Email:    "123123@qq.com",
+					Password: "123#@qqcom",
+				}).Return(nil)
+				return userSvc
+			},
+			reqBody: `
+{
+    "email": "123123@qq.com",
+    "password": "123#@qqcom",
+    "confirm_password": "123#@qqcom"
+}
+	`,
+			wantCode: http.StatusOK,
+			wantBody: `hello 注册成功`,
+		},
+		{
+			name: "参数不对, bind 失败",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				userSvc := svcmocks.NewMockUserService(ctrl)
+				return userSvc
+			},
+			reqBody: `
+{
+    "email": "123123@qq.com",
+    "password": "123#@qqcom",
+    "confirm_password": "12
+}
+	`,
+			wantCode: http.StatusBadRequest,
+			wantBody: `系统错误`,
+		},
+		{
+			name: "邮箱格式错误",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				userSvc := svcmocks.NewMockUserService(ctrl)
+				return userSvc
+			},
+			reqBody: `
+{
+    "email": "123123",
+    "password": "123#@qqcom",
+    "confirm_password": "123#@qqcom"
+}
+	`,
+			wantCode: http.StatusUnauthorized,
+			wantBody: `你的邮箱格式不对`,
+		},
+		{
+			name: "两次输入的密码不一致",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				userSvc := svcmocks.NewMockUserService(ctrl)
+				return userSvc
+			},
+			reqBody: `
+{
+    "email": "123123@qq.com",
+    "password": "1233#@qqcom",
+    "confirm_password": "123#@qqcom"
+}
+	`,
+			wantCode: http.StatusUnauthorized,
+			wantBody: `两次输入的密码不一致`,
+		},
+		{
+			name: "密码必须包含数字、特殊字符，并且长度不能小于 8 位",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				userSvc := svcmocks.NewMockUserService(ctrl)
+				return userSvc
+			},
+			reqBody: `
+{
+    "email": "123123@qq.com",
+    "password": "1233#@q",
+    "confirm_password": "1233#@q"
+}
+	`,
+			wantCode: http.StatusBadRequest,
+			wantBody: `密码必须包含数字、特殊字符，并且长度不能小于 8 位`,
+		},
+		{
+			name: "密码必须包含数字、特殊字符，并且长度不能小于 8 位",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				userSvc := svcmocks.NewMockUserService(ctrl)
+				return userSvc
+			},
+			reqBody: `
+{
+    "email": "123123@qq.com",
+    "password": "1233#@q",
+    "confirm_password": "1233#@q"
+}
+	`,
+			wantCode: http.StatusBadRequest,
+			wantBody: `密码必须包含数字、特殊字符，并且长度不能小于 8 位`,
+		},
+		{
+			name: "邮箱冲突",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				userSvc := svcmocks.NewMockUserService(ctrl)
+				userSvc.EXPECT().SignUp(gomock.Any(), domain.User{
+					Email:    "123123@qq.com",
+					Password: "123#@qqcom",
+				}).Return(service.ErrUserDuplicate)
+				return userSvc
+			},
+			reqBody: `
+{
+    "email": "123123@qq.com",
+    "password": "123#@qqcom",
+    "confirm_password": "123#@qqcom"
+}
+	`,
+			wantCode: http.StatusOK,
+			wantBody: `邮箱冲突`,
+		},
+		{
+			name: "系统异常",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				userSvc := svcmocks.NewMockUserService(ctrl)
+				userSvc.EXPECT().SignUp(gomock.Any(), domain.User{
+					Email:    "123123@qq.com",
+					Password: "123#@qqcom",
+				}).Return(errors.New("any"))
+				return userSvc
+			},
+			reqBody: `
+{
+    "email": "123123@qq.com",
+    "password": "123#@qqcom",
+    "confirm_password": "123#@qqcom"
+}
+	`,
+			wantCode: http.StatusInternalServerError,
+			wantBody: `系统异常`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			server := gin.Default()
+
+			h := NewUserHandler(tc.mock(ctrl), nil)
+			h.RegisterRoutes(server)
+
+			req, err := http.NewRequest(http.MethodPost, "/users/signup", bytes.NewBuffer([]byte(tc.reqBody)))
+
+			// 这里就可以继续使用 req 了
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp := httptest.NewRecorder()
+
+			// 这就是 HTTP 请求进去 GIN 框架的入口
+			// 当你这样调用的时候，GIN 就会处理这个请求
+			// 响应写回 resp
+			server.ServeHTTP(resp, req)
+
+			assert.Equal(t, tc.wantCode, resp.Code)
+			assert.Equal(t, tc.wantBody, resp.Body.String())
+		})
+	}
+}
+
+func TestMock(t *testing.T) {
+	// 先创建一个控制 mock 的控制器
+	ctrl := gomock.NewController(t)
+	// 每个测试结束都要调用 Finish
+	// 然后 mock 就会去验证你的测试流程是否符合预期
+	defer ctrl.Finish()
+
+	svc := svcmocks.NewMockUserService(ctrl)
+	// 开启一个个测试调用
+	// 预期第一个是 Signup 的调用
+	// 模拟的 条件是
+
+	svc.EXPECT().SignUp(gomock.Any(), gomock.Any()).
+		Return(errors.New("mock error"))
+
+	err := svc.SignUp(context.Background(), domain.User{
+		Email: "test@test.com",
+	})
+	t.Log(err)
+}
+
+```
+
+## flags
+
+`gomock` 有一些命令行标志，可以帮助你控制生成过程。这些标志通常在 `gomock` 工具的帮助下使用，例如 `gomock generate`。
+
+`mockgen` 命令用来为给定一个包含要mock的接口的Go源文件，生成mock类源代码。它支持以下标志：
+
+- `-source`：包含要mock的接口的文件。
+- `-destination`：生成的源代码写入的文件。如果不设置此项，代码将打印到标准输出。
+- `-package`：用于生成的模拟类源代码的包名。如果不设置此项包名默认在原包名前添加`mock_`前缀。
+- `-imports`：在生成的源代码中使用的显式导入列表。值为foo=bar/baz形式的逗号分隔的元素列表，其中bar/baz是要导入的包，foo是要在生成的源代码中用于包的标识符。
+- `-aux_files`：需要参考以解决的附加文件列表，例如在不同文件中定义的嵌入式接口。指定的值应为foo=bar/baz.go形式的以逗号分隔的元素列表，其中bar/baz.go是源文件，foo是`-source`文件使用的文件的包名。
+- `-build_flags`：（仅反射模式）一字不差地传递标志给go build
+- `-mock_names`：生成的模拟的自定义名称列表。这被指定为一个逗号分隔的元素列表，形式为`Repository = MockSensorRepository,Endpoint=MockSensorEndpoint`，其中`Repository`是接口名称，`mockSensorrepository`是所需的mock名称(mock工厂方法和mock记录器将以mock命名)。如果其中一个接口没有指定自定义名称，则将使用默认命名约定。
+- `-self_package`：生成的代码的完整包导入路径。使用此flag的目的是通过尝试包含自己的包来防止生成代码中的循环导入。如果mock的包被设置为它的一个输入(通常是主输入)，并且输出是stdio，那么mockgen就无法检测到最终的输出包，这种情况就会发生。设置此标志将告诉 mockgen 排除哪个导入
+- `-copyright_file`：用于将版权标头添加到生成的源代码中的版权文件
+- `-debug_parser`：仅打印解析器结果
+- `-exec_only`：（反射模式） 如果设置，则执行此反射程序
+- `-prog_only`：（反射模式）只生成反射程序；将其写入标准输出并退出。
+- `-write_package_comment`：如果为true，则写入包文档注释 (godoc)。（默认为true）
+
+## 打桩（stub）
+
+在测试中，打桩是一种测试术语，用于为函数或方法设置一个预设的返回值，而不是调用真实的实现。在 `gomock` 中，打桩通常通过设置期望的行为来实现。
+例如，您可以为 `myServiceMock` 的 `DoSomething` 方法设置一个期望的行为，并返回一个特定的错误。这可以通过调用 `myServiceMock.EXPECT().DoSomething().Return(error)` 来实现。
+在单元测试中，使用 `gomock` 可以帮助你更有效地模拟外部依赖，从而编写更可靠和更高效的测试。通常用来屏蔽或补齐业务逻辑中的关键代码方便进行单元测试。
+
+> 屏蔽：不想在单元测试用引入数据库连接等重资源
+>
+> 补齐：依赖的上下游函数或方法还未实现
+
+`gomock`支持针对参数、返回值、调用次数、调用顺序等进行打桩操作。
+
+### 参数
+
+参数相关的用法有：
+
+- `gomock.Eq(value)` ：表示一个等价于value值的参数
+- `gomock.Not(value)` ：表示一个非value值的参数
+- `gomock.Any()` ：表示任意值的参数
+- `gomock.Nil()` ：表示空值的参数
+- `SetArg(n, value)` ：设置第n（从0开始）个参数的值，通常用于指针参数或切片
+
+## 总结
+
+### 测试用例定义
+
+测试用例定义，最完整的情况下应该包含：
+
+- **名字**：简明扼要说清楚你测试的场景，建议用中文。
+- **预期输入**：也就是作为你方法的输入。如果测试的是定义在类型上的方法，那么也可以包含类型实例。
+- **预期输出**：你的方法执行完毕之后，预期返回的数据。如果方法是定义在类型上的方法，那么也可以包含执行之后的实例的状态。
+- **mock**：每一个测试需要使用到的mock状态。单元测试里面常见，集成测试一般没有。
+- **数据准备**：每一个测试用例需要的数据。集成测试里常见。
+- **数据清理**：每一个测试用例在执行完毕之后，需要执行一些数据清理动作。集成测试里常见。
+
+如果你要测试的方法很简单，那么你用不上全部字段。
+
+![img](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409040940709.png)
+
+### 设计测试用例
+
+测试用例定义和运行测试用例都是很模板化的东西。测试用例就是要根据具体的方法来设计。
+
+- **如果是单元测试：看代码，最起码做到分支覆盖。**
+- **如果是集成测试：至少测完业务层面的主要正常流程和主要异常流程。**
+
+单元测试覆盖率做到80%以上，在这个要求之下，只有极少数的异常分支没有测试。其它测试就不是我们研发要考虑的了，让测试团队去搞。
+
+![img](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409040940324.png)
+
+### 执行测试用例代码
+
+测试用例定义出来之后，怎么执行这些用例，就已经呼之欲出了。
+
+这里分成几个部分：
+
+- **初始化 mock 控制器**，每个测试用例都有独立的 mock 控制器。
+- **使用控制器 ctrl 调用 tc.mock**，拿到 mock 的 UserService 和 CodeService。
+- 使用 mock 的服务初始化 UserHandler，并且注册路由。
+- **构造 HTTP 请求和响应 Recorder**。
+- **发起调用 ServeHTTP**。
+
+![image-20240904093059634](C:/Users/ytf/AppData/Roaming/Typora/typora-user-images/image-20240904093059634.png)
+
+### 运行测试用例
+
+测试里面的`testCases`是一个匿名结构体的切片，所以运行的时候就是直接遍历。
+
+那么针对每一个测试用例：
+
+- **首先调用mock部分，或者执行before。**
+- **执行测试的方法。**
+- **比较预期结果。**
+- **调用after方法。**
+
+注意运行的时候，先调用了`t.Run`，并且传入了测试用例的名字。
+
+![img](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409040941913.png)
+
+### 不是所有的场景都很好测试
+
+**即便你的代码写得非常好，但是有一些场景基本上不可能测试到。**如图中的`error`分支，就是属于很难测试的。
+
+因为`bcrypt`包你控制不住，`Generate`这个方法只有在超时的时候才会返回`error`。那么你不测试也是可以的，代码`review`可以确保这边正确处理了`error`。
+
+**记住：没有测试到的代码，一定要认真`review`。**

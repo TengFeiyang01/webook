@@ -82,7 +82,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 	if req.Password != req.ConfirmPassword {
-		ctx.String(http.StatusOK, "两次输入的密码不一致")
+		ctx.String(http.StatusUnauthorized, "两次输入的密码不一致")
 		return
 	}
 
@@ -93,7 +93,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 	if !isPassword {
-		ctx.String(http.StatusOK, "密码必须包含数字、特殊字符，并且长度不能小于 8 位")
+		ctx.String(http.StatusBadRequest, "密码必须包含数字、特殊字符，并且长度不能小于 8 位")
 		return
 	}
 	err = u.svc.SignUp(ctx, domain.User{Email: req.Email, Password: req.Password})
@@ -102,7 +102,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 	if err != nil {
-		ctx.String(http.StatusInternalServerError, "系统错误")
+		ctx.String(http.StatusInternalServerError, "系统异常")
 		return
 	}
 
