@@ -363,13 +363,17 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 		Code  string `json:"code"`
 	}
 	var req Req
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.Bind(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, Result{
+			Code: http.StatusBadRequest,
+			Msg:  "bind失败",
+		})
 		return
 	}
 
 	ok, err := u.codeSvc.Verify(ctx, biz, req.Phone, req.Code)
 	if err != nil {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusInternalServerError, Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
@@ -377,7 +381,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 	}
 
 	if !ok {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusUnauthorized, Result{
 			Code: http.StatusUnauthorized,
 			Msg:  "验证码不正确",
 		})
@@ -388,7 +392,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 	// 这样子
 	user, err := u.svc.FindOrCreate(ctx, req.Phone)
 	if err != nil {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusInternalServerError, Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
