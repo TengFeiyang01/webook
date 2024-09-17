@@ -82,7 +82,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 	if req.Password != req.ConfirmPassword {
-		ctx.String(http.StatusOK, "两次输入的密码不一致")
+		ctx.String(http.StatusUnauthorized, "两次输入的密码不一致")
 		return
 	}
 
@@ -93,7 +93,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 	if !isPassword {
-		ctx.String(http.StatusOK, "密码必须包含数字、特殊字符，并且长度不能小于 8 位")
+		ctx.String(http.StatusBadRequest, "密码必须包含数字、特殊字符，并且长度不能小于 8 位")
 		return
 	}
 	err = u.svc.SignUp(ctx, domain.User{Email: req.Email, Password: req.Password})
@@ -102,7 +102,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 	if err != nil {
-		ctx.String(http.StatusInternalServerError, "系统错误")
+		ctx.String(http.StatusInternalServerError, "系统异常")
 		return
 	}
 
@@ -318,7 +318,7 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 		Phone string `json:"phone"`
 	}
 	var req Req
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.Bind(&req); err != nil {
 		return
 	}
 	// 是不是一个合法的手机号码
@@ -326,15 +326,13 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 	ok, err := u.phoneRegExp.MatchString(req.Phone)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, Result{
-			Code: http.StatusInternalServerError,
-			Msg:  "系统错误",
+			Msg: "系统错误",
 		})
 		return
 	}
 	if !ok {
 		ctx.JSON(http.StatusUnauthorized, Result{
-			Code: http.StatusUnauthorized,
-			Msg:  "手机号格式错误",
+			Msg: "手机号格式错误",
 		})
 		return
 	}
@@ -350,9 +348,8 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 			Msg: "发送太频繁, 请稍后再试",
 		})
 	default:
-		ctx.JSON(http.StatusOK, Result{
-			Code: http.StatusInternalServerError,
-			Msg:  "系统错误",
+		ctx.JSON(http.StatusInternalServerError, Result{
+			Msg: "系统错误",
 		})
 	}
 }
@@ -363,13 +360,17 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 		Code  string `json:"code"`
 	}
 	var req Req
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.Bind(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, Result{
+			Code: http.StatusBadRequest,
+			Msg:  "bind失败",
+		})
 		return
 	}
 
 	ok, err := u.codeSvc.Verify(ctx, biz, req.Phone, req.Code)
 	if err != nil {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusInternalServerError, Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
@@ -377,7 +378,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 	}
 
 	if !ok {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusUnauthorized, Result{
 			Code: http.StatusUnauthorized,
 			Msg:  "验证码不正确",
 		})
@@ -388,7 +389,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 	// 这样子
 	user, err := u.svc.FindOrCreate(ctx, req.Phone)
 	if err != nil {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusInternalServerError, Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
