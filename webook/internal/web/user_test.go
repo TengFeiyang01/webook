@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -239,7 +240,7 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 
 		reqBody  string
 		wantCode int
-		wantBody string
+		wantBody Result
 	}{
 		{
 			name: "验证码校验成功",
@@ -259,7 +260,10 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: `{"code":200,"msg":"验证码校验成功","data":null}`,
+			wantBody: Result{
+				Code: http.StatusOK,
+				Msg:  "验证码校验成功",
+			},
 		},
 		{
 			name: "参数不对, bind 失败",
@@ -275,7 +279,10 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: `{"code":400,"msg":"bind失败","data":null}`,
+			wantBody: Result{
+				Code: http.StatusBadRequest,
+				Msg:  "bind失败",
+			},
 		},
 		{
 			name: "验证码校验出错",
@@ -292,7 +299,10 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: `{"code":500,"msg":"系统错误","data":null}`,
+			wantBody: Result{
+				Code: http.StatusInternalServerError,
+				Msg:  "系统错误",
+			},
 		},
 		{
 			name: "验证码不对",
@@ -309,7 +319,10 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: `{"code":401,"msg":"验证码不正确","data":null}`,
+			wantBody: Result{
+				Code: http.StatusUnauthorized,
+				Msg:  "验证码不正确",
+			},
 		},
 		{
 			name: "用户不存在/创建用户失败",
@@ -327,7 +340,10 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: `{"code":500,"msg":"系统错误","data":null}`,
+			wantBody: Result{
+				Code: http.StatusInternalServerError,
+				Msg:  "系统错误",
+			},
 		},
 	}
 
@@ -348,7 +364,10 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 
 			server.ServeHTTP(resp, req)
 			assert.Equal(t, tc.wantCode, resp.Code)
-			assert.Equal(t, tc.wantBody, resp.Body.String())
+			var res Result
+			err = json.NewDecoder(resp.Body).Decode(&res)
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantBody, res)
 		})
 	}
 }

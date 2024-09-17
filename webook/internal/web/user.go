@@ -318,7 +318,7 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 		Phone string `json:"phone"`
 	}
 	var req Req
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.Bind(&req); err != nil {
 		return
 	}
 	// 是不是一个合法的手机号码
@@ -326,15 +326,13 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 	ok, err := u.phoneRegExp.MatchString(req.Phone)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, Result{
-			Code: http.StatusInternalServerError,
-			Msg:  "系统错误",
+			Msg: "系统错误",
 		})
 		return
 	}
 	if !ok {
 		ctx.JSON(http.StatusUnauthorized, Result{
-			Code: http.StatusUnauthorized,
-			Msg:  "手机号格式错误",
+			Msg: "手机号格式错误",
 		})
 		return
 	}
@@ -350,9 +348,8 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 			Msg: "发送太频繁, 请稍后再试",
 		})
 	default:
-		ctx.JSON(http.StatusOK, Result{
-			Code: http.StatusInternalServerError,
-			Msg:  "系统错误",
+		ctx.JSON(http.StatusInternalServerError, Result{
+			Msg: "系统错误",
 		})
 	}
 }
