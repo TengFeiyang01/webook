@@ -1244,7 +1244,7 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id int64) (domain.User, error)
 }
 ```
-# 单元测试
+# 单元测试、集成测试
 
 ![image-20240904094757357](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409040947176.png)
 
@@ -1609,6 +1609,114 @@ func TestMock(t *testing.T) {
 
 ```
 
+## 测试 DAO
+
+### `sqlmock` 入门
+
+```sh
+go get github.com/DATA-DOG/go-sqlmock
+```
+
+### 基本用法
+
+- 使用 `sqlmock`  来创建一个 `db`
+- 设置模拟调用
+- 使用 `db` 来测试代码：在使用 `GORM` 的时候，就是让 `GORM` 来使用这个 `db` 
+
+```go
+package dao
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-sql-driver/mysql"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	gormMysql "gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"testing"
+)
+
+func TestGORMUserDAO_Insert(t *testing.T) {
+	testCases := []struct {
+		name string
+
+		mock func(t *testing.T) *sql.DB
+
+		ctx  context.Context
+		user User
+
+		wantErr error
+	}{
+		{
+			name: "插入成功",
+			mock: func(t *testing.T) *sql.DB {
+				mockDb, mock, err := sqlmock.New()
+				res := sqlmock.NewResult(3, 1)
+				// 只要是 INSERT 到 users 的语句就行
+				mock.ExpectExec("INSERT INTO `users` .*").
+					WillReturnResult(res)
+				require.NoError(t, err)
+				return mockDb
+			},
+			user: User{
+				Email: sql.NullString{
+					String: "123@qq.com",
+				},
+			},
+		},
+		{
+			name: "邮箱冲突 or 手机号冲突",
+			mock: func(t *testing.T) *sql.DB {
+				mockDb, mock, err := sqlmock.New()
+				// 只要是 INSERT 到 users 的语句就行
+				mock.ExpectExec("INSERT INTO `users` .*").
+					WillReturnError(&mysql.MySQLError{
+						Number: 1062,
+					})
+				require.NoError(t, err)
+				return mockDb
+			},
+			user:    User{},
+			wantErr: ErrUserDuplicate,
+		},
+		{
+			name: "入库错误",
+			mock: func(t *testing.T) *sql.DB {
+				mockDb, mock, err := sqlmock.New()
+				// 只要是 INSERT 到 users 的语句就行
+				mock.ExpectExec("INSERT INTO `users` .*").
+					WillReturnError(errors.New("入库错误"))
+				require.NoError(t, err)
+				return mockDb
+			},
+			user:    User{},
+			wantErr: errors.New("入库错误"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, err := gorm.Open(gormMysql.New(gormMysql.Config{
+				Conn:                      tc.mock(t),
+				SkipInitializeWithVersion: true,
+			}), &gorm.Config{
+				// 你 mock DB 不需要 Ping
+				DisableAutomaticPing: true,
+				// 这个是什么呢
+				SkipDefaultTransaction: true,
+			})
+			assert.NoError(t, err)
+			d := NewUserDAO(db)
+			err = d.Insert(tc.ctx, tc.user)
+			assert.Equal(t, tc.wantErr, err)
+		})
+	}
+}
+```
+
 ## flags
 
 `gomock` 有一些命令行标志，可以帮助你控制生成过程。这些标志通常在 `gomock` 工具的帮助下使用，例如 `gomock generate`。
@@ -1715,3 +1823,72 @@ func TestMock(t *testing.T) {
 因为`bcrypt`包你控制不住，`Generate`这个方法只有在超时的时候才会返回`error`。那么你不测试也是可以的，代码`review`可以确保这边正确处理了`error`。
 
 **记住：没有测试到的代码，一定要认真`review`。**
+
+# 第三方服务治理
+
+核心思路
+
+- **<font color='red'> 尽量不要搞崩第三方 </font>** 
+- **<font color='red'>万一第三方崩了，你的系统仍然能稳定运行</font>** 
+
+具体到短信服务这里：
+
+- 短信服务商都有 <font color='red'>保护自己的机制，你要小心不要触发了</font>。比如说短信服务商的限流机制。
+- <font color='red'>短信服务商可能崩溃</font>，你和短信服务商之间的网络通信可能崩溃，需要想好容错机制。
+
+## 限流器抽象
+
+将原本的限流逻辑抽象出来，做成一个抽象的限流器的概念。
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171647624.png" alt="image-20240917164708489" style="zoom:150%;" />
+
+![image-20240917164742457](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171647247.png)
+
+### 在已有的代码里面集成限流器（不推荐）
+
+- **<font color='red'>保持依赖注入风格，要求初始化腾讯短信服务实现的时候，传入一个限流器。</font>**
+- **<font color='red'>在真的调用腾讯短信 API 之前，检查一下是否触发限流了。</font>**
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171657459.png" alt="image-20240917165709515" style="zoom:150%;" />![image-20240917165746867](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171657211.png)
+
+上面的这种写法更改了原本的代码，是侵入式的设计，这样在新加一个短信服务的时候，就会导致 `Send` 很臃肿，需要改进。
+
+### 利用装饰器模式改进（推荐）
+
+> **装饰器模式：<font color='red'>不改变原有实现而增加新特性的一种设计模式</font>**。
+
+![image-20240917170325897](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171703686.png)
+
+- <font color='red'>依旧保持面向接口和依赖注入的风格</font>
+- <font color='red'>svc是被装饰者</font>
+- <font color='red'>最终业务逻辑是转交给了 svc 执行的</font>
+- <font color='red'>该实现就只处理一件事：判断要不要限流</font> 
+
+![image-20240917173321432](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171733862.png)
+
+![image-20240917173352062](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171733296.png)
+
+### 装饰器的另一种实现方式
+
+![image-20240917193055228](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171930575.png)
+
+### 开闭原则、非侵入式、装饰器
+
+- <font color='red'>开闭原则：对修改闭合，对扩展开放</font> 
+- <font color='red'>非侵入式：不修改已有代码</font> 
+
+## 自动切换服务商
+
+ 怎么知道服务商出现了问题？
+
+- <font color='red'>频繁收到超时响应</font>
+- <font color='red'>收到 EOF 响应或者 UnexpectedEOF 响应。</font> 
+- <font color='red'>响应时间很长。</font> 
+
+### 策略一：failover
+
+有一种很简单的策略 `failover` ：<font color='red'>就是如果出现错误了，就直接换一个服务商，进行重试</font> 
+
+![image-20240917195135571](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171951410.png)
+
+![image-20240918092549056](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180925298.png)
