@@ -21,7 +21,7 @@ func NewRatelimitSMSService(svc sms.Service, limiter ratelimit.Limiter) sms.Serv
 	}
 }
 
-func (r RatelimitSMSService) Send(ctx context.Context, tplID string, args []string, number ...string) error {
+func (r RatelimitSMSService) Send(ctx context.Context, biz string, args []string, number ...string) error {
 	limited, err := r.limiter.Limit(ctx, "sms:tencent")
 	if err != nil {
 		// 系统错误 限流
@@ -33,5 +33,5 @@ func (r RatelimitSMSService) Send(ctx context.Context, tplID string, args []stri
 	if limited {
 		return errLimited
 	}
-	return r.svc.Send(ctx, tplID, args, number...)
+	return r.svc.Send(ctx, biz, args, number...)
 }

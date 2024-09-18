@@ -20,9 +20,9 @@ func NewFailoverSMSService(svcs []sms.Service) *FailoverSMSService {
 	}
 }
 
-func (f *FailoverSMSService) Send(ctx context.Context, tplID string, args []string, numbers ...string) error {
+func (f *FailoverSMSService) Send(ctx context.Context, biz string, args []string, numbers ...string) error {
 	for _, svc := range f.svcs {
-		err := svc.Send(ctx, tplID, args, numbers...)
+		err := svc.Send(ctx, biz, args, numbers...)
 		if err == nil {
 			return nil
 		}
