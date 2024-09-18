@@ -12,7 +12,7 @@ func NewService() *Service {
 	return &Service{}
 }
 
-func (s *Service) Send(ctx context.Context, tplID string, args []string, number ...string) error {
+func (s *Service) Send(ctx context.Context, tplID string, args []string, numbers ...string) error {
 	fmt.Println(args)
 	return nil
 }
