@@ -29,7 +29,7 @@ func InitWebUser() *gin.Engine {
 	userService := service.NewUserService(userRepository)
 	codeCache := code.NewRedisCodeCache(cmdable)
 	codeRepository := repository.NewCodeRepository(codeCache)
-	smsService := ioc.InitSMSService()
+	smsService := ioc.InitSMSService(cmdable)
 	codeService := service.NewCodeService(codeRepository, smsService)
 	userHandler := web.NewUserHandler(userService, codeService)
 	wechatService := ioc.InitOAuth2WechatService()
