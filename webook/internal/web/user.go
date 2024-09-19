@@ -6,7 +6,6 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"time"
 	"webook/webook/internal/domain"
@@ -27,6 +26,7 @@ type UserHandler struct {
 	emailRegExp    *regexp.Regexp
 	passwordRegExp *regexp.Regexp
 	phoneRegExp    *regexp.Regexp
+	jwtHandler
 }
 
 func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserHandler {
@@ -132,7 +132,7 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	// 用 JWT 设置登录态
 	// 生成一个 JWT token
 
-	if err = u.SetJWTToken(ctx, user.ID); err != nil {
+	if err = u.setJWTToken(ctx, user.ID); err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Msg: "系统错误",
 		})
@@ -140,25 +140,6 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context) {
 	}
 	fmt.Println(user)
 	ctx.String(http.StatusOK, "登陆成功")
-}
-
-func (u *UserHandler) SetJWTToken(ctx *gin.Context, uid int64) error {
-	claims := UserClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			// 过期时间
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
-		},
-		Uid:       uid,
-		UserAgent: ctx.Request.UserAgent(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenStr, err := token.SignedString([]byte("GpJCNEnLiNblrZj5xdY9aG5cgVdKHCxh"))
-	if err != nil {
-		return err
-	}
-	ctx.Header("x-jwt-token", tokenStr)
-	return nil
 }
 
 func (u *UserHandler) Login(ctx *gin.Context) {
@@ -397,7 +378,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 	}
 
 	// 这边要怎么样呢
-	if err := u.SetJWTToken(ctx, user.ID); err != nil {
+	if err := u.setJWTToken(ctx, user.ID); err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Msg: "系统错误",
 		})
@@ -408,10 +389,4 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 		Code: http.StatusOK,
 		Msg:  "验证码校验成功",
 	})
-}
-
-type UserClaims struct {
-	jwt.RegisteredClaims
-	Uid       int64
-	UserAgent string
 }

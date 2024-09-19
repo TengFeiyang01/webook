@@ -8,4 +8,5 @@ type UserDAO interface {
 	Insert(ctx context.Context, u User) error
 	FindById(ctx context.Context, id int64) (User, error)
 	UpdateById(ctx context.Context, entity User) error
+	FindByWechat(ctx context.Context, openID string) (User, error)
 }

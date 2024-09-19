@@ -18,4 +18,5 @@ type UserRepository interface {
 	Create(ctx context.Context, u domain.User) error
 	FindById(ctx context.Context, id int64) (domain.User, error)
 	UpdateById(ctx context.Context, u domain.User) error
+	FindByWechat(ctx context.Context, openID string) (domain.User, error)
 }

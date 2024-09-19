@@ -74,6 +74,26 @@ func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.
 	return svc.repo.FindByPhone(ctx, phone)
 }
 
+func (svc *userService) FindOrCreateByWechat(ctx context.Context, info domain.WechatInfo) (domain.User, error) {
+	// 这时候呢, 这个地方怎么做
+	u, err := svc.repo.FindByWechat(ctx, info.OpenID)
+	// 要判断有没有这个用户
+	// 这个叫做快路径
+	if !errors.Is(err, repository.ErrUserNotFound) {
+		// nil、不为ErrUserNotFound 都会进来这里
+		return u, err
+	}
+	u = domain.User{
+		WechatInfo: info,
+	}
+	err = svc.repo.Create(ctx, u)
+	if err != nil && !errors.Is(err, repository.ErrUserDuplicate) {
+		return u, err
+	}
+	// 因为这里会遇到主从延迟的问题
+	return svc.repo.FindByWechat(ctx, info.OpenID)
+}
+
 func (svc *userService) Profile(ctx context.Context, id int64) (domain.User, error) {
 	// 先从缓存找
 	return svc.repo.FindById(ctx, id)

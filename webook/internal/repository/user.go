@@ -89,6 +89,28 @@ func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.U
 	return u, nil
 }
 
+func (r *CachedUserRepository) FindByWechat(ctx context.Context, openID string) (domain.User, error) {
+	// 先从cache找
+	// 再从dao里面找
+	// 找到了写回cache
+	var u domain.User
+	ue, err := r.dao.FindByWechat(ctx, openID)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	u = r.entityToDomain(ue)
+
+	go func() {
+		err = r.cache.Set(ctx, u)
+		if err != nil {
+			// 打日志, 做监控
+		}
+	}()
+
+	return u, nil
+}
+
 func (r *CachedUserRepository) UpdateById(ctx context.Context, u domain.User) error {
 	err := r.dao.UpdateById(ctx, r.domainToEntity(u))
 	return err
@@ -120,6 +142,14 @@ func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
 			String: u.Phone,
 			Valid:  u.Phone != "",
 		},
+		WechatOpenID: sql.NullString{
+			String: u.WechatInfo.OpenID,
+			Valid:  u.WechatInfo.OpenID != "",
+		},
+		WechatUnionID: sql.NullString{
+			String: u.WechatInfo.UnionID,
+			Valid:  u.WechatInfo.UnionID != "",
+		},
 		NickName: u.NickName,
 		BirthDay: u.BirthDay,
 		AboutMe:  u.AboutMe,
@@ -135,7 +165,11 @@ func (r *CachedUserRepository) entityToDomain(u dao.User) domain.User {
 		Phone:    u.Phone.String,
 		NickName: u.NickName,
 		BirthDay: u.BirthDay,
-		AboutMe:  u.AboutMe,
-		Ctime:    time.UnixMilli(u.Ctime),
+		WechatInfo: domain.WechatInfo{
+			OpenID:  u.WechatOpenID.String,
+			UnionID: u.WechatUnionID.String,
+		},
+		AboutMe: u.AboutMe,
+		Ctime:   time.UnixMilli(u.Ctime),
 	}
 }
