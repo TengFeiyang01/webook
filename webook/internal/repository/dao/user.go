@@ -56,6 +56,12 @@ func (dao *GORMUserDAO) FindById(ctx context.Context, id int64) (User, error) {
 	return u, err
 }
 
+func (dao *GORMUserDAO) FindByWechat(ctx context.Context, openID string) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("wechat_open_id = ?", openID).First(&u).Error
+	return u, err
+}
+
 func (dao *GORMUserDAO) UpdateById(ctx context.Context, entity User) error {
 	// 这种写法依赖于 GORM 的零值和主键更新特性
 	// Update 非零值 WHERE id = ?
@@ -79,8 +85,12 @@ type User struct {
 	// 但是不能有多个 ""
 	Phone    sql.NullString `gorm:"unique"`
 	NickName string
-	BirthDay time.Time
+	BirthDay time.Time `gorm:"default:null"`
 	AboutMe  string
+
+	// 微信的字段
+	WechatUnionID sql.NullString
+	WechatOpenID  sql.NullString
 
 	// 创建时间
 	Ctime int64

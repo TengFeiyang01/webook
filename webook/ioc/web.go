@@ -7,32 +7,33 @@ import (
 	"strings"
 	"time"
 	"webook/webook/internal/web"
+	ijwt "webook/webook/internal/web/jwt"
 	"webook/webook/internal/web/middleware"
 	"webook/webook/pkg/ginx/middlewares/ratelimit"
 )
 
-func InitWebServer(middlewares []gin.HandlerFunc, userHandler *web.UserHandler) *gin.Engine {
+func InitWebServer(middlewares []gin.HandlerFunc, userHandler *web.UserHandler, oauth2WechatHdl *web.OAuth2WechatHandler) *gin.Engine {
 	server := gin.Default()
 	server.Use(middlewares...)
 	userHandler.RegisterRoutes(server)
+	oauth2WechatHdl.RegisterRoutes(server)
 	return server
 }
 
-func InitGinMiddlewares(redisClient redis.Cmdable) []gin.HandlerFunc {
+func InitGinMiddlewares(redisClient redis.Cmdable, jwtHdl ijwt.Handler) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHandler(),
-		ratelimit.NewBuilder(redisClient, time.Second, 1000).Build(),
-		loginJWTMiddlewareBuilder(),
+		middleware.NewLoginJWTMiddlewareBuilder(jwtHdl).
+			IgnorePaths("/users/login").
+			IgnorePaths("/users/signup").
+			IgnorePaths("/users/login_sms").
+			IgnorePaths("/oauth2/wechat/authurl").
+			IgnorePaths("/oauth2/wechat/callback").
+			IgnorePaths("/users/login_sms/code/send").
+			IgnorePaths("/users/refresh_token").
+			Build(),
+		ratelimit.NewBuilder(NewRateLimiter(time.Second, 100)).Build(),
 	}
-}
-
-func loginJWTMiddlewareBuilder() gin.HandlerFunc {
-	return middleware.NewLoginJWTMiddlewareBuilder().
-		IgnorePaths("/users/login").
-		IgnorePaths("/users/signup").
-		IgnorePaths("/users/login_sms").
-		IgnorePaths("/users/login_sms/code/send").
-		Build()
 }
 
 func corsHandler() gin.HandlerFunc {
@@ -43,7 +44,7 @@ func corsHandler() gin.HandlerFunc {
 
 		AllowHeaders: []string{"Content-Type", "Authorization"},
 		// 这个是允许前端访问你的后端响应中带的头部
-		ExposeHeaders: []string{"x-jwt-token"},
+		ExposeHeaders: []string{"x-jwt-token", "x-refresh-token"},
 		//AllowHeaders: []string{"content-type"},
 		//AllowMethods: []string{"POST"},
 		AllowOriginFunc: func(origin string) bool {

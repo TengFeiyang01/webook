@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
-	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20190711"
+	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
 	"os"
 	"testing"
 )
@@ -29,7 +29,7 @@ func TestService_Send(t *testing.T) {
 	}
 
 	// todo: 换成自己的
-	s := NewService(c, "1400933146", "f8f771e40fb513565430580b343500c8")
+	s := NewService(c, "1400933146", "f8f771e40fb513565430580b343500c8", nil)
 
 	testCases := []struct {
 		name    string

@@ -55,7 +55,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 
 此时的目录结构如下图：
 
-![image-20240103140237448](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240103140237448.png)
+![image-20240103140237448](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941098.png)
 
 在 `webook` 顶级目录下有：
 
@@ -86,7 +86,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 
 ​	这时候我们需要考虑前端页面长成什么样，然后**根据前端页面的字段，来确定后端接口输入和输出是什么样子的。** **点击注册的时候，会发一个请求到后端** `/users/signup` **上，默认情况下，前端用的是 ** `JSON` ** 来传递数据。**
 
-![image-20240103142858133](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240103142858133.png)
+![image-20240103142858133](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941343.png)
 
 在点击注册后，我们观察请求标头中的荷载：
 
@@ -151,15 +151,15 @@ ok, err := emailExp.MatchString(req.Email)
 
 正常来说，若不做额外处理，是没办法这样发请求的。
 
-![image-20240104091836551](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240104091836551.png)
+![image-20240104091836551](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941617.png)
 
 解决方法： **preflight请求** ：需要在 `preflight` 请求中告诉浏览器，**我这个 `localhost:8090` 能够接收 ** `localhost:3000` **过来的请求。**
 
 **preflight请求** 的特征：`preflight` 请求会发到同一个地址上，使用 `Options` 方法，没有请求参数
 
-![image-20240104093431844](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240104093431844.png)
+![image-20240104093431844](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941477.png)
 
-![image-20240104093450681](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240104093450681.png)
+![image-20240104093450681](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941126.png)
 
 ###### 使用 `middleware` 来解决 `CORS`
 
@@ -167,7 +167,7 @@ ok, err := emailExp.MatchString(req.Email)
 
 使用 `Gin` 中 `Engine` 上的 `Use` 方法来注册你的 `middleware` ，那么进到这个 `Engine` 中的所有请求，都会执行相应的代码。 接收 `*Context` 作为参数的方法就可以看作是 `HandlerFunc` 。
 
-![image-20240104110942415](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240104110942415.png)
+![image-20240104110942415](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941733.png)
 
 **跨域问题是因为发请求的协议+域名+端口和接收请求的协议+域名+端口对不上，比如说这里的 `localhost:3000` 发到 `localhost:8080` 上。**
 
@@ -175,7 +175,7 @@ ok, err := emailExp.MatchString(req.Email)
 
 我们使用 `docker-compose` 来搭建开发环境所需的依赖
 
-![image-20240105092057045](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105092057045.png)
+![image-20240105092057045](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941737.png)
 
 ```yaml
 version: '3.0'
@@ -224,7 +224,7 @@ services:
 
 同时，我们还需要一个 domain，代表领域对象。
 
-![image-20240105105347456](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105105347456.png)
+![image-20240105105347456](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941966.png)
 
 `dao` 中的 `User` 模型：注意到，`dao` 里面操作的不是 `domain.User` ，而是新定义了一个类型。
 
@@ -232,7 +232,7 @@ services:
 
 那么问题就来了：**如何建表？**
 
-![image-20240105112220350](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105112220350.png)
+![image-20240105112220350](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941280.png)
 
 #### 密码加密
 
@@ -243,7 +243,7 @@ services:
 
 ###### 加密的位置：
 
-![image-20240105113719864](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105113719864.png)
+![image-20240105113719864](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941959.png)
 
 这里我们选择在 `service` 加密。
 
@@ -272,13 +272,13 @@ services:
 
 具体而言，在 `dao` 这一层，我们转为了 `ErrUserDuplicateEmail` 错误，并且将这个错误一路网上返回。
 
-![image-20240105135814571](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105135814571.png)
+![image-20240105135814571](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941029.png)
 
 ## 用户登录
 
 #### 实现登录功能
 
-![image-20240105144629664](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105144629664.png)
+![image-20240105144629664](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941586.png)
 
 #### 登录校验
 
@@ -297,13 +297,13 @@ services:
 
 `Session` ：关键数据我们希望放在后端，这个存储的东西就叫做 `Session` 。
 
-![image-20240105162049868](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105162049868.png)
+![image-20240105162049868](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941252.png)
 
-![image-20240105162319316](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105162319316.png)
+![image-20240105162319316](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941240.png)
 
 #### 使用 `Gin` 的 `Session` 插件来实现登录功能
 
-`https://github.com/gin-contrib/sessions` ![image-20240105163223432](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240105163223432.png)
+`https://github.com/gin-contrib/sessions` ![image-20240105163223432](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941825.png)
 
 ```go
 # 步骤一
@@ -354,7 +354,7 @@ server.Use(middleware.NewLoginMiddleBuilder().
 	IgnorePaths("/users/login").Build())
 ```
 
-![image-20240107093421839](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240107093421839.png)
+![image-20240107093421839](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942560.png)
 
 > 启动`mysql`坑点，可能自己电脑本身的 `mysql.exe`正在运行，且占用了 `3306`端口，此时通过 `docker compose up`启动时会报错。
 >
@@ -362,7 +362,7 @@ server.Use(middleware.NewLoginMiddleBuilder().
 
 ##### 使用`Redis`
 
-![image-20240108084510912](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240108084510912.png)
+![image-20240108084510912](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942330.png)
 
 ```go
 // 第一个参数是最大空闲连接数量
@@ -380,7 +380,7 @@ if err != nil {
 
 ##### `Session` 参数
 
-![image-20240108090839733](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240108090839733.png)
+![image-20240108090839733](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942717.png)
 
 ###### 通过 `session` 设置刷新时间。
 
@@ -422,7 +422,7 @@ if now-updateTimeVal > 60*1000 {
 
 ## JWT（JSON Web Token）
 
-![image-20240108110849206](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240108110849206.png)
+![image-20240108110849206](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942243.png)
 
 ### JWT简介
 
@@ -472,7 +472,7 @@ server.Use(cors.New(cors.Config{
 
 #### JWT登录校验
 
-![image-20240108125653129](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240108125653129.png)
+![image-20240108125653129](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942023.png)
 
 #### 接入JWT的步骤总结
 
@@ -505,7 +505,7 @@ server.Use(cors.New(cors.Config{
 
 **我们的限流针对的对象是 `IP`，虽然 `IP` 不能实际上代表一个人，但这是我们比较好的选择了。**
 
-![image-20240109105541451](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109105541451.png)
+![image-20240109105541451](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942446.png)
 
 为什么使用 `Redis` 实现？
 
@@ -522,7 +522,7 @@ server.Use(cors.New(cors.Config{
 
 ### 面试要点
 
-![image-20240109113027029](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109113027029.png)
+![image-20240109113027029](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942454.png)
 
 ## kubernetes
 
@@ -540,7 +540,7 @@ server.Use(cors.New(cors.Config{
 
 在 `Docker` 里面开启 `Enable Kubernetes` 功能即可。
 
-![image-20240109114350874](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109114350874.png)
+![image-20240109114350874](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942560.png)
 
 #### 安装 `kubectl` 工具
 
@@ -552,7 +552,7 @@ server.Use(cors.New(cors.Config{
 curl.exe -LO "https://dl.k8s.io/release/v1.29.0/bin/windows/amd64/kubectl.exe"
 ```
 
-![image-20240109115422481](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109115422481.png)
+![image-20240109115422481](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942945.png)
 
 出现如上信息即为成功。
 
@@ -564,9 +564,9 @@ curl.exe -LO "https://dl.k8s.io/release/v1.29.0/bin/windows/amd64/kubectl.exe"
 
 ​	我们的目标是**部署三个实例**，可以之间让用户访问。三个实例，这样即使一个崩溃了，也还有两个，比较不容易出问题。
 
-<img src="C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109130501272.png" alt="image-20240109130501272" style="zoom: 33%;" />
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942070.png" alt="image-20240109130501272" style="zoom: 33%;" />
 
-![image-20240109130603713](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109130603713.png)
+![image-20240109130603713](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942113.png)
 
 #### 准备 `Kubernetes` 容器镜像
 
@@ -618,7 +618,7 @@ curl.exe -LO "https://dl.k8s.io/release/v1.29.0/bin/windows/amd64/kubectl.exe"
 
 ##### 编写 `Deployment`
 
-![image-20240109155544490](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109155544490.png)
+![image-20240109155544490](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942870.png)
 
 > template 中的 app: webook 要和 metadata 左边 metadata 中的 name 对上
 
@@ -652,15 +652,15 @@ spec:
 
 ###### spec
 
-![image-20240109155933542](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109155933542.png)
+![image-20240109155933542](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943814.png)
 
 ###### selector
 
-![image-20240109160201853](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109160201853.png)
+![image-20240109160201853](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943289.png)
 
 ###### template
 
-![image-20240109160433760](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109160433760.png)
+![image-20240109160433760](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943881.png)
 
 ###### image
 
@@ -677,7 +677,7 @@ spec:
 
 ##### 编写 `Service`
 
-![image-20240109161042480](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240109161042480.png)
+![image-20240109161042480](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943336.png)
 
 ```yaml
 apiVersion: v1
@@ -720,7 +720,7 @@ webook       LoadBalancer   10.97.2.153   localhost     80:32581/TCP   21s
 
 在 `k8s` 里面，**存储空间被抽象为 `PersistentVolume` （持久化卷）。**
 
-![image-20240110090119102](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110090119102.png)
+![image-20240110090119102](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943986.png)
 
 `MySQL Service` 和 `MySQL Deployment`
 
@@ -784,7 +784,7 @@ spec:
             claimName: webook-mysql-claim-v4
 ```
 
-![image-20240110095923347](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110095923347.png)
+![image-20240110095923347](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943254.png)
 
 ##### PersistentVlolumeClaim
 
@@ -863,13 +863,13 @@ spec:
 
 ##### 整体调用流程及其对应关系
 
-![image-20240110110924769](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110110924769.png)
+![image-20240110110924769](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943570.png)
 
-![image-20240110111542977](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110111542977.png)
+![image-20240110111542977](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943291.png)
 
-![image-20240110111807109](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110111807109.png)
+![image-20240110111807109](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943291.png)
 
-![image-20240110111955990](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110111955990.png)
+![image-20240110111955990](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943171.png)
 
 >还有一个点是 测试的时候 填的数据库名应为 mysql 而非 webook
 
@@ -926,7 +926,7 @@ spec:
 - `nodePort`：是指我在 `k8s`集群之外访问的端口，比如说我执行 `redis-cli -p 30379`。
 - `targetPort`：是指 `Pod`上暴露的的端口。
 
-![image-20240110114546532](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110114546532.png)
+![image-20240110114546532](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943786.png)
 
 ##### 测试 `Redis`
 
@@ -960,7 +960,7 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx
 ```
 
-![image-20240110132140779](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110132140779.png)
+![image-20240110132140779](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943548.png)
 
 运行 `kubectl apply -f k8s-ingress-nginx.yaml` ，然后去修改 `Hosts` 文件。
 
@@ -975,9 +975,9 @@ helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.git
 
 ## 集成 `Redis`、`MySQL` 启动。
 
-![image-20240110143207123](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110143207123.png)
+![image-20240110143207123](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943757.png)
 
-![image-20240110143224536](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240110143224536.png)
+![image-20240110143224536](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180943177.png)
 
 配置和 `main.go` 和 `config` 之后：
 
@@ -1071,11 +1071,11 @@ script -t1 -d1s -c2 -s ./scripts/script/profile.lua http://localhost:8090/users/
 
 也就是 `UserCache`。
 
-![image-20240112113901609](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240112113901609.png)
+![image-20240112113901609](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180944335.png)
 
 检测数据不存在的写法：
 
-![image-20240112114212810](C:\Users\ytf\AppData\Roaming\Typora\typora-user-images\image-20240112114212810.png)
+![image-20240112114212810](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180944252.png)
 
 ## Redis 数据结构
 
@@ -1244,7 +1244,7 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id int64) (domain.User, error)
 }
 ```
-# 单元测试
+# 单元测试、集成测试
 
 ![image-20240904094757357](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409040947176.png)
 
@@ -1609,6 +1609,114 @@ func TestMock(t *testing.T) {
 
 ```
 
+## 测试 DAO
+
+### `sqlmock` 入门
+
+```sh
+go get github.com/DATA-DOG/go-sqlmock
+```
+
+### 基本用法
+
+- 使用 `sqlmock`  来创建一个 `db`
+- 设置模拟调用
+- 使用 `db` 来测试代码：在使用 `GORM` 的时候，就是让 `GORM` 来使用这个 `db` 
+
+```go
+package dao
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-sql-driver/mysql"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	gormMysql "gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"testing"
+)
+
+func TestGORMUserDAO_Insert(t *testing.T) {
+	testCases := []struct {
+		name string
+
+		mock func(t *testing.T) *sql.DB
+
+		ctx  context.Context
+		user User
+
+		wantErr error
+	}{
+		{
+			name: "插入成功",
+			mock: func(t *testing.T) *sql.DB {
+				mockDb, mock, err := sqlmock.New()
+				res := sqlmock.NewResult(3, 1)
+				// 只要是 INSERT 到 users 的语句就行
+				mock.ExpectExec("INSERT INTO `users` .*").
+					WillReturnResult(res)
+				require.NoError(t, err)
+				return mockDb
+			},
+			user: User{
+				Email: sql.NullString{
+					String: "123@qq.com",
+				},
+			},
+		},
+		{
+			name: "邮箱冲突 or 手机号冲突",
+			mock: func(t *testing.T) *sql.DB {
+				mockDb, mock, err := sqlmock.New()
+				// 只要是 INSERT 到 users 的语句就行
+				mock.ExpectExec("INSERT INTO `users` .*").
+					WillReturnError(&mysql.MySQLError{
+						Number: 1062,
+					})
+				require.NoError(t, err)
+				return mockDb
+			},
+			user:    User{},
+			wantErr: ErrUserDuplicate,
+		},
+		{
+			name: "入库错误",
+			mock: func(t *testing.T) *sql.DB {
+				mockDb, mock, err := sqlmock.New()
+				// 只要是 INSERT 到 users 的语句就行
+				mock.ExpectExec("INSERT INTO `users` .*").
+					WillReturnError(errors.New("入库错误"))
+				require.NoError(t, err)
+				return mockDb
+			},
+			user:    User{},
+			wantErr: errors.New("入库错误"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, err := gorm.Open(gormMysql.New(gormMysql.Config{
+				Conn:                      tc.mock(t),
+				SkipInitializeWithVersion: true,
+			}), &gorm.Config{
+				// 你 mock DB 不需要 Ping
+				DisableAutomaticPing: true,
+				// 这个是什么呢
+				SkipDefaultTransaction: true,
+			})
+			assert.NoError(t, err)
+			d := NewUserDAO(db)
+			err = d.Insert(tc.ctx, tc.user)
+			assert.Equal(t, tc.wantErr, err)
+		})
+	}
+}
+```
+
 ## flags
 
 `gomock` 有一些命令行标志，可以帮助你控制生成过程。这些标志通常在 `gomock` 工具的帮助下使用，例如 `gomock generate`。
@@ -1715,3 +1823,250 @@ func TestMock(t *testing.T) {
 因为`bcrypt`包你控制不住，`Generate`这个方法只有在超时的时候才会返回`error`。那么你不测试也是可以的，代码`review`可以确保这边正确处理了`error`。
 
 **记住：没有测试到的代码，一定要认真`review`。**
+
+# 第三方服务治理
+
+核心思路
+
+- **<font color='red'> 尽量不要搞崩第三方 </font>** 
+- **<font color='red'>万一第三方崩了，你的系统仍然能稳定运行</font>** 
+
+具体到短信服务这里：
+
+- 短信服务商都有 <font color='red'>保护自己的机制，你要小心不要触发了</font>。比如说短信服务商的限流机制。
+- <font color='red'>短信服务商可能崩溃</font>，你和短信服务商之间的网络通信可能崩溃，需要想好容错机制。
+
+## 限流器抽象
+
+将原本的限流逻辑抽象出来，做成一个抽象的限流器的概念。
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171647624.png" alt="image-20240917164708489" style="zoom:150%;" />
+
+![image-20240917164742457](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171647247.png)
+
+### 在已有的代码里面集成限流器（不推荐）
+
+- **<font color='red'>保持依赖注入风格，要求初始化腾讯短信服务实现的时候，传入一个限流器。</font>**
+- **<font color='red'>在真的调用腾讯短信 API 之前，检查一下是否触发限流了。</font>**
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171657459.png" alt="image-20240917165709515" style="zoom:150%;" />![image-20240917165746867](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171657211.png)
+
+上面的这种写法更改了原本的代码，是侵入式的设计，这样在新加一个短信服务的时候，就会导致 `Send` 很臃肿，需要改进。
+
+### 利用装饰器模式改进（推荐）
+
+> **装饰器模式：<font color='red'>不改变原有实现而增加新特性的一种设计模式</font>**。
+
+![image-20240917170325897](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171703686.png)
+
+- <font color='red'>依旧保持面向接口和依赖注入的风格</font>
+- <font color='red'>svc是被装饰者</font>
+- <font color='red'>最终业务逻辑是转交给了 svc 执行的</font>
+- <font color='red'>该实现就只处理一件事：判断要不要限流</font> 
+
+![image-20240917173321432](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171733862.png)
+
+![image-20240917173352062](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171733296.png)
+
+### 装饰器的另一种实现方式
+
+![image-20240917193055228](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171930575.png)
+
+### 开闭原则、非侵入式、装饰器
+
+- <font color='red'>开闭原则：对修改闭合，对扩展开放</font> 
+- <font color='red'>非侵入式：不修改已有代码</font> 
+
+## 自动切换服务商
+
+ 怎么知道服务商出现了问题？
+
+- <font color='red'>频繁收到超时响应</font>
+- <font color='red'>收到 EOF 响应或者 UnexpectedEOF 响应。</font> 
+- <font color='red'>响应时间很长。</font> 
+
+### 策略一：failover
+
+有一种很简单的策略 `failover` ：<font color='red'>就是如果出现错误了，就直接换一个服务商，进行重试</font> 
+
+![image-20240917195135571](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409171951410.png)
+
+![image-20240918092549056](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180925298.png)
+
+### 策略二：动态判断服务商状态
+
+**<font color='red'>计算服务商是否还运作正常</font>**。常用的判断标准：
+
+- 错误率：例如连续 `N` 个超时响应，错误率超过 `10%` 
+- 响应时间增长率：例如响应时间从 `100ms` 突然变成 `1s` 
+
+> 这里使用一种简单的算法：<font color='red'>只要连续超过 `N` 个请求超时了，就直接切换</font>。
+
+#### 实现
+
+```go
+func (t *TimeoutFailoverSMSService) Send(ctx context.Context,
+	tplID string, args []string, numbers ...string) error {
+	idx := atomic.LoadInt32(&t.idx)
+	cnt := atomic.LoadInt32(&t.cnt)
+	if cnt > t.threshold {
+		// 这里要切换新的下标
+		newIdx := (idx + 1) % int32(len(t.svcs))
+		if atomic.CompareAndSwapInt32(&t.idx, idx, newIdx) {
+			// 如果切换成功
+			atomic.StoreInt32(&t.cnt, 0)
+
+		}
+		// else 出现并发了，别人换成功了
+		idx = atomic.LoadInt32(&t.idx)
+	}
+	svc := t.svcs[idx]
+	err := svc.Send(ctx, tplID, args, numbers...)
+	switch {
+	case err == nil:
+		atomic.StoreInt32(&t.cnt, 0)
+		return nil
+	case errors.Is(err, context.DeadlineExceeded):
+		atomic.AddInt32(&t.cnt, 1)
+		return err
+	default:
+		// 不知道什么错误
+		// 你可以考虑，换下一个
+		// - 超时错误，可能是偶发的，我尽量再试试
+		// - 非超时，我直接下一个
+		log.Println("failover failover service:", err)
+		return err
+	}
+}
+```
+
+## 权限控制
+
+怎么做到某个 `tpl` 只能被申请的业务方调用？
+
+**<font color='red'> 使用token</font>** 
+
+而且是内部调用，可以使用 <font color='red'>静态token</font>。
+
+> 业务方申请一个 `tpl`，而后颁发一个 `token` 给它，要求调用接口的时候，带上这个 `token`。
+
+### 使用 JWT token
+
+有两种设计方案：
+
+- **<font color='red'>第一种在 `Send` 方法里面加上一个 `token` 参数</font>** 
+- **<font color='red'>第二种是直接用 `token` 参数替换掉 `tpl` 参数，所需的各种数据，从 `token` 种解密。</font>**
+
+我们使用第二种。
+
+![image-20240918122318398](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181223991.png)
+
+## 进阶指南
+
+![image-20240918122255322](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181222859.png)
+
+# 微信扫码登陆
+
+总体上分为三个步骤：
+
+- **<font color='red'> 点击微信登陆, 跳转到微信页面</font>**。跳转过去的 `url` 是什么？
+- **<font color='red'>微信扫码登录，确认登陆</font>**。
+- **<font color='red'>微信跳转回来</font>**。跳转回来的 `url` 是什么？
+
+![image-20240918142840851](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181428137.png)
+
+![image-20240918144221553](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181442841.png)
+
+![image-20240918145056153](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181450483.png)
+
+## 调用微信验证 Code
+
+![image-20240918162830301](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181628533.png)
+
+## 从微信种拿到字段
+
+![image-20240918162927447](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181629453.png)
+
+![image-20240918163015566](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181630913.png)
+
+![image-20240918163039266](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181630075.png)
+
+## 登录 OR 注册
+
+![image-20240918163126295](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409181631596.png)
+
+## State 作用
+
+![image-20240919084222758](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190842584.png)
+
+![image-20240919084255855](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190842550.png)
+
+解决方法：
+
+![image-20240919084744476](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190847827.png)![image-20240919084859654](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190849049.png)
+
+# 长短 token 设计与实现
+
+在用户登录成功的的时候，我们<font color='red'>会颁发两个 token</font>，
+
+- 一个就是已有的普通的 `jwt token`，充当 `access_token` 
+- 再额外返回一个 `token`，也就是 `refresh_token` 
+
+<font color='red'>前端在发现 `access_token` 过期之后，要发一个刷新 `token` 的请求。</font>
+
+<font color='red'>前端使用新的 `token` 来请求资源</font>
+
+![image-20240919094034784](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190940119.png)
+
+因此：
+
+- <font color='red'>在登陆成功的时候，返回两个 `token` </font>
+
+- <font color='red'>提供一个刷新 `token` 的接口，叫做 `refresh_token` </font>
+- <font color='red'>去除原本 `jwt middleware` 种刷新过期时间的机制</font> 
+
+![image-20240919094338633](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190943747.png)
+
+# 退出登录
+
+Session 下退出登录的思路很简单,**先把 Cookie 删了再把对应的 Session 本身删了**。
+
+而 `jwt` 比较麻烦，因为 `jwt` 本身是无状态的。
+
+![image-20240919112411045](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191124408.png)
+
+## JWT 退出登录
+
+只能使用一个额外的东西来记录这个 `jwt` 已经不可用了。
+
+**考虑使用 `Redis` 这种缓存。**
+
+### 利用 `Redis` 来记录不可用的 token
+
+> 记录不可用的，因为推出登录是一个比登录更加低频的操作
+
+所以，在这种思路之下，我们需要修改:
+
+- **提供一个退出登录的接口**, 在这个接口里面需要把这个已经废弃的 token 放到一个地方，例如 Redis。
+- 在登录校验的地方，要先去存放废弃 token地方看一眼, **确认这个 token 的用户还没退出登录**。
+
+注意，在采用了长短 token 之后，你如果要把ken 废掉,有两种做法:
+
+- 废掉长 token,登录校验的时候检测长 toke还有没有效。
+- 两个都废掉,登录校验的时候也同步检测长知i token。
+
+这时候就很麻烦了，因为你至少要随时拿到长oken。
+
+但是,为啥非得用 token 呢?<font color='red'> **能不能用一个东西标识这一次登录，这个登录对应了长短 token,最后我再检测这个标识呢?**</font> 毕竟 token 传来传去很烦。
+
+在搞清楚了这些之后，我们可以确认整个流程是:
+
+- 用户登录的时候，生成一个标识，放到长短token 里面，这个我们叫做 ssid。
+
+- 用户登录校验的时候，要进一步看看 ssid 是不是已经无效了。
+
+- 用户在调用 refresh token 的时候,也要进一步看看 ssid 是不是无效了。
+
+- 用户在退出登录的时候，就要把 ssid 标记为不可用。
+
+也就是说，只要一个 ssid 在 Redis 里面出现了,就可以认为登录已经失效了。
