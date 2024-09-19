@@ -85,7 +85,7 @@ type User struct {
 	// 但是不能有多个 ""
 	Phone    sql.NullString `gorm:"unique"`
 	NickName string
-	BirthDay time.Time
+	BirthDay time.Time `gorm:"default:null"`
 	AboutMe  string
 
 	// 微信的字段

@@ -2004,3 +2004,69 @@ func (t *TimeoutFailoverSMSService) Send(ctx context.Context,
 解决方法：
 
 ![image-20240919084744476](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190847827.png)![image-20240919084859654](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190849049.png)
+
+# 长短 token 设计与实现
+
+在用户登录成功的的时候，我们<font color='red'>会颁发两个 token</font>，
+
+- 一个就是已有的普通的 `jwt token`，充当 `access_token` 
+- 再额外返回一个 `token`，也就是 `refresh_token` 
+
+<font color='red'>前端在发现 `access_token` 过期之后，要发一个刷新 `token` 的请求。</font>
+
+<font color='red'>前端使用新的 `token` 来请求资源</font>
+
+![image-20240919094034784](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190940119.png)
+
+因此：
+
+- <font color='red'>在登陆成功的时候，返回两个 `token` </font>
+
+- <font color='red'>提供一个刷新 `token` 的接口，叫做 `refresh_token` </font>
+- <font color='red'>去除原本 `jwt middleware` 种刷新过期时间的机制</font> 
+
+![image-20240919094338633](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409190943747.png)
+
+# 退出登录
+
+Session 下退出登录的思路很简单,**先把 Cookie 删了再把对应的 Session 本身删了**。
+
+而 `jwt` 比较麻烦，因为 `jwt` 本身是无状态的。
+
+![image-20240919112411045](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191124408.png)
+
+## JWT 退出登录
+
+只能使用一个额外的东西来记录这个 `jwt` 已经不可用了。
+
+**考虑使用 `Redis` 这种缓存。**
+
+### 利用 `Redis` 来记录不可用的 token
+
+> 记录不可用的，因为推出登录是一个比登录更加低频的操作
+
+所以，在这种思路之下，我们需要修改:
+
+- **提供一个退出登录的接口**, 在这个接口里面需要把这个已经废弃的 token 放到一个地方，例如 Redis。
+- 在登录校验的地方，要先去存放废弃 token地方看一眼, **确认这个 token 的用户还没退出登录**。
+
+注意，在采用了长短 token 之后，你如果要把ken 废掉,有两种做法:
+
+- 废掉长 token,登录校验的时候检测长 toke还有没有效。
+- 两个都废掉,登录校验的时候也同步检测长知i token。
+
+这时候就很麻烦了，因为你至少要随时拿到长oken。
+
+但是,为啥非得用 token 呢?<font color='red'> **能不能用一个东西标识这一次登录，这个登录对应了长短 token,最后我再检测这个标识呢?**</font> 毕竟 token 传来传去很烦。
+
+在搞清楚了这些之后，我们可以确认整个流程是:
+
+- 用户登录的时候，生成一个标识，放到长短token 里面，这个我们叫做 ssid。
+
+- 用户登录校验的时候，要进一步看看 ssid 是不是已经无效了。
+
+- 用户在调用 refresh token 的时候,也要进一步看看 ssid 是不是无效了。
+
+- 用户在退出登录的时候，就要把 ssid 标记为不可用。
+
+也就是说，只要一个 ssid 在 Redis 里面出现了,就可以认为登录已经失效了。

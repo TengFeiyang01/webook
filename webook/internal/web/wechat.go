@@ -10,12 +10,13 @@ import (
 	"time"
 	"webook/webook/internal/service"
 	"webook/webook/internal/service/oauth2/wechat"
+	ijwt "webook/webook/internal/web/jwt"
 )
 
 type OAuth2WechatHandler struct {
 	svc     wechat.Service
 	userSvc service.UserService
-	jwtHandler
+	ijwt.Handler
 	stateKey []byte
 	cfg      WechatHandlerConfig
 }
@@ -24,12 +25,13 @@ type WechatHandlerConfig struct {
 	Secure bool
 }
 
-func NewOAuth2WechatHandler(svc wechat.Service, userSvc service.UserService, cfg WechatHandlerConfig) *OAuth2WechatHandler {
+func NewOAuth2WechatHandler(svc wechat.Service, userSvc service.UserService, cfg WechatHandlerConfig, jwtHdl ijwt.Handler) *OAuth2WechatHandler {
 	return &OAuth2WechatHandler{
 		svc:      svc,
 		userSvc:  userSvc,
 		stateKey: []byte("GpJCNEnLiNblrZj5xdY9aG0cgVdKHCxh"),
 		cfg:      cfg,
+		Handler:  jwtHdl,
 	}
 }
 
@@ -112,8 +114,8 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 		})
 		return
 	}
-	err = h.setJWTToken(ctx, u.ID)
-	if err != nil {
+
+	if err = h.SetLoginToken(ctx, u.ID); err != nil {
 		ctx.JSON(http.StatusInternalServerError, Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
@@ -154,10 +156,4 @@ func (h *OAuth2WechatHandler) verifyState(ctx *gin.Context) error {
 		return errors.New("state 不相等")
 	}
 	return nil
-}
-
-type UserClaims struct {
-	jwt.RegisteredClaims
-	Uid       int64
-	UserAgent string
 }
