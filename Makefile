@@ -7,4 +7,5 @@ mock:
 	@mockgen -package=redismocks -destination=webook/internal/repository/cache/redismocks/cmdable.mock.go github.com/redis/go-redis/v9 Cmdable
 	@mockgen -source=webook/pkg/ratelimit/types.go -package=ratelimitmocks -destination=webook/pkg/ratelimit/mocks/ratelimit.mock.go
 	@mockgen -source=webook/internal/service/sms/types.go -package=smssvcmocks -destination=webook/internal/service/sms/mocks/service.mock.go
+	@mockgen -source=webook/internal/web/jwt/types.go -package=jwtmocks -destination=webook/internal/web/jwt/mocks/jwt.mock.go
 	@go mod tidy
