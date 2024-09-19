@@ -12,6 +12,13 @@ type Service struct {
 	retryCnt int
 }
 
+func NewService(svc sms.Service, retryCnt int) *Service {
+	return &Service{
+		svc:      svc,
+		retryCnt: retryCnt,
+	}
+}
+
 func (s Service) Send(ctx context.Context, biz string, args []string, numbers ...string) error {
 	err := s.svc.Send(ctx, biz, args, numbers...)
 	cnt := 1
