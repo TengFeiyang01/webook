@@ -2061,12 +2061,72 @@ Session 下退出登录的思路很简单,**先把 Cookie 删了再把对应的 
 
 在搞清楚了这些之后，我们可以确认整个流程是:
 
-- 用户登录的时候，生成一个标识，放到长短token 里面，这个我们叫做 ssid。
+- 用户登录的时候，**生成一个标识，放到长短token 里面**，这个我们叫做 ssid。
 
-- 用户登录校验的时候，要进一步看看 ssid 是不是已经无效了。
+- 用户登录校验的时候，要进一步看看 **ssid 是不是已经无效了**。
 
-- 用户在调用 refresh token 的时候,也要进一步看看 ssid 是不是无效了。
+- 用户**在调用 refresh token 的时候,也要进一步看看 ssid 是不是无效了**。
 
-- 用户在退出登录的时候，就要把 ssid 标记为不可用。
+- 用户在退出登录的时候，**就要把 ssid 标记为不可用**。
 
 也就是说，只要一个 ssid 在 Redis 里面出现了,就可以认为登录已经失效了。
+
+![image-20240919133010912](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191330265.png)
+
+![image-20240919133048803](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191330986.png)
+
+![image-20240919133134006](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191331174.png)
+
+![image-20240919133419470](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191334610.png)
+
+#  接入配置模块
+
+在深入学习使用配置模块之前,我们先来学习一些和配置有关的基本概念。
+
+配置如果从来源上来说，可以分成:
+
+- **启动参数**: 某一次运行的参数,可以考虑在这里提供。最为典型的就是命令行工具,会要求你传入各种参数,例如在 mockgen 中传递的 source、destination.
+- **环境变量**: 和具体的实例有关的参数都放在这里。比如说在实例的权重,或者实例的分组信息。
+- **配置文件**: 一些当下环境中所需要的通用的配置,比如说我们的数据库连接信息等。
+- **远程配置中心**: 它和配置文件可以说是互相补充的,除了启动程序所需的最少配置,剩下的配置都可以放在远程配置中心。
+
+个人建议: 少用启动参数,因为对于新人来说,门槛比较高;少用环境变量,因为你只有登录上机器才知道参数的值,比较麻烦;**优先使用配置文件,大规模微服务集群可以考虑引入远程配置中心**。
+
+> 命令行 $\gt$ 环境变量 $\gt$ 配置文件 $\gt$ 远程配置中心
+
+## 业务配置的通用理论：两次加载
+
+- **第一次加载最基本的配置**：包括
+  - 远程配置的连接信息，二次加载的时候需要先连上配置中心。
+  - 日志相关配置，确保日志模块初始化成功，后续可以输出日志。
+- **第二次则是完全加载**：
+  - 读取系统所需的全部依赖，并且用于初始化各种第三方。
+  - 如果在第一次加载种的配置，在远程配置中心也能找到，那么就会被覆盖，并且再次初始化使用这些配置的组件。
+
+## 使用 Viper 读取本地配置
+
+```sh
+go get github.com/spf13/viper
+```
+
+### viper 入门
+
+#### 加载配置
+
+初始化有两种方式，一种是 `SetConfigName`，一种是使用 `SetConfigFile` 。最后就是调用 `ReadInConfig`。
+
+![image-20240920172717865](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201727709.png) ![image-20240920172707025](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201727363.png)
+
+**配置文件定位**
+
+![image-20240920172838818](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201728468.png)
+
+#### 初始化整个结构体
+
+在 ioC，也就是初始化的地方，**定义一个内部结构体，用来接收全部相关的配置**。
+
+![image-20240920174124094](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201741020.png)
+
+#### viper 设置默认值
+
+![image-20240920174419586](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201744724.png)
