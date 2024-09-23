@@ -19,6 +19,7 @@ func InitWebUser() *gin.Engine {
 	wire.Build(
 		// 初始化 DB
 		ioc.InitDB, ioc.InitRedis,
+		ioc.InitLogger,
 
 		// 初始化 DAO
 		dao.NewUserDAO,

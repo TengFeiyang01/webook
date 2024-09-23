@@ -2130,3 +2130,102 @@ go get github.com/spf13/viper
 #### viper 设置默认值
 
 ![image-20240920174419586](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201744724.png)
+
+#### viper 直接读取
+
+![image-20240923161702394](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231617124.png)
+
+### 根据不同环境加载不同的配置文件
+
+![image-20240923162151668](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231621794.png)
+
+#### 利用 viper 读取启动参数
+
+![image-20240923162416083](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231624202.png)
+
+### 远程配置中心
+
+![image-20240923163320001](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231633285.png)
+
+#### 安装 etcdctl
+
+![image-20240923164402556](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231644577.png)
+
+####    使用 viper 接入 etcd
+
+![image-20240923165447849](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231654032.png)
+
+![image-20240923174252833](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231742885.png)
+
+### 监听配置变更
+
+![image-20240923174235123](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231742407.png) 
+
+![image-20240923175249566](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231752104.png)
+
+## 将和配置有关的操作，限定在初始化过程中
+
+另外一个较好的实践，是将和配置有关的操作限定在初始化过程中。
+
+具体到 webook 中,就是你只会在 **loC** 和 **main** 函数的部分操作配置。
+
+这种做法的优点就是: **你要从 viper 换到另外:个框架时,只需要改初始化过程,别的都不需要改。**
+
+但是这在一些情况下比较难做到，比如你要在service 层监听配置项的变更,那就会违背这个原则，
+
+# 接入日志模块
+
+到目前为止，我们都还没有使用任何的日志模块。
+
+也就是基本上没有打印任何的日志。
+
+缺乏日志的缺点很明显
+
+- **无法确认系统状态，出现问题不都不知道**
+- **在出现问题的时候难以定位**
+
+![58a6c9cea820f2be58dfec7aebb2e0c](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409240905666.png)
+
+## 什么时候打日志？打什么级别？
+
+![image-20240924090819986](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409240908838.png)
+
+## 使用 Zap 
+
+```sh
+go get -u go.uber.org/zap
+```
+
+zap的使用，一般**直接设置一个全局的 Logger**。
+
+### 打印日志
+
+- 我们绝不会把 `error` 返回给前端，暴露给用户。
+- 在打印日志的时候，手机号码这种敏感信息是不准打印出来的。
+
+###  不使用 zap 包变量
+
+![image-20240924103319381](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241033264.png)
+
+## 封装 Logger
+
+![image-20240924105626318](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241056771.png)
+
+### 使用自身的 Logger
+
+![image-20240924105802113](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241058338.png)
+
+> 在整个系统的入口和出口，最好都打详细日志。
+>
+> - **入口，是指你的系统调用了第三方**
+> - **出口，是指你的系统收到了请求，并返回响应**
+
+## 利用 Gin 的 middleware 打印日志
+
+![image-20240924111106716](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241111764.png)
+
+![image-20240924112615700](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241126967.png)
+
+### 如何打印响应
+
+![image-20240924112912422](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241129729.png)

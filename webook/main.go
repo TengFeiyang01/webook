@@ -8,19 +8,29 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
+	"go.uber.org/zap"
 )
 
 func main() {
-	//initViperV1()
+	initViperV1()
 	//initViperReader()
 	//initViperRemote()
-	initViperWatch()
+	//initViperWatch()
+	initLogger()
 	server := InitWebUser()
 	//initViperV1()
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(200, "hello world")
 	})
 	_ = server.Run(":8080")
+}
+
+func initLogger() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	zap.ReplaceGlobals(logger)
 }
 
 func initViperWatch() {
@@ -43,7 +53,7 @@ func initViperReader() {
 	// 格式必不可少
 	viper.SetConfigType("yaml")
 	cfg := `
-db.mysql:
+db:
   dsn: "root:root@tcp(localhost:13316)/webook"
 redis:
   addr: "localhost:6379"

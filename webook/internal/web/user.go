@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 	"webook/webook/internal/domain"
@@ -407,6 +408,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
+		zap.L().Error("verify sms code error", zap.Error(err))
 		return
 	}
 
