@@ -6,7 +6,7 @@ type ZapLogger struct {
 	l *zap.Logger
 }
 
-func NewZapLogger(l *zap.Logger) *ZapLogger {
+func NewZapLogger(l *zap.Logger) LoggerV1 {
 	return &ZapLogger{
 		l: l,
 	}

@@ -10,12 +10,13 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"webook/webook/internal/integration/startup"
 	"webook/webook/internal/web"
 	"webook/webook/ioc"
 )
 
 func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
-	server := InitWebUser()
+	server := startup.InitWebServer()
 	rdb := ioc.InitRedis()
 	testCases := []struct {
 		name string

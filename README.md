@@ -2229,3 +2229,99 @@ zap的使用，一般**直接设置一个全局的 Logger**。
 ### 如何打印响应
 
 ![image-20240924112912422](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241129729.png)
+
+## GORM 打印日志
+
+![image-20240924135449817](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241354486.png)
+
+## 打日志技巧总结
+
+- **宁滥勿缺。也就是宁可多打日志，也不要少打日志。**
+- **优先考虑利用 AOP 机制来打印日志。**
+- **如果没有 AOP 机制，可以考虑用装饰器来打印日志。**
+- **在百万 OPS 之前，不要考虑打印日志的开销问题**
+
+> 打,狠狠打,往死里打!
+
+# 发帖功能
+
+## 需求分析
+
+![image-20240924153450591](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241534727.png)
+
+### 帖子状态分析
+
+![image-20240924153616461](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241536695.png)
+
+### 一边修改一边可查看怎么办
+
+![image-20240924153949297](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241539361.png)
+
+### 删除是真删除还是假删除
+
+![image-20240924154117259](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241541560.png)
+
+## 流程
+
+![1727164249911](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241551129.png)
+
+### 创作者修改并且保存
+
+![image-20240924154525047](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241545017.png)
+
+### 创作者发表文章
+
+#### 情况一
+
+![image-20240924154828607](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241548157.png)
+
+#### 情况二
+
+![image-20240924154916923](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241549398.png)
+
+#### 情况三
+
+![image-20240924154957255](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241549528.png)
+
+## TDD 与编辑接口
+
+TDD: **测试驱动开发。大明简洁版定义: 先写测试、再写实现。** 
+
+- **通过撰写测试,理清楚接口该如何定义，体会用户使用起来是否合适，**
+- **通过撰写测试用例，理清楚整个功能要考虑的主流程、异常流程。**
+
+TDD 专注于某个功能的实现。
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241557735.png" alt="1727164657585" style="zoom:33%;" />
+
+### TDD：核心循环
+
+- 第一步：**根据对需求的理解**，初步定义接口。在这个步骤，不要害怕定义的接口不合适，必然会不合适。
+- 第二步：**根据接口定义测试**，也就是参考我给出的测试模板，先把测试的框架写出来。
+- 第三步：**执行核心循环。**
+  - 增加测试用例。
+  - 提供/修改实现:
+  - 执行测试用例。
+
+我会给你演示集成测试出发的 TDD 和单元测试出发的 TDD。
+
+### 定义接口
+
+#### 新文章
+
+![image-20240924160217533](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241602695.png)
+
+#### HTTP 接口
+
+启用一个新的 `ArticleHandler`，并且注册第一个路由。
+
+```go
+func (h *ArticleHandle) RegisterRoutes(server *gin.Engine) {
+	g := server.Group("/articles")
+	g.POST("/edit", h.Edit)
+}
+```
+
+### 定义测试
+
+![image-20240924170439930](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241704254.png)

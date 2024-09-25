@@ -15,7 +15,7 @@ func InitDB(l logger.LoggerV1) *gorm.DB {
 		DSN string `yaml:"dsn"`
 	}
 	var cfg = Config{
-		DSN: "root@tcp(localhost:13316)/webook_default",
+		DSN: "root:root@tcp(localhost:13316)/webook",
 	}
 
 	// 看起来不支持 key 的分隔
