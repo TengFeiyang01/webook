@@ -64,7 +64,7 @@ func (dao *GORMUserDAO) FindByWechat(ctx context.Context, openID string) (User, 
 
 func (dao *GORMUserDAO) UpdateById(ctx context.Context, entity User) error {
 	// 这种写法依赖于 GORM 的零值和主键更新特性
-	// Update 非零值 WHERE id = ?
+	// UpdateById 非零值 WHERE id = ?
 	//return dao.db.WithContext(ctx).Updates(&entity).Error
 	return dao.db.WithContext(ctx).Model(&entity).Where("id = ?", entity.ID).
 		Updates(map[string]any{

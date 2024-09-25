@@ -2,12 +2,33 @@ package dao
 
 import (
 	"context"
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 )
 
 type GORMArticleDAO struct {
 	db *gorm.DB
+}
+
+func (dao *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
+	art.Utime = time.Now().UnixMilli()
+	// 依赖 gorm 忽略零值, 会用主键进行更新
+	res := dao.db.WithContext(ctx).Model(&art).
+		Where("id = ? AND author_id = ?", art.Id, art.AuthorId).
+		Updates(map[string]interface{}{
+			"title":   art.Title,
+			"content": art.Content,
+			"utime":   art.Utime,
+		})
+	// 你要不要检查真的更新了
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("update article failed, the author maybe invalid. id:[%d], author_id:[%d]", art.Id, art.AuthorId)
+	}
+	return res.Error
 }
 
 func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {

@@ -29,6 +29,7 @@ func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 
 func (h *ArticleHandler) Edit(ctx *gin.Context) {
 	type Req struct {
+		Id      int64  `json:"id"`
 		Title   string `json:"title"`
 		Content string `json:"content"`
 	}
@@ -50,6 +51,7 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 		return
 	}
 	id, err := h.svc.Save(ctx, domain.Article{
+		Id:      req.Id,
 		Title:   req.Title,
 		Content: req.Content,
 		Author: domain.Author{
@@ -61,7 +63,7 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 			Code: 5,
 			Msg:  "系统错误",
 		})
-		h.l.Error("保存帖子失败", logger.Error(err))
+		h.l.Info("保存帖子失败", logger.Error(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, Result{

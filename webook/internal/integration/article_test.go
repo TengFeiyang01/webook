@@ -89,6 +89,84 @@ func (s *ArticleTestSuite) TestEdit() {
 				Msg:  "OK",
 			},
 		},
+		{
+			name: "修改已有帖子",
+			before: func(t *testing.T) {
+				err := s.db.Create(dao.Article{
+					Id:       2,
+					Title:    "my Title",
+					Content:  "my Content",
+					AuthorId: 123,
+					Ctime:    1234,
+					Utime:    12345,
+				}).Error
+				assert.NoError(t, err)
+			},
+			after: func(t *testing.T) {
+				// 验证数据库
+				var art dao.Article
+				err := s.db.Where("id = ?", 2).First(&art).Error
+				assert.NoError(t, err)
+				assert.True(t, art.Utime > 12345)
+				art.Utime = 0
+				assert.Equal(t, dao.Article{
+					Id:       2,
+					Title:    "new Title",
+					Content:  "new Content",
+					AuthorId: 123,
+					Ctime:    1234,
+				}, art)
+			},
+			art: Article{
+				Id:      2,
+				Title:   "new Title",
+				Content: "new Content",
+			},
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Data: 2,
+				Msg:  "OK",
+			},
+		},
+		{
+			name: "修改别人的帖子",
+			before: func(t *testing.T) {
+				err := s.db.Create(dao.Article{
+					Id:      3,
+					Title:   "my Title",
+					Content: "my Content",
+					// 测试模拟的用户是 123, 这里是789，意味着你在修改别人的数据。
+					AuthorId: 789,
+					Ctime:    1234,
+					Utime:    12345,
+				}).Error
+				assert.NoError(t, err)
+			},
+			after: func(t *testing.T) {
+				// 验证数据库
+				var art dao.Article
+				err := s.db.Where("id = ?", 3).First(&art).Error
+				assert.NoError(t, err)
+				assert.NotEqual(t, dao.Article{
+					Id:       3,
+					Title:    "new Title",
+					Content:  "new Content",
+					AuthorId: 789,
+					Ctime:    1234,
+					Utime:    12345,
+				}, art)
+			},
+			art: Article{
+				Id:      3,
+				Title:   "new Title",
+				Content: "new Content",
+			},
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Code: 5,
+				Msg:  "系统错误",
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -128,6 +206,7 @@ func TestArticle(t *testing.T) {
 }
 
 type Article struct {
+	Id      int64  `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }

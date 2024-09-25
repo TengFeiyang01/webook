@@ -2283,7 +2283,7 @@ zap的使用，一般**直接设置一个全局的 Logger**。
 
 ![image-20240924154957255](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241549528.png)
 
-## TDD 与编辑接口
+## 编辑接口
 
 TDD: **测试驱动开发。大明简洁版定义: 先写测试、再写实现。** 
 
@@ -2326,8 +2326,13 @@ func (h *ArticleHandle) RegisterRoutes(server *gin.Engine) {
 
 ![image-20240924170439930](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241704254.png)
 
-```go
+![image-20240925130824494](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251308883.png)
 
+![image-20240925130852020](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251308037.png)
+
+![image-20240925131320092](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251313050.png)
+
+```go
 // ArticleTestSuite 测试套件
 type ArticleTestSuite struct {
 	suite.Suite
@@ -2431,4 +2436,6 @@ func (s *ArticleTestSuite) TestEdit() {
 	}
 }
 ```
+
+## 发表文章
 
