@@ -2061,12 +2061,374 @@ Session 下退出登录的思路很简单,**先把 Cookie 删了再把对应的 
 
 在搞清楚了这些之后，我们可以确认整个流程是:
 
-- 用户登录的时候，生成一个标识，放到长短token 里面，这个我们叫做 ssid。
+- 用户登录的时候，**生成一个标识，放到长短token 里面**，这个我们叫做 ssid。
 
-- 用户登录校验的时候，要进一步看看 ssid 是不是已经无效了。
+- 用户登录校验的时候，要进一步看看 **ssid 是不是已经无效了**。
 
-- 用户在调用 refresh token 的时候,也要进一步看看 ssid 是不是无效了。
+- 用户**在调用 refresh token 的时候,也要进一步看看 ssid 是不是无效了**。
 
-- 用户在退出登录的时候，就要把 ssid 标记为不可用。
+- 用户在退出登录的时候，**就要把 ssid 标记为不可用**。
 
 也就是说，只要一个 ssid 在 Redis 里面出现了,就可以认为登录已经失效了。
+
+![image-20240919133010912](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191330265.png)
+
+![image-20240919133048803](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191330986.png)
+
+![image-20240919133134006](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191331174.png)
+
+![image-20240919133419470](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409191334610.png)
+
+#  接入配置模块
+
+在深入学习使用配置模块之前,我们先来学习一些和配置有关的基本概念。
+
+配置如果从来源上来说，可以分成:
+
+- **启动参数**: 某一次运行的参数,可以考虑在这里提供。最为典型的就是命令行工具,会要求你传入各种参数,例如在 mockgen 中传递的 source、destination.
+- **环境变量**: 和具体的实例有关的参数都放在这里。比如说在实例的权重,或者实例的分组信息。
+- **配置文件**: 一些当下环境中所需要的通用的配置,比如说我们的数据库连接信息等。
+- **远程配置中心**: 它和配置文件可以说是互相补充的,除了启动程序所需的最少配置,剩下的配置都可以放在远程配置中心。
+
+个人建议: 少用启动参数,因为对于新人来说,门槛比较高;少用环境变量,因为你只有登录上机器才知道参数的值,比较麻烦;**优先使用配置文件,大规模微服务集群可以考虑引入远程配置中心**。
+
+> 命令行 $\gt$ 环境变量 $\gt$ 配置文件 $\gt$ 远程配置中心
+
+## 业务配置的通用理论：两次加载
+
+- **第一次加载最基本的配置**：包括
+  - 远程配置的连接信息，二次加载的时候需要先连上配置中心。
+  - 日志相关配置，确保日志模块初始化成功，后续可以输出日志。
+- **第二次则是完全加载**：
+  - 读取系统所需的全部依赖，并且用于初始化各种第三方。
+  - 如果在第一次加载种的配置，在远程配置中心也能找到，那么就会被覆盖，并且再次初始化使用这些配置的组件。
+
+## 使用 Viper 读取本地配置
+
+```sh
+go get github.com/spf13/viper
+```
+
+### viper 入门
+
+#### 加载配置
+
+初始化有两种方式，一种是 `SetConfigName`，一种是使用 `SetConfigFile` 。最后就是调用 `ReadInConfig`。
+
+![image-20240920172717865](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201727709.png) ![image-20240920172707025](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201727363.png)
+
+**配置文件定位**
+
+![image-20240920172838818](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201728468.png)
+
+#### 初始化整个结构体
+
+在 ioC，也就是初始化的地方，**定义一个内部结构体，用来接收全部相关的配置**。
+
+![image-20240920174124094](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201741020.png)
+
+#### viper 设置默认值
+
+![image-20240920174419586](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409201744724.png)
+
+#### viper 直接读取
+
+![image-20240923161702394](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231617124.png)
+
+### 根据不同环境加载不同的配置文件
+
+![image-20240923162151668](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231621794.png)
+
+#### 利用 viper 读取启动参数
+
+![image-20240923162416083](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231624202.png)
+
+### 远程配置中心
+
+![image-20240923163320001](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231633285.png)
+
+#### 安装 etcdctl
+
+![image-20240923164402556](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231644577.png)
+
+####    使用 viper 接入 etcd
+
+![image-20240923165447849](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231654032.png)
+
+![image-20240923174252833](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231742885.png)
+
+### 监听配置变更
+
+![image-20240923174235123](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231742407.png) 
+
+![image-20240923175249566](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409231752104.png)
+
+## 将和配置有关的操作，限定在初始化过程中
+
+另外一个较好的实践，是将和配置有关的操作限定在初始化过程中。
+
+具体到 webook 中,就是你只会在 **loC** 和 **main** 函数的部分操作配置。
+
+这种做法的优点就是: **你要从 viper 换到另外:个框架时,只需要改初始化过程,别的都不需要改。**
+
+但是这在一些情况下比较难做到，比如你要在service 层监听配置项的变更,那就会违背这个原则，
+
+# 接入日志模块
+
+到目前为止，我们都还没有使用任何的日志模块。
+
+也就是基本上没有打印任何的日志。
+
+缺乏日志的缺点很明显
+
+- **无法确认系统状态，出现问题不都不知道**
+- **在出现问题的时候难以定位**
+
+![58a6c9cea820f2be58dfec7aebb2e0c](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409240905666.png)
+
+## 什么时候打日志？打什么级别？
+
+![image-20240924090819986](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409240908838.png)
+
+## 使用 Zap 
+
+```sh
+go get -u go.uber.org/zap
+```
+
+zap的使用，一般**直接设置一个全局的 Logger**。
+
+### 打印日志
+
+- 我们绝不会把 `error` 返回给前端，暴露给用户。
+- 在打印日志的时候，手机号码这种敏感信息是不准打印出来的。
+
+###  不使用 zap 包变量
+
+![image-20240924103319381](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241033264.png)
+
+## 封装 Logger
+
+![image-20240924105626318](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241056771.png)
+
+### 使用自身的 Logger
+
+![image-20240924105802113](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241058338.png)
+
+> 在整个系统的入口和出口，最好都打详细日志。
+>
+> - **入口，是指你的系统调用了第三方**
+> - **出口，是指你的系统收到了请求，并返回响应**
+
+## 利用 Gin 的 middleware 打印日志
+
+![image-20240924111106716](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241111764.png)
+
+![image-20240924112615700](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241126967.png)
+
+### 如何打印响应
+
+![image-20240924112912422](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241129729.png)
+
+## GORM 打印日志
+
+![image-20240924135449817](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241354486.png)
+
+## 打日志技巧总结
+
+- **宁滥勿缺。也就是宁可多打日志，也不要少打日志。**
+- **优先考虑利用 AOP 机制来打印日志。**
+- **如果没有 AOP 机制，可以考虑用装饰器来打印日志。**
+- **在百万 OPS 之前，不要考虑打印日志的开销问题**
+
+> 打,狠狠打,往死里打!
+
+# 发帖功能
+
+## 需求分析
+
+![image-20240924153450591](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241534727.png)
+
+### 帖子状态分析
+
+![image-20240924153616461](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241536695.png)
+
+### 一边修改一边可查看怎么办
+
+![image-20240924153949297](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241539361.png)
+
+### 删除是真删除还是假删除
+
+![image-20240924154117259](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241541560.png)
+
+## 流程
+
+![1727164249911](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241551129.png)
+
+### 创作者修改并且保存
+
+![image-20240924154525047](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241545017.png)
+
+### 创作者发表文章
+
+#### 情况一
+
+![image-20240924154828607](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241548157.png)
+
+#### 情况二
+
+![image-20240924154916923](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241549398.png)
+
+#### 情况三
+
+![image-20240924154957255](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241549528.png)
+
+## TDD 与编辑接口
+
+TDD: **测试驱动开发。大明简洁版定义: 先写测试、再写实现。** 
+
+- **通过撰写测试,理清楚接口该如何定义，体会用户使用起来是否合适，**
+- **通过撰写测试用例，理清楚整个功能要考虑的主流程、异常流程。**
+
+TDD 专注于某个功能的实现。
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241557735.png" alt="1727164657585" style="zoom:33%;" />
+
+### TDD：核心循环
+
+- 第一步：**根据对需求的理解**，初步定义接口。在这个步骤，不要害怕定义的接口不合适，必然会不合适。
+- 第二步：**根据接口定义测试**，也就是参考我给出的测试模板，先把测试的框架写出来。
+- 第三步：**执行核心循环。**
+  - 增加测试用例。
+  - 提供/修改实现:
+  - 执行测试用例。
+
+我会给你演示集成测试出发的 TDD 和单元测试出发的 TDD。
+
+### 定义接口
+
+#### 新文章
+
+![image-20240924160217533](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241602695.png)
+
+#### HTTP 接口
+
+启用一个新的 `ArticleHandler`，并且注册第一个路由。
+
+```go
+func (h *ArticleHandle) RegisterRoutes(server *gin.Engine) {
+	g := server.Group("/articles")
+	g.POST("/edit", h.Edit)
+}
+```
+
+### 定义测试
+
+![image-20240924170439930](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241704254.png)
+
+```go
+
+// ArticleTestSuite 测试套件
+type ArticleTestSuite struct {
+	suite.Suite
+	server *gin.Engine
+	db     *gorm.DB
+}
+
+func (s *ArticleTestSuite) SetupSuite() {
+	// 在所有测试执行之前，初始化
+	//s.server = startup.InitWebServ er()
+	s.server = gin.Default()
+	s.server.Use(func(ctx *gin.Context) {
+		ctx.Set("claims", &ijwt.UserClaims{
+			Uid: 123,
+		})
+	})
+	s.db = startup.InitTestDB()
+	artHdl := startup.InitArticleHandler()
+	artHdl.RegisterRoutes(s.server)
+}
+
+// TearDownTest 每一个测试都会执行
+func (s *ArticleTestSuite) TearDownTest() {
+	s.db.Exec("TRUNCATE TABLE articles")
+}
+
+func (s *ArticleTestSuite) TestEdit() {
+	t := s.T()
+	testCases := []struct {
+		name string
+
+		// 集成测试，准备数据
+		before func(t *testing.T)
+		// 集成测试 验证数据
+		after func(t *testing.T)
+		// 预期的输入
+		art Article
+
+		// HTTP 响应码
+		wantCode int
+		wantRes  Result[int64]
+	}{
+		{
+			name: "新建帖子-保存成功",
+			before: func(t *testing.T) {
+
+			},
+			after: func(t *testing.T) {
+				// 验证数据库
+				var art dao.Article
+				err := s.db.Where("id = ?", 1).First(&art).Error
+				assert.NoError(t, err)
+				assert.True(t, art.Ctime > 0)
+				assert.True(t, art.Utime > 0)
+				art.Ctime = 0
+				art.Utime = 0
+				assert.Equal(t, dao.Article{
+					Id:       1,
+					Title:    "my Title",
+					Content:  "my Content",
+					AuthorId: 123,
+				}, art)
+			},
+			art: Article{
+				Title:   "my Title",
+				Content: "my Content",
+			},
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Data: 1,
+				Msg:  "OK",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// 构造请求
+			// 执行
+			// 验证结果
+			tc.before(t)
+			reqBody, err := json.Marshal(tc.art)
+			assert.NoError(t, err)
+			req, err := http.NewRequest(http.MethodPost,
+				"/articles/edit", bytes.NewBuffer(reqBody))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp := httptest.NewRecorder()
+
+			s.server.ServeHTTP(resp, req)
+			assert.Equal(t, tc.wantCode, resp.Code)
+			if resp.Code != http.StatusOK {
+				return
+			}
+			var webRes Result[int64]
+			err = json.NewDecoder(resp.Body).Decode(&webRes)
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantRes, webRes)
+			tc.after(t)
+		})
+	}
+}
+```
+

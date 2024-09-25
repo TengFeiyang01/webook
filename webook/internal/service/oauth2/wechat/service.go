@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/url"
 	"webook/webook/internal/domain"
+	"webook/webook/pkg/logger"
 )
 
 var redirectURI = url.PathEscape("https://wxwbaby.cn/oauth2/wechat/callback")
@@ -21,10 +23,16 @@ type service struct {
 	appId     string
 	appSecret string
 	client    *http.Client
+	l         logger.LoggerV1
 }
 
-func NewService(appId string, appSecret string) Service {
-	return &service{appId: appId, appSecret: appSecret, client: http.DefaultClient}
+func NewService(appId string, appSecret string, l logger.LoggerV1) Service {
+	return &service{
+		appId:     appId,
+		appSecret: appSecret,
+		client:    http.DefaultClient,
+		l:         l,
+	}
 }
 
 func (s *service) AuthURL(ctx context.Context, state string) (string, error) {
@@ -56,6 +64,10 @@ func (s *service) VerifyCode(ctx context.Context, code string) (domain.WechatInf
 	if res.ErrCode != 0 {
 		return domain.WechatInfo{}, fmt.Errorf("wechat verify code error, errcode=%d", res.ErrCode)
 	}
+
+	zap.L().Info("get user info by wechat success",
+		zap.String("unionID", res.UnionId), zap.String("openID", res.OpenID))
+
 	return domain.WechatInfo{
 		OpenID:  res.OpenID,
 		UnionID: res.UnionId,

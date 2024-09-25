@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"webook/webook/internal/repository/cache"
 )
 
@@ -41,8 +42,14 @@ func (c *RedisCodeCache) Set(ctx context.Context, biz, phone, code string) error
 		return nil
 	case -1:
 		// 太频繁
+		zap.L().Warn("sms code send too many", zap.String("biz", biz),
+			// phone 不能直接记
+			zap.String("phone", phone))
+		// 你要在告警系统配置
+		// 比如说规则，一分钟内超过100次 WARN，你就告警
 		return ErrCodeSendTooMany
 	default:
+		zap.L().Error("failed to send sms code", zap.Error(err))
 		// 系统错误
 		return errors.New("系统错误")
 	}

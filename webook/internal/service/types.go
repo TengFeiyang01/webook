@@ -24,3 +24,7 @@ type UserService interface {
 	UpdateById(ctx context.Context, u domain.User) error
 	UpdateNonSensitiveInfo(ctx context.Context, u domain.User) error
 }
+
+type ArticleService interface {
+	Save(ctx context.Context, art domain.Article) (int64, error)
+}

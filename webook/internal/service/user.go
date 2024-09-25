@@ -6,6 +6,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository"
+	"webook/webook/pkg/logger"
 )
 
 var (
@@ -15,11 +16,23 @@ var (
 
 type userService struct {
 	repo repository.UserRepository
+	//logger *zap.Logger
+	l logger.LoggerV1
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo: repo}
+func NewUserService(repo repository.UserRepository, l logger.LoggerV1) UserService {
+	return &userService{
+		repo: repo,
+		l:    l,
+	}
 }
+
+//func NewUserServiceV1(repo repository.UserRepository, l *zap.Logger) UserService {
+//	return &userService{
+//		repo:   repo,
+//		logger: zap.L(),
+//	}
+//}
 
 // SignUp 注册
 func (svc *userService) SignUp(ctx context.Context, u domain.User) error {
@@ -60,6 +73,8 @@ func (svc *userService) FindOrCreate(ctx context.Context, phone string) (domain.
 		// nil、不为ErrUserNotFound 都会进来这里
 		return u, err
 	}
+	// 这里，把 phone 脱敏之后打出来
+	svc.l.Info("uses not register", logger.String("phone", phone))
 
 	// 这个叫做慢路径
 	// 明确知道, 没有这个用户
