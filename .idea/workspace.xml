@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="27a15ed5-f99b-4fc6-a2a9-16e6cc881ae3" name="Changes" comment=":sparkles: 接入日志模块、TDD测试驱动" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" url="file://D:/GoWork/go1.22.1" />
+  <component name="Git.Settings">
+    <option name="PUSH_AUTO_UPDATE" value="true" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://D:/GoWork/pkg/mod/github.com/golang-jwt/jwt/v5@v5.2.1/registered_claims.go" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2mGbZFWoAsuqculPrtBGBuR4GmK" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "DefaultGoTemplateProperty": "Go File",
+    "Go Build.go build webook/webook.executor": "Debug",
+    "Go Test.TestABC in webook/webook/internal/integration.executor": "Run",
+    "Go Test.TestArticle in webook/webook/internal/integration.executor": "Run",
+    "Go Test.TestEdit in webook/webook/internal/integration (1).executor": "Run",
+    "Go Test.TestEdit in webook/webook/internal/integration.executor": "Run",
+    "Go Test.TestUserHandler_e2e_SendLoginSMSCode in webook/webook/internal/integration.executor": "Run",
+    "Go Test.TestV1 in webook/webook/internal/web.executor": "Run",
+    "Go Test.TestVvv in webook/webook/internal/web.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "git-widget-placeholder": "dev",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "last_opened_file_path": "E:/Go_Workspace/webook/webook/internal/integration/startup",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "go.vgo",
+    "ts.external.directory.path": "E:\\Go_Workspace\\webook\\webook-fe\\node_modules\\typescript\\lib"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
+    ]
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\Go_Workspace\webook\webook\internal\integration\startup" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\Go_Workspace\webook\webook\internal\integration\startup" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Go Test.TestEdit in webook/webook/internal/integration (1)">
+    <configuration name="TestABC in webook/webook/internal/integration" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="webook" />
+      <working_directory value="$PROJECT_DIR$/webook/internal/integration" />
+      <parameters value=" -testify.m ^TestABC$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="webook/webook/internal/integration" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestArticle\E$/^\QTestABC\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestArticle in webook/webook/internal/integration" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="webook" />
+      <working_directory value="$PROJECT_DIR$/webook/internal/integration" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="webook/webook/internal/integration" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestArticle\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestEdit in webook/webook/internal/integration (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="webook" />
+      <working_directory value="$PROJECT_DIR$/webook/internal/integration" />
+      <parameters value=" -testify.m ^TestEdit$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="webook/webook/internal/integration" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestArticle\E$/^\QTestEdit\E$/^\Q新建帖子-保存成功\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestEdit in webook/webook/internal/integration" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="webook" />
+      <working_directory value="$PROJECT_DIR$/webook/internal/integration" />
+      <parameters value=" -testify.m ^TestEdit$" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="webook/webook/internal/integration" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestArticle\E$/^\QTestEdit\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestUserHandler_e2e_SendLoginSMSCode in webook/webook/internal/integration" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="webook" />
+      <working_directory value="$PROJECT_DIR$/webook/internal/integration" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="webook/webook/internal/integration" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestUserHandler_e2e_SendLoginSMSCode\E$" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Go Test.TestEdit in webook/webook/internal/integration (1)" />
+      <item itemvalue="Go Test.TestABC in webook/webook/internal/integration" />
+      <item itemvalue="Go Test.TestArticle in webook/webook/internal/integration" />
+      <item itemvalue="Go Test.TestEdit in webook/webook/internal/integration" />
+      <item itemvalue="Go Test.TestUserHandler_e2e_SendLoginSMSCode in webook/webook/internal/integration" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Test.TestEdit in webook/webook/internal/integration (1)" />
+        <item itemvalue="Go Test.TestEdit in webook/webook/internal/integration" />
+        <item itemvalue="Go Test.TestArticle in webook/webook/internal/integration" />
+        <item itemvalue="Go Test.TestUserHandler_e2e_SendLoginSMSCode in webook/webook/internal/integration" />
+        <item itemvalue="Go Test.TestABC in webook/webook/internal/integration" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-gosdk-5df93f7ad4aa-dfc284eb1eb8-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-242.20224.306" />
+        <option value="bundled-js-predefined-d6986cc7102b-410509235cf1-JavaScript-GO-242.20224.306" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/master" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Revert &quot;:sparkles: 微信扫码登录&quot;&#10;&#10;This reverts commit b2556dcf" />
+    <MESSAGE value=":sparkles: 微信扫码登录" />
+    <MESSAGE value=":sparkles: 退出登录" />
+    <MESSAGE value=":art: 重构" />
+    <MESSAGE value=":sparkles: 接入日志模块" />
+    <MESSAGE value=":sparkles: 接入日志模块、TDD测试驱动" />
+    <option name="LAST_COMMIT_MESSAGE" value=":sparkles: 接入日志模块、TDD测试驱动" />
+  </component>
+  <component name="VgoProject">
+    <environment>
+      <map>
+        <entry key="GOPROXY" value="https://goproxy.cn,direct" />
+        <entry key="WECHAT_APP_ID" value="abc" />
+        <entry key="WECHAT_APP_SECRET" value="abc" />
+      </map>
+    </environment>
+    <settings-migrated>true</settings-migrated>
+  </component>
+</project>
