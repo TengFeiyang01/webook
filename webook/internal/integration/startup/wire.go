@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"webook/webook/internal/repository"
+	"webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache/code"
 	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
@@ -34,7 +35,7 @@ func InitWebServer() *gin.Engine {
 
 		// repository 部分
 		repository.NewCodeRepository,
-		repository.NewArticleRepository,
+		article.NewArticleRepository,
 
 		// Service 部分
 		ioc.InitSMSService,
@@ -60,7 +61,7 @@ func InitArticleHandler() *web.ArticleHandler {
 	wire.Build(thirdPartySet,
 		service.NewArticleService,
 		web.NewArticleHandler,
-		repository.NewArticleRepository,
+		article.NewArticleRepository,
 		dao.NewGORMArticleDAO)
 	return &web.ArticleHandler{}
 }

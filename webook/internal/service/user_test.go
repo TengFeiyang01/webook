@@ -11,6 +11,7 @@ import (
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository"
 	repomocks "webook/webook/internal/repository/mocks"
+	"webook/webook/pkg/logger"
 )
 
 func Test_userService_Login(t *testing.T) {
@@ -99,7 +100,7 @@ func Test_userService_Login(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			svc := NewUserService(tc.mock(ctrl))
+			svc := NewUserService(tc.mock(ctrl), &logger.NopLogger{})
 			u, err := svc.Login(tc.ctx, tc.email, tc.password)
 			assert.Equal(t, tc.wantErr, err)
 			assert.Equal(t, tc.wantUser, u)

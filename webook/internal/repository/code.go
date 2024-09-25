@@ -6,6 +6,12 @@ import (
 	"webook/webook/internal/repository/cache/code"
 )
 
+// CodeRepository Code相关的功能
+type CodeRepository interface {
+	Store(ctx context.Context, biz, phone, code string) error
+	Verify(ctx context.Context, biz, phone, code string) (bool, error)
+}
+
 var (
 	ErrCodeSendTooMany        = code.ErrCodeSendTooMany
 	ErrCodeVerifyTooManyTimes = code.ErrCodeVerifyTooManyTimes

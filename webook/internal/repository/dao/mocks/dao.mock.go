@@ -127,3 +127,55 @@ func (mr *MockUserDAOMockRecorder) UpdateById(ctx, entity any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateById", reflect.TypeOf((*MockUserDAO)(nil).UpdateById), ctx, entity)
 }
+
+// MockArticleDAO is a mock of ArticleDAO interface.
+type MockArticleDAO struct {
+	ctrl     *gomock.Controller
+	recorder *MockArticleDAOMockRecorder
+}
+
+// MockArticleDAOMockRecorder is the mock recorder for MockArticleDAO.
+type MockArticleDAOMockRecorder struct {
+	mock *MockArticleDAO
+}
+
+// NewMockArticleDAO creates a new mock instance.
+func NewMockArticleDAO(ctrl *gomock.Controller) *MockArticleDAO {
+	mock := &MockArticleDAO{ctrl: ctrl}
+	mock.recorder = &MockArticleDAOMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockArticleDAO) EXPECT() *MockArticleDAOMockRecorder {
+	return m.recorder
+}
+
+// Insert mocks base method.
+func (m *MockArticleDAO) Insert(ctx context.Context, art dao.Article) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Insert", ctx, art)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Insert indicates an expected call of Insert.
+func (mr *MockArticleDAOMockRecorder) Insert(ctx, art any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Insert", reflect.TypeOf((*MockArticleDAO)(nil).Insert), ctx, art)
+}
+
+// UpdateById mocks base method.
+func (m *MockArticleDAO) UpdateById(ctx context.Context, article dao.Article) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateById", ctx, article)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateById indicates an expected call of UpdateById.
+func (mr *MockArticleDAOMockRecorder) UpdateById(ctx, article any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateById", reflect.TypeOf((*MockArticleDAO)(nil).UpdateById), ctx, article)
+}

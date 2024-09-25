@@ -1,10 +1,15 @@
-package repository
+package article
 
 import (
 	"context"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository/dao"
 )
+
+type ArticleRepository interface {
+	Create(ctx context.Context, art domain.Article) (int64, error)
+	Update(ctx context.Context, art domain.Article) error
+}
 
 type CachedArticleRepository struct {
 	dao dao.ArticleDAO
