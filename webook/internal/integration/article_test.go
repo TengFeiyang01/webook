@@ -12,7 +12,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"webook/webook/internal/integration/startup"
-	"webook/webook/internal/repository/dao"
+	"webook/webook/internal/repository/dao/article"
 	ijwt "webook/webook/internal/web/jwt"
 )
 
@@ -65,14 +65,14 @@ func (s *ArticleTestSuite) TestEdit() {
 			},
 			after: func(t *testing.T) {
 				// 验证数据库
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("id = ?", 1).First(&art).Error
 				assert.NoError(t, err)
 				assert.True(t, art.Ctime > 0)
 				assert.True(t, art.Utime > 0)
 				art.Ctime = 0
 				art.Utime = 0
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       1,
 					Title:    "my Title",
 					Content:  "my Content",
@@ -92,7 +92,7 @@ func (s *ArticleTestSuite) TestEdit() {
 		{
 			name: "修改已有帖子",
 			before: func(t *testing.T) {
-				err := s.db.Create(dao.Article{
+				err := s.db.Create(article.Article{
 					Id:       2,
 					Title:    "my Title",
 					Content:  "my Content",
@@ -104,12 +104,12 @@ func (s *ArticleTestSuite) TestEdit() {
 			},
 			after: func(t *testing.T) {
 				// 验证数据库
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("id = ?", 2).First(&art).Error
 				assert.NoError(t, err)
 				assert.True(t, art.Utime > 12345)
 				art.Utime = 0
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       2,
 					Title:    "new Title",
 					Content:  "new Content",
@@ -131,7 +131,7 @@ func (s *ArticleTestSuite) TestEdit() {
 		{
 			name: "修改别人的帖子",
 			before: func(t *testing.T) {
-				err := s.db.Create(dao.Article{
+				err := s.db.Create(article.Article{
 					Id:      3,
 					Title:   "my Title",
 					Content: "my Content",
@@ -144,10 +144,10 @@ func (s *ArticleTestSuite) TestEdit() {
 			},
 			after: func(t *testing.T) {
 				// 验证数据库
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("id = ?", 3).First(&art).Error
 				assert.NoError(t, err)
-				assert.NotEqual(t, dao.Article{
+				assert.NotEqual(t, article.Article{
 					Id:       3,
 					Title:    "new Title",
 					Content:  "new Content",

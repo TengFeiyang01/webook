@@ -1,14 +1,63 @@
-package dao
+package article
 
 import (
 	"context"
 	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
+type ArticleDAO interface {
+	Insert(ctx context.Context, art Article) (int64, error)
+	UpdateById(ctx context.Context, art Article) error
+	Sync(ctx context.Context, art Article) (int64, error)
+	Upsert(ctx context.Context, art PublishArticle) error
+}
+
 type GORMArticleDAO struct {
 	db *gorm.DB
+}
+
+func (dao *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error) {
+	// 先操作制作库（此时应该是表），后操作线上库（此时应该是表）
+	// 在事务内部、这里采用了闭包形态
+	// GORM 帮助我们管理事务的生命周期
+	var (
+		id = art.Id
+	)
+	err := dao.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+		txDAO := NewGORMArticleDAO(tx)
+		if id > 0 {
+			err = txDAO.UpdateById(ctx, art)
+		} else {
+			id, err = txDAO.Insert(ctx, art)
+		}
+		if err != nil {
+			return err
+		}
+		// 操作线上库了
+		return txDAO.Upsert(ctx, PublishArticle{Article: art})
+	})
+	return id, err
+}
+
+// Upsert Update or INSERT
+func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error {
+	// 这个是插入
+	now := time.Now().UnixMilli()
+	art.Ctime = now
+	art.Utime = now
+	err := dao.db.Clauses(clause.OnConflict{
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"title":   art.Title,
+			"content": art.Content,
+			"utime":   now,
+		}),
+	}).Create(&art).Error
+	// INSERT xxx on DUPLICATE KEY UPDATE xxx
+	return err
 }
 
 func (dao *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {

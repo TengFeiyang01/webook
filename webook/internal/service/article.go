@@ -22,7 +22,7 @@ func (a *articleService) Publish(ctx context.Context, art domain.Article) (int64
 	//id, err := a.repo.Save(ctx, art)
 	// 线上库呢?
 	//panic("implement me")
-	return 1, nil
+	return a.repo.SyncV1(ctx, art)
 }
 
 func (a *articleService) PublishV1(ctx context.Context, art domain.Article) (int64, error) {

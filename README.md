@@ -2439,3 +2439,351 @@ func (s *ArticleTestSuite) TestEdit() {
 
 ## 发表文章
 
+**发表文章接口，我们使用单元测试TDD。** 
+
+![image-20240925143852501](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251438435.png)
+
+### Web层测试
+
+```go
+func TestArticleHandler_Publish(t *testing.T) {
+
+	testCases := []struct {
+		name string
+
+		mock func(ctrl *gomock.Controller) service.ArticleService
+
+		reqBody string
+
+		wantCode int
+		wantRes  Result
+	}{
+		{
+			name: "新建并发表",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				return svc
+			},
+			reqBody: `
+{
+	"title":"my title",
+	"content":"my content"
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result{
+				Data: float64(1),
+				Msg:  "OK",
+			},
+		},
+		{
+			name: "已有帖子且发表成功",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Id:      1,
+					Title:   "new title",
+					Content: "new content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				return svc
+			},
+			reqBody: `
+{
+	"id":1,
+	"title":"new title",
+	"content":"new content"
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result{
+				Data: float64(1),
+				Msg:  "OK",
+			},
+		},
+		{
+			name: "publish失败",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(0), errors.New("publish failed"))
+				return svc
+			},
+			reqBody: `
+{
+	"title":"my title",
+	"content":"my content"
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result{
+				Code: 5,
+				Msg:  "系统错误",
+			},
+		},
+		{
+			name: "输入有误、Bind返回错误",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				return svc
+			},
+			reqBody: `
+{
+	"title":"my title",
+	"content":"my con
+}
+`,
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name: "找不到User",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(0), gorm.ErrRecordNotFound)
+				return svc
+			},
+			reqBody: `
+{
+	"title":"my title",
+	"content":"my content"
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result{
+				Code: http.StatusUnauthorized,
+				Msg:  "找不到用户",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			server := gin.Default()
+			server.Use(func(ctx *gin.Context) {
+				ctx.Set("claims", &ijwt.UserClaims{
+					Uid: 123,
+				})
+			})
+			h := NewArticleHandler(tc.mock(ctrl), &logger.NopLogger{})
+			h.RegisterRoutes(server)
+
+			req, err := http.NewRequest(http.MethodPost, "/articles/publish", bytes.NewBuffer([]byte(tc.reqBody)))
+
+			// 这里就可以继续使用 req 了
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+			resp := httptest.NewRecorder()
+			server.ServeHTTP(resp, req)
+			assert.Equal(t, tc.wantCode, resp.Code)
+			if resp.Code != http.StatusOK {
+				return
+			}
+			var webRes Result
+			err = json.NewDecoder(resp.Body).Decode(&webRes)
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantRes, webRes)
+		})
+	}
+}
+```
+
+### Service层测试
+
+![image-20240925144046474](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251440460.png)
+
+![image-20240925144909436](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251449626.png)
+
+![image-20240925152755408](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251527661.png)
+
+```go
+func Test_articleService_Publish(t *testing.T) {
+	testCases := []struct {
+		name string
+
+		mock func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+			article.ArticleReaderRepository)
+
+		art domain.Article
+
+		wantErr error
+		wantId  int64
+	}{
+		{
+			name: "新建发表成功",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artmocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Create(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				reader := artmocks.NewMockArticleReaderRepository(ctrl)
+				reader.EXPECT().Save(gomock.Any(), domain.Article{
+					Id:      1,
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				return author, reader
+			},
+
+			art: domain.Article{
+				Title:   "my title",
+				Content: "my content",
+				Author: domain.Author{
+					Id: 123,
+				},
+			},
+			wantId:  1,
+			wantErr: nil,
+		},
+		{
+			name: "修改并发表成功",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artmocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Update(gomock.Any(), domain.Article{
+					Id:      2,
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(nil)
+				reader := artmocks.NewMockArticleReaderRepository(ctrl)
+				reader.EXPECT().Save(gomock.Any(), domain.Article{
+					Id:      2,
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(2), nil)
+				return author, reader
+			},
+
+			art: domain.Article{
+				Id:      2,
+				Title:   "my title",
+				Content: "my content",
+				Author: domain.Author{
+					Id: 123,
+				},
+			},
+			wantId: 2,
+		},
+		{
+			name: "保存到制作库失败",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artmocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Create(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(0), errors.New("mock error"))
+				reader := artmocks.NewMockArticleReaderRepository(ctrl)
+				return author, reader
+			},
+
+			art: domain.Article{
+				Title:   "my title",
+				Content: "my content",
+				Author: domain.Author{
+					Id: 123,
+				},
+			},
+			wantId:  0,
+			wantErr: errors.New("mock error"),
+		},
+		{
+			// 部分失败
+			name: "保存到制作库成功，但是保存到线上库失败",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artmocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Create(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				reader := artmocks.NewMockArticleReaderRepository(ctrl)
+				reader.EXPECT().Save(gomock.Any(), domain.Article{
+					Id:      1,
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(0), errors.New("mock error"))
+				return author, reader
+			},
+
+			art: domain.Article{
+				Title:   "my title",
+				Content: "my content",
+				Author: domain.Author{
+					Id: 123,
+				},
+			},
+			wantId:  0,
+			wantErr: errors.New("mock error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			author, reader := tc.mock(ctrl)
+			svc := NewArticleServiceV1(author, reader)
+			id, err := svc.PublishV1(context.Background(), tc.art)
+			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantId, id)
+		})
+	}
+}
+```
+
+![image-20240925155406697](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251554958.png)
+
+#### 部分失败问题
+
+在这一个简单的实现里面，出现了一个部分失败的场景：**数据保存到制作库成功，但是保存到线上库失败了。** 
+
+那么，**这里为什么不直接开启事务呢?确保制作库和线上库，要么全部成功，要么全部失败。
+
+![image-20240925160046557](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251600769.png)
+
+ ![image-20240925160207438](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251602894.png)

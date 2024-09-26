@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 	dao "webook/webook/internal/repository/dao"
+	"webook/webook/internal/repository/dao/article"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -152,7 +153,7 @@ func (m *MockArticleDAO) EXPECT() *MockArticleDAOMockRecorder {
 }
 
 // Insert mocks base method.
-func (m *MockArticleDAO) Insert(ctx context.Context, art dao.Article) (int64, error) {
+func (m *MockArticleDAO) Insert(ctx context.Context, art article.Article) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Insert", ctx, art)
 	ret0, _ := ret[0].(int64)
@@ -167,7 +168,7 @@ func (mr *MockArticleDAOMockRecorder) Insert(ctx, art any) *gomock.Call {
 }
 
 // UpdateById mocks base method.
-func (m *MockArticleDAO) UpdateById(ctx context.Context, article dao.Article) error {
+func (m *MockArticleDAO) UpdateById(ctx context.Context, article article.Article) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateById", ctx, article)
 	ret0, _ := ret[0].(error)
