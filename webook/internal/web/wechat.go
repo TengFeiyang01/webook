@@ -11,6 +11,7 @@ import (
 	"webook/webook/internal/service"
 	"webook/webook/internal/service/oauth2/wechat"
 	ijwt "webook/webook/internal/web/jwt"
+	"webook/webook/pkg/ginx"
 )
 
 type OAuth2WechatHandler struct {
@@ -45,20 +46,20 @@ func (h *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
 	state := uuid.New()
 	url, err := h.svc.AuthURL(ctx, state)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Result{
+		ctx.JSON(http.StatusInternalServerError, ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "构造url失败",
 		})
 		return
 	}
 	if err := h.setStateCookie(ctx, state); err != nil {
-		ctx.JSON(http.StatusInternalServerError, Result{
+		ctx.JSON(http.StatusInternalServerError, ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统异常",
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, Result{
+	ctx.JSON(http.StatusOK, ginx.Result{
 		Data: url,
 	})
 }
@@ -90,7 +91,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 	code := ctx.Query("code")
 	err := h.verifyState(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Result{
+		ctx.JSON(http.StatusInternalServerError, ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "登录失败",
 		})
@@ -99,7 +100,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 
 	info, err := h.svc.VerifyCode(ctx, code)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Result{
+		ctx.JSON(http.StatusInternalServerError, ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
@@ -108,7 +109,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 	// 从 userService 拿uid
 	u, err := h.userSvc.FindOrCreateByWechat(ctx, info)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, Result{
+		ctx.JSON(http.StatusInternalServerError, ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
@@ -116,13 +117,13 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 	}
 
 	if err = h.SetLoginToken(ctx, u.ID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, Result{
+		ctx.JSON(http.StatusInternalServerError, ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, Result{
+	ctx.JSON(http.StatusOK, ginx.Result{
 		Code: http.StatusOK,
 		Data: info,
 	})
@@ -134,7 +135,7 @@ func (h *OAuth2WechatHandler) verifyState(ctx *gin.Context) error {
 	ck, err := ctx.Cookie("jwt-state")
 	if err != nil {
 		// 做好监控，有人搞你
-		ctx.JSON(http.StatusInternalServerError, Result{
+		ctx.JSON(http.StatusInternalServerError, ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})
@@ -145,7 +146,7 @@ func (h *OAuth2WechatHandler) verifyState(ctx *gin.Context) error {
 		return h.stateKey, nil
 	})
 	if err != nil || !token.Valid {
-		ctx.JSON(http.StatusInternalServerError, Result{
+		ctx.JSON(http.StatusInternalServerError, ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "系统错误",
 		})

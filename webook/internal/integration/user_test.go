@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 	"webook/webook/internal/integration/startup"
-	"webook/webook/internal/web"
 	"webook/webook/ioc"
+	"webook/webook/pkg/ginx"
 )
 
 func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
@@ -32,7 +32,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 		reqBody string
 
 		wantCode int
-		wantBody web.Result
+		wantBody ginx.Result
 	}{
 		{
 			name: "发送成功",
@@ -53,7 +53,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 	"phone": "13213130303"
 }`,
 			wantCode: http.StatusOK,
-			wantBody: web.Result{
+			wantBody: ginx.Result{
 				Msg: "发送成功",
 			},
 		},
@@ -79,7 +79,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 	"phone": "13213130303"
 }`,
 			wantCode: http.StatusOK,
-			wantBody: web.Result{
+			wantBody: ginx.Result{
 				Msg: "发送太频繁, 请稍后再试",
 			},
 		},
@@ -105,7 +105,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 	"phone": "13213130303"
 }`,
 			wantCode: http.StatusInternalServerError,
-			wantBody: web.Result{
+			wantBody: ginx.Result{
 				Msg: "系统错误",
 			},
 		},
@@ -120,7 +120,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 	"phone": ""
 }`,
 			wantCode: http.StatusUnauthorized,
-			wantBody: web.Result{
+			wantBody: ginx.Result{
 				Msg: "手机号格式错误",
 			},
 		},
@@ -152,7 +152,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 			if resp.Code != http.StatusOK {
 				return
 			}
-			var webRes web.Result
+			var webRes ginx.Result
 			err = json.NewDecoder(resp.Body).Decode(&webRes)
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantBody, webRes)

@@ -44,18 +44,18 @@ func (r *CachedUserRepository) FindByEmail(ctx context.Context, email string) (d
 	if err != nil {
 		return domain.User{}, err
 	}
-	return r.entityToDomain(u), nil
+	return r.toDomain(u), nil
 }
 func (r *CachedUserRepository) FindByPhone(ctx context.Context, phone string) (domain.User, error) {
 	u, err := r.dao.FindByPhone(ctx, phone)
 	if err != nil {
 		return domain.User{}, err
 	}
-	return r.entityToDomain(u), nil
+	return r.toDomain(u), nil
 }
 
 func (r *CachedUserRepository) Create(ctx context.Context, u domain.User) error {
-	return r.dao.Insert(ctx, r.domainToEntity(u))
+	return r.dao.Insert(ctx, r.toEntity(u))
 }
 
 func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
@@ -82,7 +82,7 @@ func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.U
 		return domain.User{}, err
 	}
 
-	u = r.entityToDomain(ue)
+	u = r.toDomain(ue)
 
 	//_ = r.cache.Set(ctx, u)
 	//if err != nil {
@@ -109,7 +109,7 @@ func (r *CachedUserRepository) FindByWechat(ctx context.Context, openID string) 
 		return domain.User{}, err
 	}
 
-	u = r.entityToDomain(ue)
+	u = r.toDomain(ue)
 
 	go func() {
 		err = r.cache.Set(ctx, u)
@@ -122,14 +122,14 @@ func (r *CachedUserRepository) FindByWechat(ctx context.Context, openID string) 
 }
 
 func (r *CachedUserRepository) UpdateById(ctx context.Context, u domain.User) error {
-	err := r.dao.UpdateById(ctx, r.domainToEntity(u))
+	err := r.dao.UpdateById(ctx, r.toEntity(u))
 	return err
 }
 
 func (r *CachedUserRepository) UpdateNonZeroFields(ctx context.Context,
 	user domain.User) error {
 	// 更新 DB 之后，删除
-	err := r.dao.UpdateById(ctx, r.domainToEntity(user))
+	err := r.dao.UpdateById(ctx, r.toEntity(user))
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (r *CachedUserRepository) UpdateNonZeroFields(ctx context.Context,
 	return r.cache.Del(ctx, user.ID)
 }
 
-func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
+func (r *CachedUserRepository) toEntity(u domain.User) dao.User {
 	return dao.User{
 		ID: u.ID,
 		Email: sql.NullString{
@@ -167,7 +167,7 @@ func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
 	}
 }
 
-func (r *CachedUserRepository) entityToDomain(u dao.User) domain.User {
+func (r *CachedUserRepository) toDomain(u dao.User) domain.User {
 	return domain.User{
 		ID:       u.ID,
 		Email:    u.Email.String,

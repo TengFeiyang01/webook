@@ -8,6 +8,7 @@ import (
 	"webook/webook/internal/domain"
 	"webook/webook/internal/service"
 	ijwt "webook/webook/internal/web/jwt"
+	"webook/webook/pkg/ginx"
 	"webook/webook/pkg/logger"
 )
 
@@ -40,7 +41,7 @@ func (h *ArticleHandler) Publish(ctx *gin.Context) {
 	claims, ok := c.(*ijwt.UserClaims)
 	if !ok {
 		//ctx.AbortWithStatus(http.StatusUnauthorized)
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusOK, ginx.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		})
@@ -49,7 +50,7 @@ func (h *ArticleHandler) Publish(ctx *gin.Context) {
 	}
 	id, err := h.svc.Publish(ctx, req.toDomain(claims.Uid))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusOK, ginx.Result{
 			Code: http.StatusUnauthorized,
 			Msg:  "找不到用户",
 		})
@@ -57,14 +58,14 @@ func (h *ArticleHandler) Publish(ctx *gin.Context) {
 		return
 	}
 	if err != nil {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusOK, ginx.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		})
 		h.l.Info("发布帖子失败", logger.Error(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, Result{
+	ctx.JSON(http.StatusOK, ginx.Result{
 		Msg:  "OK",
 		Data: id,
 	})
@@ -82,7 +83,7 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 	claims, ok := c.(*ijwt.UserClaims)
 	if !ok {
 		//ctx.AbortWithStatus(http.StatusUnauthorized)
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusOK, ginx.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		})
@@ -91,14 +92,14 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 	}
 	id, err := h.svc.Save(ctx, req.toDomain(claims.Uid))
 	if err != nil {
-		ctx.JSON(http.StatusOK, Result{
+		ctx.JSON(http.StatusOK, ginx.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		})
 		h.l.Info("保存帖子失败", logger.Error(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, Result{
+	ctx.JSON(http.StatusOK, ginx.Result{
 		Msg:  "OK",
 		Data: id,
 	})

@@ -26,7 +26,7 @@ func InitWebUser() *gin.Engine {
 
 		// 初始化 cache
 		user.NewRedisUserCache,
-		//cache.NewMemoryCodeCache,
+		//cache.NewLocalCodeCache,
 		code.NewRedisCodeCache,
 
 		// 初始化 repository

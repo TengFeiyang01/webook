@@ -16,6 +16,7 @@ import (
 	"webook/webook/internal/service"
 	svcmocks "webook/webook/internal/service/mocks"
 	ijwt "webook/webook/internal/web/jwt"
+	"webook/webook/pkg/ginx"
 	"webook/webook/pkg/logger"
 )
 
@@ -29,7 +30,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 		reqBody string
 
 		wantCode int
-		wantRes  Result
+		wantRes  ginx.Result
 	}{
 		{
 			name: "新建并发表",
@@ -51,7 +52,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantRes: Result{
+			wantRes: ginx.Result{
 				Data: float64(1),
 				Msg:  "OK",
 			},
@@ -78,7 +79,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantRes: Result{
+			wantRes: ginx.Result{
 				Data: float64(1),
 				Msg:  "OK",
 			},
@@ -103,7 +104,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantRes: Result{
+			wantRes: ginx.Result{
 				Code: 5,
 				Msg:  "系统错误",
 			},
@@ -142,7 +143,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantRes: Result{
+			wantRes: ginx.Result{
 				Code: http.StatusUnauthorized,
 				Msg:  "找不到用户",
 			},
@@ -173,7 +174,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 			if resp.Code != http.StatusOK {
 				return
 			}
-			var webRes Result
+			var webRes ginx.Result
 			err = json.NewDecoder(resp.Body).Decode(&webRes)
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantRes, webRes)

@@ -2787,3 +2787,23 @@ func Test_articleService_Publish(t *testing.T) {
 ![image-20240925160046557](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251600769.png)
 
  ![image-20240925160207438](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251602894.png)
+
+### Repository 层实现
+
+![image-20240926093010942](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409260930822.png)
+
+![image-20240926093045316](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409260930441.png)
+
+![image-20240926094230402](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409260942806.png)
+
+### DAO 层实现
+
+![image-20240926095143932](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409260951991.png)
+
+![image-20240926101347409](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261013579.png)
+
+![image-20240926101632143](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261016579.png)
+
+![image-20240926101725027](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261017282.png)
+
+![image-20240926102851057](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261028096.png)

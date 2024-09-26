@@ -8,5 +8,6 @@ import (
 func InitTables(db *gorm.DB) error {
 	return db.AutoMigrate(&User{},
 		&article.Article{},
-		&article.PublishArticle{})
+		&article.PublishArticle{},
+		&AsyncSms{})
 }

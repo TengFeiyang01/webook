@@ -93,9 +93,9 @@ type User struct {
 	// 唯一索引允许有多个空值
 	// 但是不能有多个 ""
 	Phone    sql.NullString `gorm:"unique"`
-	NickName string
-	BirthDay time.Time `gorm:"default:null"`
-	AboutMe  string
+	NickName string         `gorm:"type=varchar(128)"`
+	BirthDay time.Time      `gorm:"default:null"`
+	AboutMe  string         `gorm:"type=varchar(4096)"`
 
 	// 微信的字段
 	WechatUnionID sql.NullString
