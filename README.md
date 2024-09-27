@@ -2832,3 +2832,41 @@ const (
 ### 状态流转
 
 ![image-20240926163028118](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261630335.png)
+
+![image-20240927103210140](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032442.png)
+
+![](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032442.png)
+
+![image-20240927103245248](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032631.png)
+
+![image-20240927103256243](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032290.png)
+
+## MongoDB
+
+![image-20240927110341490](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271103480.png)
+
+![image-20240927130252488](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271302637.png)
+
+![image-20240927130707106](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271307492.png)
+
+![image-20240927134318912](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271343950.png)
+
+![image-20240927134330633](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271343842.png)
+
+![image-20240927134349002](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271343101.png)
+
+![image-20240927134359774](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271344143.png)
+
+> MongoDB 在存储的时候，就是利用 BSON 将一个结构体转化为字节流，而后存储下来
+
+![image-20240927135730889](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271357027.png)
+
+![image-20240927145723215](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271457339.png)
+
+![image-20240927145747555](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271457630.png)
+
+![image-20240927145810989](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271458984.png)
+
+![image-20240927145822155](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271458331.png)
+
+![image-20240927145646598](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271456648.png)
