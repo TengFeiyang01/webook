@@ -12,11 +12,39 @@ type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
 	UpdateById(ctx context.Context, art Article) error
 	Sync(ctx context.Context, art Article) (int64, error)
-	Upsert(ctx context.Context, art PublishArticle) error
+	Upsert(ctx context.Context, art PublishedArticle) error
+	SyncStatus(ctx context.Context, id int64, author int64, status uint8) error
 }
 
 type GORMArticleDAO struct {
 	db *gorm.DB
+}
+
+func (dao *GORMArticleDAO) SyncStatus(ctx context.Context, id int64, author int64, status uint8) error {
+	now := time.Now().UnixMilli()
+	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		res := tx.Model(&Article{}).Where(" id = ? AND author_id = ?", id, author).
+			Updates(map[string]interface{}{
+				"status": status,
+				"utime":  now,
+			})
+		if res.Error != nil {
+			// 数据库有问题
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			// 要么 ID 是错误的，要么作者不对
+			// 后者情况需要小心
+			// 用 Prometheus 打点，只要频繁出现，你就告警，然后手工介入排查
+			return fmt.Errorf("可能有人在搞你，误操作非自己的文章, uid: %d, author: %d", id, author)
+		}
+		return tx.Model(&Article{}).
+			Where("id = ?", id).
+			Updates(map[string]interface{}{
+				"status": status,
+				"utime":  now,
+			}).Error
+	})
 }
 
 func (dao *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error) {
@@ -38,13 +66,13 @@ func (dao *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error)
 			return err
 		}
 		// 操作线上库了
-		return txDAO.Upsert(ctx, PublishArticle{Article: art})
+		return txDAO.Upsert(ctx, PublishedArticle{Article: art})
 	})
 	return id, err
 }
 
 // Upsert Update or INSERT
-func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error {
+func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishedArticle) error {
 	// 这个是插入
 	now := time.Now().UnixMilli()
 	art.Ctime = now
@@ -54,6 +82,7 @@ func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error
 			"title":   art.Title,
 			"content": art.Content,
 			"utime":   now,
+			"status":  art.Status,
 		}),
 	}).Create(&art).Error
 	// INSERT xxx on DUPLICATE KEY UPDATE xxx
@@ -68,6 +97,7 @@ func (dao *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
 		Updates(map[string]interface{}{
 			"title":   art.Title,
 			"content": art.Content,
+			"status":  art.Status,
 			"utime":   art.Utime,
 		})
 	// 你要不要检查真的更新了
@@ -99,6 +129,7 @@ type Article struct {
 	Title    string `gorm:"type=varchar(2024)"`
 	Content  string `gorm:"type=BLOB"`
 	AuthorId int64  `gorm:"index=aid_ctime"`
+	Status   uint8
 	// - 按 创建时间/更新时间 倒序排序
 	// SELECT * FROM articles WHERE author_id = 123 ORDER BY `ctime` DESC
 	// - 在 author_id 和 ctime 上创建联合索引

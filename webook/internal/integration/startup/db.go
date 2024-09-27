@@ -12,7 +12,7 @@ import (
 
 var db *gorm.DB
 
-func InitTestDB() *gorm.DB {
+func InitDB() *gorm.DB {
 	if db == nil {
 		dsn := "root:root@tcp(localhost:13316)/webook"
 		sqlDB, err := sql.Open("mysql", dsn)

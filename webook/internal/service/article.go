@@ -17,42 +17,48 @@ type articleService struct {
 	l logger.LoggerV1
 }
 
-func (a *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
-	// 制作库
-	//id, err := a.repo.Save(ctx, art)
-	// 线上库呢?
-	//panic("implement me")
-	return a.repo.SyncV1(ctx, art)
+func (svc *articleService) WithDraw(ctx context.Context, art domain.Article) error {
+	return svc.repo.SyncStatus(ctx, art.Id, art.Author.Id, domain.ArticleStatusPrivate)
 }
 
-func (a *articleService) PublishV1(ctx context.Context, art domain.Article) (int64, error) {
+func (svc *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
 	// 制作库
-	//id, err := a.repo.Save(ctx, art)
+	//id, err := svc.repo.Save(ctx, art)
 	// 线上库呢?
+	//panic("implement me")
+	art.Status = domain.ArticleStatusPublished
+	return svc.repo.Sync(ctx, art)
+}
+
+func (svc *articleService) PublishV1(ctx context.Context, art domain.Article) (int64, error) {
+	// 制作库
+	//id, err := svc.repo.Save(ctx, art)
+	// 线上库呢?
+	art.Status = domain.ArticleStatusPublished
 	var (
 		id  = art.Id
 		err error
 	)
 	if art.Id == 0 {
-		id, err = a.author.Create(ctx, art)
+		id, err = svc.author.Create(ctx, art)
 	} else {
-		err = a.author.Update(ctx, art)
+		err = svc.author.Update(ctx, art)
 	}
 	if err != nil {
 		return 0, err
 	}
 	art.Id = id
 	for i := 0; i < 3; i++ {
-		id, err = a.reader.Save(ctx, art)
+		id, err = svc.reader.Save(ctx, art)
 		if err == nil {
 			break
 		}
-		a.l.Error("部分失败，保存到线上库失败",
+		svc.l.Error("部分失败，保存到线上库失败",
 			logger.Int64("art_id", id),
 			logger.Error(err))
 	}
 	if err != nil {
-		a.l.Error("部分失败，重试彻底失败",
+		svc.l.Error("部分失败，重试彻底失败",
 			logger.Int64("art_id", id),
 			logger.Error(err))
 		// 接入你的告警系统，手工处理一下
@@ -77,10 +83,11 @@ func NewArticleServiceV1(author article.ArticleAuthorRepository, reader article.
 	}
 }
 
-func (a *articleService) Save(ctx context.Context, art domain.Article) (int64, error) {
+func (svc *articleService) Save(ctx context.Context, art domain.Article) (int64, error) {
+	art.Status = domain.ArticleStatusUnPublished
 	if art.Id > 0 {
-		err := a.repo.Update(ctx, art)
+		err := svc.repo.Update(ctx, art)
 		return art.Id, err
 	}
-	return a.repo.Create(ctx, art)
+	return svc.repo.Create(ctx, art)
 }

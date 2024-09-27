@@ -2807,3 +2807,28 @@ func Test_articleService_Publish(t *testing.T) {
 ![image-20240926101725027](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261017282.png)
 
 ![image-20240926102851057](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261028096.png)
+
+## 维护状态
+
+### 状态图
+
+![image-20240926160955535](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261609704.png)
+
+### 状态定义
+
+> 一般定义常量，最好不要把零值做成有意义的值
+
+```go
+
+const (
+	// ArticleStatusUnknown 为了避免零值之类的问题
+	ArticleStatusUnknown ArticleStatus = iota
+	ArticleStatusUnPublished
+	ArticleStatusPublished
+	ArticleStatusPrivate
+)
+```
+
+### 状态流转
+
+![image-20240926163028118](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261630335.png)

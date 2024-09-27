@@ -35,6 +35,7 @@ func Test_articleService_Publish(t *testing.T) {
 					Author: domain.Author{
 						Id: 123,
 					},
+					Status: domain.ArticleStatusPublished,
 				}).Return(int64(1), nil)
 				reader := artmocks.NewMockArticleReaderRepository(ctrl)
 				reader.EXPECT().Save(gomock.Any(), domain.Article{
@@ -44,6 +45,7 @@ func Test_articleService_Publish(t *testing.T) {
 					Author: domain.Author{
 						Id: 123,
 					},
+					Status: domain.ArticleStatusPublished,
 				}).Return(int64(1), nil)
 				return author, reader
 			},
@@ -54,6 +56,7 @@ func Test_articleService_Publish(t *testing.T) {
 				Author: domain.Author{
 					Id: 123,
 				},
+				Status: domain.ArticleStatusPublished,
 			},
 			wantId:  1,
 			wantErr: nil,
@@ -104,6 +107,7 @@ func Test_articleService_Publish(t *testing.T) {
 					Author: domain.Author{
 						Id: 123,
 					},
+					Status: domain.ArticleStatusPublished,
 				}).Return(int64(0), errors.New("mock error"))
 				reader := artmocks.NewMockArticleReaderRepository(ctrl)
 				return author, reader
@@ -115,6 +119,7 @@ func Test_articleService_Publish(t *testing.T) {
 				Author: domain.Author{
 					Id: 123,
 				},
+				Status: domain.ArticleStatusPublished,
 			},
 			wantId:  0,
 			wantErr: errors.New("mock error"),
@@ -140,6 +145,7 @@ func Test_articleService_Publish(t *testing.T) {
 					Author: domain.Author{
 						Id: 123,
 					},
+					Status: domain.ArticleStatusPublished,
 				}).Return(int64(0), errors.New("mock error"))
 				reader.EXPECT().Save(gomock.Any(), domain.Article{
 					Id:      2,
@@ -148,6 +154,7 @@ func Test_articleService_Publish(t *testing.T) {
 					Author: domain.Author{
 						Id: 123,
 					},
+					Status: domain.ArticleStatusPublished,
 				}).Return(int64(2), nil)
 				return author, reader
 			},
@@ -174,6 +181,7 @@ func Test_articleService_Publish(t *testing.T) {
 					Author: domain.Author{
 						Id: 123,
 					},
+					Status: domain.ArticleStatusPublished,
 				}).Return(int64(1), nil)
 				reader := artmocks.NewMockArticleReaderRepository(ctrl)
 				reader.EXPECT().Save(gomock.Any(), domain.Article{
@@ -183,6 +191,7 @@ func Test_articleService_Publish(t *testing.T) {
 					Author: domain.Author{
 						Id: 123,
 					},
+					Status: domain.ArticleStatusPublished,
 				}).Times(3).Return(int64(0), errors.New("mock error"))
 				return author, reader
 			},
@@ -193,6 +202,7 @@ func Test_articleService_Publish(t *testing.T) {
 				Author: domain.Author{
 					Id: 123,
 				},
+				Status: domain.ArticleStatusPublished,
 			},
 			wantId:  0,
 			wantErr: errors.New("mock error"),

@@ -14,6 +14,7 @@ type ArticleRepository interface {
 	// SyncV1 存储并同步数据
 	SyncV1(ctx context.Context, art domain.Article) (int64, error)
 	SyncV2(ctx context.Context, art domain.Article) (int64, error)
+	SyncStatus(ctx context.Context, id int64, author int64, status domain.ArticleStatus) error
 }
 
 type CachedArticleRepository struct {
@@ -28,6 +29,10 @@ type CachedArticleRepository struct {
 	// 那么就只能利用 db 开启事务之后，创建基于事务的 DAO
 	// 或者，直接去掉 DAO 这一层、在 repository 的实现中，直接操作 db。
 	db *gorm.DB
+}
+
+func (c CachedArticleRepository) SyncStatus(ctx context.Context, id int64, author int64, status domain.ArticleStatus) error {
+	return c.dao.SyncStatus(ctx, id, author, status.ToUint8())
 }
 
 func (c CachedArticleRepository) Sync(ctx context.Context, art domain.Article) (int64, error) {
@@ -62,7 +67,7 @@ func (c CachedArticleRepository) SyncV2(ctx context.Context, art domain.Article)
 	// 操作线上库, 保存数据, 同步过来
 	// 考虑到, 此时线上库可能有、可能没有, 你要有一个 UPSERT 的写法
 	// INSERT or UPDATE
-	err = reader.UpsertV2(ctx, dao.PublishArticle{Article: artEntity})
+	err = reader.UpsertV2(ctx, dao.PublishedArticle{Article: artEntity})
 	tx.Commit()
 	return id, err
 }
@@ -90,12 +95,7 @@ func (c CachedArticleRepository) SyncV1(ctx context.Context, art domain.Article)
 }
 
 func (c CachedArticleRepository) Update(ctx context.Context, art domain.Article) error {
-	return c.dao.UpdateById(ctx, dao.Article{
-		Id:       art.Id,
-		Title:    art.Title,
-		Content:  art.Content,
-		AuthorId: art.Author.Id,
-	})
+	return c.dao.UpdateById(ctx, c.toEntity(art))
 }
 
 func (c CachedArticleRepository) Create(ctx context.Context, art domain.Article) (int64, error) {
@@ -103,6 +103,7 @@ func (c CachedArticleRepository) Create(ctx context.Context, art domain.Article)
 		Title:    art.Title,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
+		Status:   art.Status.ToUint8(),
 	})
 }
 
@@ -118,5 +119,6 @@ func (c CachedArticleRepository) toEntity(art domain.Article) dao.Article {
 		Title:    art.Title,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
+		Status:   art.Status.ToUint8(),
 	}
 }
