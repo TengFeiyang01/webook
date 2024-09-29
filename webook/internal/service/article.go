@@ -85,6 +85,7 @@ func NewArticleServiceV1(author article.ArticleAuthorRepository, reader article.
 
 func (svc *articleService) Save(ctx context.Context, art domain.Article) (int64, error) {
 	art.Status = domain.ArticleStatusUnPublished
+	println(art.Id)
 	if art.Id > 0 {
 		err := svc.repo.Update(ctx, art)
 		return art.Id, err

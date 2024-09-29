@@ -4,7 +4,7 @@ import (
 	"context"
 	"gorm.io/gorm"
 	"webook/webook/internal/domain"
-	dao "webook/webook/internal/repository/dao/article"
+	"webook/webook/internal/repository/dao/article"
 )
 
 type ArticleRepository interface {
@@ -18,11 +18,11 @@ type ArticleRepository interface {
 }
 
 type CachedArticleRepository struct {
-	dao dao.ArticleDAO
+	dao article.ArticleDAO
 
 	// V1 操作两个 DAO
-	readerDAO dao.ReaderDAO
-	authorDAO dao.AuthorDao
+	readerDAO article.ReaderDAO
+	authorDAO article.AuthorDao
 
 	// 耦合了 DAO 操作的东西
 	// 正常情况下，如果你要在 repository 层面上操作事务
@@ -48,8 +48,8 @@ func (c CachedArticleRepository) SyncV2(ctx context.Context, art domain.Article)
 	}
 	defer tx.Rollback()
 	// 利用 tx 来构建DAO
-	author := dao.NewAuthorDAO(tx)
-	reader := dao.NewReaderDAO(tx)
+	author := article.NewAuthorDAO(tx)
+	reader := article.NewReaderDAO(tx)
 	var (
 		id  = art.Id
 		err error
@@ -67,7 +67,7 @@ func (c CachedArticleRepository) SyncV2(ctx context.Context, art domain.Article)
 	// 操作线上库, 保存数据, 同步过来
 	// 考虑到, 此时线上库可能有、可能没有, 你要有一个 UPSERT 的写法
 	// INSERT or UPDATE
-	err = reader.UpsertV2(ctx, dao.PublishedArticle{Article: artEntity})
+	err = reader.UpsertV2(ctx, article.PublishedArticleV1{Article: artEntity})
 	tx.Commit()
 	return id, err
 }
@@ -99,7 +99,7 @@ func (c CachedArticleRepository) Update(ctx context.Context, art domain.Article)
 }
 
 func (c CachedArticleRepository) Create(ctx context.Context, art domain.Article) (int64, error) {
-	return c.dao.Insert(ctx, dao.Article{
+	return c.dao.Insert(ctx, article.Article{
 		Title:    art.Title,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
@@ -107,14 +107,14 @@ func (c CachedArticleRepository) Create(ctx context.Context, art domain.Article)
 	})
 }
 
-func NewArticleRepository(dao dao.ArticleDAO) ArticleRepository {
+func NewArticleRepository(dao article.ArticleDAO) ArticleRepository {
 	return &CachedArticleRepository{
 		dao: dao,
 	}
 }
 
-func (c CachedArticleRepository) toEntity(art domain.Article) dao.Article {
-	return dao.Article{
+func (c CachedArticleRepository) toEntity(art domain.Article) article.Article {
+	return article.Article{
 		Id:       art.Id,
 		Title:    art.Title,
 		Content:  art.Content,

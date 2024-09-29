@@ -2870,3 +2870,61 @@ const (
 ![image-20240927145822155](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271458331.png)
 
 ![image-20240927145646598](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271456648.png)
+
+### DAO 抽象
+
+![image-20240927154300249](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271543317.png)
+
+![image-20240927164342150](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271643430.png)
+
+![image-20240927164356114](C:/Users/ytf/AppData/Roaming/Typora/typora-user-images/image-20240927164356114.png)
+
+![image-20240927164407448](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271644387.png)
+
+![image-20240927164419919](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271644093.png)
+
+![image-20240929100822929](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291008070.png)
+
+![image-20240929100836278](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291008257.png)
+
+![image-20240929100845729](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291008902.png)
+
+![image-20240929100856769](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291009529.png)
+
+### 发布接口重构
+
+![image-20240929100934226](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291009535.png)
+
+# 利用OSS来存储数据
+
+![image-20240929101945124](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291019028.png)
+
+## OSS入门
+
+![image-20240929102442763](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291024702.png)
+
+![image-20240929102812219](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291028165.png)
+
+![image-20240929103027601](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291030767.png)
+
+## S3 API 入门
+
+![image-20240929103124701](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291031695.png)
+
+![image-20240929103138352](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291031569.png)
+
+![image-20240929104805388](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291048394.png)
+
+![image-20240929104836033](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049403.png)
+
+![image-20240929104854362](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049086.png)
+
+![image-20240929104910219](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049374.png)![image-20240929104918563](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049665.png)
+
+## 总结
+
+![image-20240929111614793](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291116979.png)
+
+![image-20240929111712853](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291117883.png)
+
+![image-20240929111545509](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291115231.png)

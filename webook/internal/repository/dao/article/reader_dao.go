@@ -7,11 +7,13 @@ import (
 
 type ReaderDAO interface {
 	Upsert(ctx context.Context, art Article) error
-	UpsertV2(ctx context.Context, art PublishedArticle) error
+	UpsertV2(ctx context.Context, art PublishedArticleV1) error
 }
 
-// PublishedArticle 这个代表的是线上表
-type PublishedArticle struct {
+type PublishedArticle Article
+
+// PublishedArticleV1 这个代表的是线上表
+type PublishedArticleV1 struct {
 	Article
 }
 

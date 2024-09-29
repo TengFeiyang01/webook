@@ -12,7 +12,7 @@ type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
 	UpdateById(ctx context.Context, art Article) error
 	Sync(ctx context.Context, art Article) (int64, error)
-	Upsert(ctx context.Context, art PublishedArticle) error
+	Upsert(ctx context.Context, art PublishedArticleV1) error
 	SyncStatus(ctx context.Context, id int64, author int64, status uint8) error
 }
 
@@ -66,13 +66,13 @@ func (dao *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error)
 			return err
 		}
 		// 操作线上库了
-		return txDAO.Upsert(ctx, PublishedArticle{Article: art})
+		return txDAO.Upsert(ctx, PublishedArticleV1{Article: art})
 	})
 	return id, err
 }
 
 // Upsert Update or INSERT
-func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishedArticle) error {
+func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishedArticleV1) error {
 	// 这个是插入
 	now := time.Now().UnixMilli()
 	art.Ctime = now
@@ -125,14 +125,13 @@ func (dao *GORMArticleDAO) Insert(ctx context.Context, art Article) (int64, erro
 }
 
 type Article struct {
-	Id       int64  `gorm:"primary_key;AUTO_INCREMENT"`
-	Title    string `gorm:"type=varchar(2024)"`
-	Content  string `gorm:"type=BLOB"`
-	AuthorId int64  `gorm:"index=aid_ctime"`
-	Status   uint8
-	// - 按 创建时间/更新时间 倒序排序
-	// SELECT * FROM articles WHERE author_id = 123 ORDER BY `ctime` DESC
-	// - 在 author_id 和 ctime 上创建联合索引
-	Ctime int64 `gorm:"index=aid_ctime"`
-	Utime int64
+	Id      int64  `gorm:"primaryKey,autoIncrement" bson:"id,omitempty"`
+	Title   string `gorm:"type=varchar(4096)" bson:"title,omitempty"`
+	Content string `gorm:"type=BLOB" bson:"content,omitempty"`
+	// 我要根据创作者ID来查询
+	AuthorId int64 `gorm:"index" bson:"author_id,omitempty"`
+	Status   uint8 `bson:"status,omitempty"`
+	Ctime    int64 `bson:"ctime,omitempty"`
+	// 更新时间
+	Utime int64 `bson:"utime,omitempty"`
 }

@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/aws/aws-sdk-go v1.55.5
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/dlclark/regexp2 v1.10.0
 	github.com/ecodeclub/ekit v0.0.9
@@ -24,7 +25,6 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.989
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.989
 	go.mongodb.org/mongo-driver v1.9.0
-	go.mongodb.org/mongo-driver/v2 v2.0.0-beta2
 	go.uber.org/atomic v1.9.0
 	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.21.0
@@ -80,6 +80,7 @@ require (
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/integration/startup"
-	dao "webook/webook/internal/repository/dao/article"
+	"webook/webook/internal/repository/dao/article"
 	ijwt "webook/webook/internal/web/jwt"
 )
 
@@ -24,7 +24,7 @@ type ArticleHandlerSuite struct {
 
 func (s *ArticleHandlerSuite) SetupSuite() {
 	s.db = startup.InitDB()
-	hdl := startup.InitArticleHandler(dao.NewGORMArticleDAO(s.db))
+	hdl := startup.InitArticleHandler(article.NewGORMArticleDAO(s.db))
 	server := gin.Default()
 	server.Use(func(ctx *gin.Context) {
 		ctx.Set("user", ijwt.UserClaims{
@@ -62,7 +62,7 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 			},
 			after: func(t *testing.T) {
 				// 验证一下数据
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("author_id = ?", 123).First(&art).Error
 				assert.NoError(t, err)
 				assert.True(t, art.Id > 0)
@@ -71,13 +71,13 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 				art.Utime = 0
 				art.Ctime = 0
 				art.Id = 0
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Title:    "hello，你好",
 					Content:  "随便试试",
 					AuthorId: 123,
 					Status:   domain.ArticleStatusPublished.ToUint8(),
 				}, art)
-				var publishedArt dao.PublishedArticle
+				var publishedArt article.PublishedArticleV1
 				err = s.db.Where("author_id = ?", 123).First(&publishedArt).Error
 				assert.NoError(t, err)
 				assert.True(t, publishedArt.Id > 0)
@@ -86,8 +86,8 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 				publishedArt.Ctime = 0
 				publishedArt.Utime = 0
 				publishedArt.Id = 0
-				assert.Equal(t, dao.PublishedArticle{
-					Article: dao.Article{
+				assert.Equal(t, article.PublishedArticleV1{
+					Article: article.Article{
 						Title:    "hello，你好",
 						Content:  "随便试试",
 						AuthorId: 123,
@@ -110,7 +110,7 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 			name: "更新帖子并新发表",
 			before: func(t *testing.T) {
 				// 模拟已经存在的帖子
-				err := s.db.Create(&dao.Article{
+				err := s.db.Create(&article.Article{
 					Id:       2,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -123,13 +123,13 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 			},
 			after: func(t *testing.T) {
 				// 验证一下数据
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("id = ?", 2).First(&art).Error
 				assert.NoError(t, err)
 				// 更新时间变了
 				assert.True(t, art.Utime > 234)
 				art.Utime = 0
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       2,
 					Ctime:    456,
 					Status:   domain.ArticleStatusPublished.ToUint8(),
@@ -137,15 +137,15 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 					Content:  "新的内容",
 					AuthorId: 123,
 				}, art)
-				var publishedArt dao.PublishedArticle
+				var publishedArt article.PublishedArticleV1
 				err = s.db.Where("id = ?", 2).First(&publishedArt).Error
 				assert.NoError(t, err)
 				assert.True(t, publishedArt.Ctime > 0)
 				assert.True(t, publishedArt.Utime > 0)
 				publishedArt.Ctime = 0
 				publishedArt.Utime = 0
-				assert.Equal(t, dao.PublishedArticle{
-					Article: dao.Article{
+				assert.Equal(t, article.PublishedArticleV1{
+					Article: article.Article{
 						Id:       2,
 						Status:   domain.ArticleStatusPublished.ToUint8(),
 						Title:    "新的标题",
@@ -168,8 +168,8 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 		{
 			name: "更新帖子，并且重新发表",
 			before: func(t *testing.T) {
-				art := dao.Article{
-					Id:       3,
+				art := article.Article{
+					Id:       4,
 					Title:    "我的标题",
 					Content:  "我的内容",
 					Ctime:    456,
@@ -179,19 +179,19 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 				}
 				err := s.db.Create(&art).Error
 				assert.NoError(t, err)
-				part := dao.PublishedArticle{Article: art}
+				part := article.PublishedArticleV1{Article: art}
 				err = s.db.Create(&part).Error
 				assert.NoError(t, err)
 			},
 			after: func(t *testing.T) {
-				var art dao.Article
-				err := s.db.Where("id = ?", 3).First(&art).Error
+				var art article.Article
+				err := s.db.Where("id = ?", 4).First(&art).Error
 				assert.NoError(t, err)
 				// 更新时间变了
 				assert.True(t, art.Utime > 234)
 				art.Utime = 0
-				assert.Equal(t, dao.Article{
-					Id:       3,
+				assert.Equal(t, article.Article{
+					Id:       4,
 					Ctime:    456,
 					Status:   domain.ArticleStatusPublished.ToUint8(),
 					Title:    "新的标题",
@@ -199,16 +199,16 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 					AuthorId: 123,
 				}, art)
 
-				var publishedArt dao.PublishedArticle
+				var publishedArt article.PublishedArticleV1
 				err = s.db.Where("id = ?", 3).First(&publishedArt).Error
 				assert.NoError(t, err)
 				assert.True(t, publishedArt.Ctime > 0)
 				assert.True(t, publishedArt.Utime > 0)
 				publishedArt.Ctime = 0
 				publishedArt.Utime = 0
-				assert.Equal(t, dao.PublishedArticle{
-					Article: dao.Article{
-						Id:       3,
+				assert.Equal(t, article.PublishedArticleV1{
+					Article: article.Article{
+						Id:       4,
 						Status:   domain.ArticleStatusPublished.ToUint8(),
 						Title:    "新的标题",
 						Content:  "新的内容",
@@ -217,20 +217,20 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 				}, publishedArt)
 			},
 			req: Article{
-				Id:      3,
+				Id:      4,
 				Title:   "新的标题",
 				Content: "新的内容",
 			},
 			wantCode: 200,
 			wantResult: Result[int64]{
-				Data: 3,
+				Data: 4,
 				Msg:  "OK",
 			},
 		},
 		{
 			name: "更新别人的帖子，并且发表失败",
 			before: func(t *testing.T) {
-				art := dao.Article{
+				art := article.Article{
 					Id:      4,
 					Title:   "我的标题",
 					Content: "我的内容",
@@ -242,7 +242,7 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 				}
 				err := s.db.Create(&art).Error
 				assert.NoError(t, err)
-				part := dao.PublishedArticle{Article: dao.Article{
+				part := article.PublishedArticleV1{Article: article.Article{
 					Id:       4,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -256,7 +256,7 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 			},
 			after: func(t *testing.T) {
 				// 更新应该是失败了，数据没有发生变化
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("id = ?", 4).First(&art).Error
 				assert.NoError(t, err)
 				assert.Equal(t, "我的标题", art.Title)
@@ -266,7 +266,7 @@ func (s *ArticleHandlerSuite) TestArticle_Publish() {
 				assert.Equal(t, uint8(1), art.Status)
 				assert.Equal(t, int64(789), art.AuthorId)
 
-				var part dao.PublishedArticle
+				var part article.PublishedArticleV1
 				// 数据没有变化
 				err = s.db.Where("id = ?", 4).First(&part).Error
 				assert.NoError(t, err)
@@ -340,7 +340,7 @@ func (s *ArticleHandlerSuite) TestEdit() {
 			before: func(t *testing.T) {},
 			after: func(t *testing.T) {
 				// 你要验证，保存到了数据库里面
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("author_id=?", 123).
 					First(&art).Error
 				assert.NoError(t, err)
@@ -348,7 +348,7 @@ func (s *ArticleHandlerSuite) TestEdit() {
 				assert.True(t, art.Utime > 0)
 				art.Ctime = 0
 				art.Utime = 0
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       1,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -371,7 +371,7 @@ func (s *ArticleHandlerSuite) TestEdit() {
 			name: "修改帖子",
 			before: func(t *testing.T) {
 				// 假装数据库已经有这个帖子
-				err := s.db.Create(&dao.Article{
+				err := s.db.Create(&article.Article{
 					Id:       11,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -385,13 +385,13 @@ func (s *ArticleHandlerSuite) TestEdit() {
 			},
 			after: func(t *testing.T) {
 				// 你要验证，保存到了数据库里面
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("id=?", 11).
 					First(&art).Error
 				assert.NoError(t, err)
 				assert.True(t, art.Utime > 789)
 				art.Utime = 0
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       11,
 					Title:    "新的标题",
 					Content:  "新的内容",
@@ -417,7 +417,7 @@ func (s *ArticleHandlerSuite) TestEdit() {
 			name: "修改帖子-别人的帖子",
 			before: func(t *testing.T) {
 				// 假装数据库已经有这个帖子
-				err := s.db.Create(&dao.Article{
+				err := s.db.Create(&article.Article{
 					Id:      22,
 					Title:   "我的标题",
 					Content: "我的内容",
@@ -431,11 +431,11 @@ func (s *ArticleHandlerSuite) TestEdit() {
 			},
 			after: func(t *testing.T) {
 				// 你要验证，保存到了数据库里面
-				var art dao.Article
+				var art article.Article
 				err := s.db.Where("id=?", 22).
 					First(&art).Error
 				assert.NoError(t, err)
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       22,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -494,7 +494,7 @@ func (s *ArticleHandlerSuite) TestEdit() {
 func (s *ArticleHandlerSuite) TearDownTest() {
 	err := s.db.Exec("truncate table `articles`").Error
 	assert.NoError(s.T(), err)
-	err = s.db.Exec("truncate table `published_articles`").Error
+	err = s.db.Exec("truncate table `published_article_v1`").Error
 	assert.NoError(s.T(), err)
 }
 
