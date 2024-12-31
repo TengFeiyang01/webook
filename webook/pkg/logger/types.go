@@ -18,6 +18,7 @@ type LoggerV1 interface {
 	Info(msg string, args ...Field)
 	Warn(msg string, args ...Field)
 	Error(msg string, args ...Field)
+	With(args ...Field) LoggerV1
 }
 
 type Field struct {
@@ -40,4 +41,5 @@ type LoggerV2 interface {
 	Info(msg string, args ...any)
 	Warn(msg string, args ...any)
 	Error(msg string, args ...any)
+	With(args ...Field) LoggerV2
 }

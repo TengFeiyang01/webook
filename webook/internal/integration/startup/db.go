@@ -2,6 +2,10 @@ package startup
 
 import (
 	"database/sql"
+	"fmt"
+	"go.mongodb.org/mongo-driver/event"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/net/context"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -12,7 +16,7 @@ import (
 
 var db *gorm.DB
 
-func InitTestDB() *gorm.DB {
+func InitDB() *gorm.DB {
 	if db == nil {
 		dsn := "root:root@tcp(localhost:13316)/webook"
 		sqlDB, err := sql.Open("mysql", dsn)
@@ -38,4 +42,22 @@ func InitTestDB() *gorm.DB {
 		}
 	}
 	return db
+}
+func InitMongoDB() *mongo.Database {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	monitor := &event.CommandMonitor{
+		Started: func(ctx context.Context, evt *event.CommandStartedEvent) {
+			fmt.Println(evt.Command)
+		},
+	}
+	opts := options.Client().
+		ApplyURI("mongodb://root:example@localhost:27017/").
+		SetMonitor(monitor)
+	client, err := mongo.Connect(ctx, opts)
+	if err != nil {
+		panic(err)
+	}
+	return client.Database("webook")
 }

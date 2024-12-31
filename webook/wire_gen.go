@@ -9,9 +9,11 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"webook/webook/internal/repository"
+	article2 "webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache/code"
 	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
+	"webook/webook/internal/repository/dao/article"
 	"webook/webook/internal/service"
 	"webook/webook/internal/web"
 	"webook/webook/internal/web/jwt"
@@ -42,6 +44,10 @@ func InitWebUser() *gin.Engine {
 	wechatService := ioc.InitOAuth2WechatService(loggerV1)
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, wechatHandlerConfig, handler)
-	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler)
+	articleDAO := article.NewGORMArticleDAO(db)
+	articleRepository := article2.NewArticleRepository(articleDAO)
+	articleService := service.NewArticleService(articleRepository)
+	articleHandler := web.NewArticleHandler(articleService, loggerV1)
+	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
 	return engine
 }

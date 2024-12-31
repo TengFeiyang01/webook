@@ -20,6 +20,7 @@ import (
 	svcmocks "webook/webook/internal/service/mocks"
 	ijwt "webook/webook/internal/web/jwt"
 	jwtmocks "webook/webook/internal/web/jwt/mocks"
+	"webook/webook/pkg/ginx"
 )
 
 func TestEncrypt(t *testing.T) {
@@ -260,7 +261,7 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 
 		reqBody  string
 		wantCode int
-		wantBody Result
+		wantBody ginx.Result
 	}{
 		{
 			name: "验证码校验成功",
@@ -282,7 +283,7 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: Result{
+			wantBody: ginx.Result{
 				Code: http.StatusOK,
 				Msg:  "验证码校验成功",
 			},
@@ -303,7 +304,7 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: Result{
+			wantBody: ginx.Result{
 				Code: http.StatusBadRequest,
 				Msg:  "bind失败",
 			},
@@ -325,7 +326,7 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: Result{
+			wantBody: ginx.Result{
 				Code: http.StatusInternalServerError,
 				Msg:  "系统错误",
 			},
@@ -347,7 +348,7 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: Result{
+			wantBody: ginx.Result{
 				Code: http.StatusUnauthorized,
 				Msg:  "验证码不正确",
 			},
@@ -370,7 +371,7 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 	"code": "123456"
 }
 `,
-			wantBody: Result{
+			wantBody: ginx.Result{
 				Code: http.StatusInternalServerError,
 				Msg:  "系统错误",
 			},
@@ -393,7 +394,7 @@ func TestUserHandler_LoginSMS(t *testing.T) {
 
 			server.ServeHTTP(resp, req)
 			assert.Equal(t, tc.wantCode, resp.Code)
-			var res Result
+			var res ginx.Result
 			err = json.NewDecoder(resp.Body).Decode(&res)
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantBody, res)

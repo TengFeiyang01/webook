@@ -12,7 +12,8 @@ import (
 )
 
 func main() {
-	initViperV1()
+	initViper()
+	//initViperV1()
 	//initViperReader()
 	//initViperRemote()
 	//initViperWatch()

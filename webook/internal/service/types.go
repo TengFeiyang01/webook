@@ -27,4 +27,7 @@ type UserService interface {
 
 type ArticleService interface {
 	Save(ctx context.Context, art domain.Article) (int64, error)
+	WithDraw(ctx context.Context, art domain.Article) error
+	Publish(ctx context.Context, art domain.Article) (int64, error)
+	PublishV1(ctx context.Context, art domain.Article) (int64, error)
 }

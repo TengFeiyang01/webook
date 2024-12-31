@@ -6,9 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"webook/webook/internal/repository"
+	"webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache/code"
 	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
+	artdao "webook/webook/internal/repository/dao/article"
 	"webook/webook/internal/service"
 	"webook/webook/internal/web"
 	ijwt "webook/webook/internal/web/jwt"
@@ -30,11 +32,11 @@ func InitWebServer() *gin.Engine {
 		userSvcProvider,
 		// cache 部分
 		code.NewRedisCodeCache,
-		dao.NewGORMArticleDAO,
+		artdao.NewGORMArticleDAO,
 
 		// repository 部分
 		repository.NewCodeRepository,
-		repository.NewArticleRepository,
+		article.NewArticleRepository,
 
 		// Service 部分
 		ioc.InitSMSService,
@@ -56,11 +58,14 @@ func InitWebServer() *gin.Engine {
 	return gin.Default()
 }
 
-func InitArticleHandler() *web.ArticleHandler {
-	wire.Build(thirdPartySet,
+func InitArticleHandler(d artdao.ArticleDAO) *web.ArticleHandler {
+	wire.Build(
+		thirdPartySet,
+		//userSvcProvider,
 		service.NewArticleService,
 		web.NewArticleHandler,
-		repository.NewArticleRepository,
-		dao.NewGORMArticleDAO)
+		article.NewArticleRepository,
+		//artdao.NewMongoDBArticleDAO,
+	)
 	return &web.ArticleHandler{}
 }

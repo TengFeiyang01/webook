@@ -6,6 +6,12 @@ type ZapLogger struct {
 	l *zap.Logger
 }
 
+func (z *ZapLogger) With(args ...Field) LoggerV1 {
+	return &ZapLogger{
+		l: z.l.With(z.toZapFields(args)...),
+	}
+}
+
 func NewZapLogger(l *zap.Logger) LoggerV1 {
 	return &ZapLogger{
 		l: l,

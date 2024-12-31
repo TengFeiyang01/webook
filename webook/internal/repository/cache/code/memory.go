@@ -4,57 +4,86 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	memcache "github.com/patrickmn/go-cache"
+	lru "github.com/hashicorp/golang-lru"
+	"sync"
 	"time"
 	"webook/webook/internal/repository/cache"
 )
 
-const expiration = 10 * time.Minute
+var ErrKeyNotExist = errors.New("key not exist")
 
-type MemoryCodeCache struct {
-	cache *memcache.Cache
+type LocalCodeCache struct {
+	lock       sync.Mutex
+	cache      *lru.Cache
+	rwLock     sync.RWMutex
+	expiration time.Duration
 }
 
-func NewMemoryCodeCache() cache.CodeCache {
-	return &MemoryCodeCache{
-		cache: memcache.New(expiration, expiration),
+func NewLocalCodeCache(c *lru.Cache, expiration time.Duration) cache.CodeCache {
+	return &LocalCodeCache{
+		cache:      c,
+		expiration: expiration,
 	}
 }
 
-func (mc *MemoryCodeCache) Set(ctx context.Context, biz, phone, code string) error {
-	_ = ctx
-	_, t, ok := mc.cache.GetWithExpiration(mc.key(biz, phone))
-	if ok && time.Now().After(t) {
-		return errors.New("系统错误")
-	}
-	if !ok || t.Sub(time.Now()) < time.Minute*9 {
-		mc.cache.Set(mc.key(biz, phone), code, expiration)
-		mc.cache.Set(mc.cntKey(biz, phone), 3, expiration)
+type codeItem struct {
+	code   string
+	cnt    int
+	expire time.Time
+}
+
+func (l *LocalCodeCache) Set(ctx context.Context, biz, phone, code string) error {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	key := l.key(biz, phone)
+	now := time.Now()
+	val, ok := l.cache.Get(key)
+	if !ok {
+		l.cache.Add(key, codeItem{
+			code:   code,
+			cnt:    3,
+			expire: now.Add(l.expiration),
+		})
 		return nil
 	}
-	return ErrCodeSendTooMany
+	item, ok := val.(codeItem)
+	if !ok {
+		return errors.New("系统错误")
+	}
+	if item.expire.Sub(now) > time.Minute*9 {
+		return ErrCodeSendTooMany
+	}
+	l.cache.Add(key, codeItem{
+		code:   code,
+		cnt:    3,
+		expire: now.Add(l.expiration),
+	})
+	return nil
 }
 
-func (mc *MemoryCodeCache) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
-	_ = ctx
-	cntKey := mc.cntKey(biz, phone)
-	cnt, ok := mc.cache.Get(cntKey)
-	if !ok || cnt.(int) <= 0 {
+func (l *LocalCodeCache) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	key := l.key(biz, phone)
+	val, ok := l.cache.Get(key)
+	if !ok {
+		return false, ErrKeyNotExist
+	}
+	item, ok := val.(codeItem)
+	if !ok {
+		return false, errors.New("系统错误")
+	}
+	if item.cnt <= 0 {
 		return false, ErrCodeVerifyTooManyTimes
 	}
-	code, _ := mc.cache.Get(mc.key(biz, phone))
-	if inputCode == code {
-		return true, nil
-	} else {
-		_, err := mc.cache.DecrementInt(mc.key(biz, phone), 1)
-		return false, err
-	}
+	item.cnt--
+	return item.code == inputCode, nil
 }
 
-func (mc *MemoryCodeCache) key(biz, phone string) string {
+func (l *LocalCodeCache) key(biz, phone string) string {
 	return fmt.Sprintf("phone_code:%s:%s", biz, phone)
 }
 
-func (mc *MemoryCodeCache) cntKey(biz, phone string) string {
+func (l *LocalCodeCache) cntKey(biz, phone string) string {
 	return fmt.Sprintf("phone_code:%s:%s:cnt", biz, phone)
 }

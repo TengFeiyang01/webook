@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+type UserDAO interface {
+	FindByEmail(ctx context.Context, email string) (User, error)
+	FindByPhone(ctx context.Context, phone string) (User, error)
+	Insert(ctx context.Context, u User) error
+	FindById(ctx context.Context, id int64) (User, error)
+	UpdateById(ctx context.Context, entity User) error
+	FindByWechat(ctx context.Context, openID string) (User, error)
+}
+
 var (
 	ErrUserDuplicate = errors.New("邮箱冲突")
 	ErrUserNotFound  = gorm.ErrRecordNotFound
@@ -64,7 +73,7 @@ func (dao *GORMUserDAO) FindByWechat(ctx context.Context, openID string) (User, 
 
 func (dao *GORMUserDAO) UpdateById(ctx context.Context, entity User) error {
 	// 这种写法依赖于 GORM 的零值和主键更新特性
-	// Update 非零值 WHERE id = ?
+	// UpdateById 非零值 WHERE id = ?
 	//return dao.db.WithContext(ctx).Updates(&entity).Error
 	return dao.db.WithContext(ctx).Model(&entity).Where("id = ?", entity.ID).
 		Updates(map[string]any{
@@ -84,9 +93,9 @@ type User struct {
 	// 唯一索引允许有多个空值
 	// 但是不能有多个 ""
 	Phone    sql.NullString `gorm:"unique"`
-	NickName string
-	BirthDay time.Time `gorm:"default:null"`
-	AboutMe  string
+	NickName string         `gorm:"type=varchar(128)"`
+	BirthDay time.Time      `gorm:"default:null"`
+	AboutMe  string         `gorm:"type=varchar(4096)"`
 
 	// 微信的字段
 	WechatUnionID sql.NullString

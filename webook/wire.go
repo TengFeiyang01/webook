@@ -6,9 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"webook/webook/internal/repository"
+	artrepo "webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache/code"
 	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
+	"webook/webook/internal/repository/dao/article"
 	"webook/webook/internal/service"
 	"webook/webook/internal/web"
 	ijwt "webook/webook/internal/web/jwt"
@@ -26,12 +28,13 @@ func InitWebUser() *gin.Engine {
 
 		// 初始化 cache
 		user.NewRedisUserCache,
-		//cache.NewMemoryCodeCache,
+		//cache.NewLocalCodeCache,
 		code.NewRedisCodeCache,
 
 		// 初始化 repository
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
+		artrepo.NewArticleRepository,
 
 		// 初始化 service
 		service.NewUserService,
@@ -43,6 +46,9 @@ func InitWebUser() *gin.Engine {
 
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
+		web.NewArticleHandler,
+		service.NewArticleService,
+		article.NewGORMArticleDAO,
 		ijwt.NewRedisJWT,
 
 		ioc.InitGinMiddlewares,

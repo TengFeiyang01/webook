@@ -2283,7 +2283,7 @@ zap的使用，一般**直接设置一个全局的 Logger**。
 
 ![image-20240924154957255](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241549528.png)
 
-## TDD 与编辑接口
+## 编辑接口
 
 TDD: **测试驱动开发。大明简洁版定义: 先写测试、再写实现。** 
 
@@ -2326,8 +2326,13 @@ func (h *ArticleHandle) RegisterRoutes(server *gin.Engine) {
 
 ![image-20240924170439930](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409241704254.png)
 
-```go
+![image-20240925130824494](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251308883.png)
 
+![image-20240925130852020](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251308037.png)
+
+![image-20240925131320092](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251313050.png)
+
+```go
 // ArticleTestSuite 测试套件
 type ArticleTestSuite struct {
 	suite.Suite
@@ -2432,3 +2437,494 @@ func (s *ArticleTestSuite) TestEdit() {
 }
 ```
 
+## 发表文章
+
+**发表文章接口，我们使用单元测试TDD。** 
+
+![image-20240925143852501](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251438435.png)
+
+### Web层测试
+
+```go
+func TestArticleHandler_Publish(t *testing.T) {
+
+	testCases := []struct {
+		name string
+
+		mock func(ctrl *gomock.Controller) service.ArticleService
+
+		reqBody string
+
+		wantCode int
+		wantRes  Result
+	}{
+		{
+			name: "新建并发表",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				return svc
+			},
+			reqBody: `
+{
+	"title":"my title",
+	"content":"my content"
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result{
+				Data: float64(1),
+				Msg:  "OK",
+			},
+		},
+		{
+			name: "已有帖子且发表成功",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Id:      1,
+					Title:   "new title",
+					Content: "new content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				return svc
+			},
+			reqBody: `
+{
+	"id":1,
+	"title":"new title",
+	"content":"new content"
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result{
+				Data: float64(1),
+				Msg:  "OK",
+			},
+		},
+		{
+			name: "publish失败",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(0), errors.New("publish failed"))
+				return svc
+			},
+			reqBody: `
+{
+	"title":"my title",
+	"content":"my content"
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result{
+				Code: 5,
+				Msg:  "系统错误",
+			},
+		},
+		{
+			name: "输入有误、Bind返回错误",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				return svc
+			},
+			reqBody: `
+{
+	"title":"my title",
+	"content":"my con
+}
+`,
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name: "找不到User",
+			mock: func(ctrl *gomock.Controller) service.ArticleService {
+				svc := svcmocks.NewMockArticleService(ctrl)
+				svc.EXPECT().Publish(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(0), gorm.ErrRecordNotFound)
+				return svc
+			},
+			reqBody: `
+{
+	"title":"my title",
+	"content":"my content"
+}
+`,
+			wantCode: http.StatusOK,
+			wantRes: Result{
+				Code: http.StatusUnauthorized,
+				Msg:  "找不到用户",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			server := gin.Default()
+			server.Use(func(ctx *gin.Context) {
+				ctx.Set("claims", &ijwt.UserClaims{
+					Uid: 123,
+				})
+			})
+			h := NewArticleHandler(tc.mock(ctrl), &logger.NopLogger{})
+			h.RegisterRoutes(server)
+
+			req, err := http.NewRequest(http.MethodPost, "/articles/publish", bytes.NewBuffer([]byte(tc.reqBody)))
+
+			// 这里就可以继续使用 req 了
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+			resp := httptest.NewRecorder()
+			server.ServeHTTP(resp, req)
+			assert.Equal(t, tc.wantCode, resp.Code)
+			if resp.Code != http.StatusOK {
+				return
+			}
+			var webRes Result
+			err = json.NewDecoder(resp.Body).Decode(&webRes)
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantRes, webRes)
+		})
+	}
+}
+```
+
+### Service层测试
+
+![image-20240925144046474](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251440460.png)
+
+![image-20240925144909436](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251449626.png)
+
+![image-20240925152755408](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251527661.png)
+
+```go
+func Test_articleService_Publish(t *testing.T) {
+	testCases := []struct {
+		name string
+
+		mock func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+			article.ArticleReaderRepository)
+
+		art domain.Article
+
+		wantErr error
+		wantId  int64
+	}{
+		{
+			name: "新建发表成功",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artmocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Create(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				reader := artmocks.NewMockArticleReaderRepository(ctrl)
+				reader.EXPECT().Save(gomock.Any(), domain.Article{
+					Id:      1,
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				return author, reader
+			},
+
+			art: domain.Article{
+				Title:   "my title",
+				Content: "my content",
+				Author: domain.Author{
+					Id: 123,
+				},
+			},
+			wantId:  1,
+			wantErr: nil,
+		},
+		{
+			name: "修改并发表成功",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artmocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Update(gomock.Any(), domain.Article{
+					Id:      2,
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(nil)
+				reader := artmocks.NewMockArticleReaderRepository(ctrl)
+				reader.EXPECT().Save(gomock.Any(), domain.Article{
+					Id:      2,
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(2), nil)
+				return author, reader
+			},
+
+			art: domain.Article{
+				Id:      2,
+				Title:   "my title",
+				Content: "my content",
+				Author: domain.Author{
+					Id: 123,
+				},
+			},
+			wantId: 2,
+		},
+		{
+			name: "保存到制作库失败",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artmocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Create(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(0), errors.New("mock error"))
+				reader := artmocks.NewMockArticleReaderRepository(ctrl)
+				return author, reader
+			},
+
+			art: domain.Article{
+				Title:   "my title",
+				Content: "my content",
+				Author: domain.Author{
+					Id: 123,
+				},
+			},
+			wantId:  0,
+			wantErr: errors.New("mock error"),
+		},
+		{
+			// 部分失败
+			name: "保存到制作库成功，但是保存到线上库失败",
+			mock: func(ctrl *gomock.Controller) (article.ArticleAuthorRepository,
+				article.ArticleReaderRepository) {
+				author := artmocks.NewMockArticleAuthorRepository(ctrl)
+				author.EXPECT().Create(gomock.Any(), domain.Article{
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(1), nil)
+				reader := artmocks.NewMockArticleReaderRepository(ctrl)
+				reader.EXPECT().Save(gomock.Any(), domain.Article{
+					Id:      1,
+					Title:   "my title",
+					Content: "my content",
+					Author: domain.Author{
+						Id: 123,
+					},
+				}).Return(int64(0), errors.New("mock error"))
+				return author, reader
+			},
+
+			art: domain.Article{
+				Title:   "my title",
+				Content: "my content",
+				Author: domain.Author{
+					Id: 123,
+				},
+			},
+			wantId:  0,
+			wantErr: errors.New("mock error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			author, reader := tc.mock(ctrl)
+			svc := NewArticleServiceV1(author, reader)
+			id, err := svc.PublishV1(context.Background(), tc.art)
+			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantId, id)
+		})
+	}
+}
+```
+
+![image-20240925155406697](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251554958.png)
+
+#### 部分失败问题
+
+在这一个简单的实现里面，出现了一个部分失败的场景：**数据保存到制作库成功，但是保存到线上库失败了。** 
+
+那么，**这里为什么不直接开启事务呢?确保制作库和线上库，要么全部成功，要么全部失败。
+
+![image-20240925160046557](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251600769.png)
+
+ ![image-20240925160207438](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251602894.png)
+
+### Repository 层实现
+
+![image-20240926093010942](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409260930822.png)
+
+![image-20240926093045316](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409260930441.png)
+
+![image-20240926094230402](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409260942806.png)
+
+### DAO 层实现
+
+![image-20240926095143932](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409260951991.png)
+
+![image-20240926101347409](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261013579.png)
+
+![image-20240926101632143](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261016579.png)
+
+![image-20240926101725027](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261017282.png)
+
+![image-20240926102851057](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261028096.png)
+
+## 维护状态
+
+### 状态图
+
+![image-20240926160955535](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261609704.png)
+
+### 状态定义
+
+> 一般定义常量，最好不要把零值做成有意义的值
+
+```go
+
+const (
+	// ArticleStatusUnknown 为了避免零值之类的问题
+	ArticleStatusUnknown ArticleStatus = iota
+	ArticleStatusUnPublished
+	ArticleStatusPublished
+	ArticleStatusPrivate
+)
+```
+
+### 状态流转
+
+![image-20240926163028118](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261630335.png)
+
+![image-20240927103210140](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032442.png)
+
+![](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032442.png)
+
+![image-20240927103245248](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032631.png)
+
+![image-20240927103256243](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032290.png)
+
+## MongoDB
+
+![image-20240927110341490](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271103480.png)
+
+![image-20240927130252488](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271302637.png)
+
+![image-20240927130707106](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271307492.png)
+
+![image-20240927134318912](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271343950.png)
+
+![image-20240927134330633](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271343842.png)
+
+![image-20240927134349002](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271343101.png)
+
+![image-20240927134359774](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271344143.png)
+
+> MongoDB 在存储的时候，就是利用 BSON 将一个结构体转化为字节流，而后存储下来
+
+![image-20240927135730889](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271357027.png)
+
+![image-20240927145723215](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271457339.png)
+
+![image-20240927145747555](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271457630.png)
+
+![image-20240927145810989](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271458984.png)
+
+![image-20240927145822155](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271458331.png)
+
+![image-20240927145646598](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271456648.png)
+
+### DAO 抽象
+
+![image-20240927154300249](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271543317.png)
+
+![image-20240927164342150](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271643430.png)
+
+![image-20240927164356114](C:/Users/ytf/AppData/Roaming/Typora/typora-user-images/image-20240927164356114.png)
+
+![image-20240927164407448](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271644387.png)
+
+![image-20240927164419919](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271644093.png)
+
+![image-20240929100822929](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291008070.png)
+
+![image-20240929100836278](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291008257.png)
+
+![image-20240929100845729](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291008902.png)
+
+![image-20240929100856769](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291009529.png)
+
+### 发布接口重构
+
+![image-20240929100934226](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291009535.png)
+
+# 利用OSS来存储数据
+
+![image-20240929101945124](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291019028.png)
+
+## OSS入门
+
+![image-20240929102442763](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291024702.png)
+
+![image-20240929102812219](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291028165.png)
+
+![image-20240929103027601](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291030767.png)
+
+## S3 API 入门
+
+![image-20240929103124701](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291031695.png)
+
+![image-20240929103138352](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291031569.png)
+
+![image-20240929104805388](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291048394.png)
+
+![image-20240929104836033](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049403.png)
+
+![image-20240929104854362](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049086.png)
+
+![image-20240929104910219](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049374.png)![image-20240929104918563](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049665.png)
+
+## 总结
+
+![image-20240929111614793](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291116979.png)
+
+![image-20240929111712853](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291117883.png)
+
+![image-20240929111545509](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291115231.png)
