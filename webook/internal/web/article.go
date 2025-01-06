@@ -45,7 +45,25 @@ func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 
 	pub := g.Group("/pub")
 	pub.GET("/:id", ginx.WrapToken[ijwt.UserClaims](h.PubDetail))
+	// 点赞和取消点赞都复用这个接口
+	pub.POST("/like", ginx.WrapBodyAndToken[LikeReq, ijwt.UserClaims](h.Like))
+}
 
+func (h *ArticleHandler) Like(ctx *gin.Context, req LikeReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	var err error
+	if req.Like {
+		err = h.interSvc.Like(ctx, h.biz, req.Id, uc.Uid)
+	} else {
+		err = h.interSvc.CancelLike(ctx, h.biz, req.Id, uc.Uid)
+	}
+
+	if err != nil {
+		return ginx.Result{
+			Code: http.StatusInternalServerError,
+			Msg:  "system error",
+		}, err
+	}
+	return ginx.Result{Msg: "OK"}, nil
 }
 
 func (h *ArticleHandler) WithDraw(ctx *gin.Context) {

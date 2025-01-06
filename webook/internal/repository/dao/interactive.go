@@ -79,8 +79,12 @@ func (dao *GORMInteractiveDAO) InsertCollectionBiz(ctx context.Context,
 
 func (dao *GORMInteractiveDAO) InsertLikeInfo(ctx context.Context,
 	biz string, id int64, uid int64) error {
+	// 同时记录点赞, 以及更新点赞计数
+	// 需要一张表, 来记录谁给什么资源点赞了
 	now := time.Now().UnixMilli()
 	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 先准备插入点赞记录
+		// 有没有可能已经点赞过了
 		err := tx.Clauses(clause.OnConflict{
 			DoUpdates: clause.Assignments(map[string]interface{}{
 				"utime":  now,
@@ -117,7 +121,7 @@ func (dao *GORMInteractiveDAO) DeleteLikeInfo(ctx context.Context,
 	now := time.Now().UnixMilli()
 	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		err := tx.Model(&UserLikeBiz{}).
-			Where("uid=? AND biz_id = ? AND biz=?", uid, id, biz).
+			Where("uid = ? AND biz_id = ? AND biz=?", uid, id, biz).
 			Updates(map[string]interface{}{
 				"utime":  now,
 				"status": 0,
@@ -126,7 +130,7 @@ func (dao *GORMInteractiveDAO) DeleteLikeInfo(ctx context.Context,
 			return err
 		}
 		return tx.Model(&Interactive{}).
-			Where("biz =? AND biz_id=?", biz, id).
+			Where("biz = ? AND biz_id= ?", biz, id).
 			Updates(map[string]interface{}{
 				"like_cnt": gorm.Expr("`like_cnt` - 1"),
 				"utime":    now,
@@ -177,6 +181,18 @@ type UserCollectionBiz struct {
 	Ctime int64
 }
 
+// Interactive 正常来说,一张主表和与他有关联关系的表会共用同一个DAO
+// 因此我们用一个 DAO 来操作
+// 查找点赞数量前 100 的
+// SELECT biz, biz_id, COUNT(*) AS cnt FROM `interactive`
+// GROUP BY biz, biz_id
+// ORDER BY cnt LIMIT 100;
+// 实时查找, 性能自查, 上面这个语句, 就是全表扫描
+// 高性能, 我不要求准确性
+// 面试标准答案: ZSET(大数据性能差)
+// 1. 定时计算
+// 1.1 定时计算 + 本地缓存
+// 2. 优化版本的 ZSET, 定时筛选 + 实时 ZSET 计算
 type Interactive struct {
 	Id int64 `gorm:"primaryKey,autoIncrement"`
 	// <bizid, biz>

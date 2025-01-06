@@ -2990,3 +2990,70 @@ ye![image-20250102153028189](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture
 #### 淘汰策略
 
 ![image-20250102163857005](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021638493.png)
+
+# 阅读、点赞和收藏
+
+## 需求分析
+
+![image-20250106092500792](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501060925977.png)
+
+![image-20250106092846054](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501060928245.png)
+
+### 拆分还是合并
+
+![image-20250106093129053](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501060931991.png)
+
+## 阅读计数
+
+![image-20250106093506493](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501060935607.png)
+
+### IncrReadCnt实现 
+
+![](C:/Users/ytf/AppData/Roaming/Typora/typora-user-images/image-20250106100214718.png)
+
+#### 数据库操作
+
+![image-20250106103430275](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061034508.png)
+
+#### 表结构设计
+
+![image-20250106103450399](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061034392.png)
+
+### IncrReadCnt中的缓存问题
+
+![image-20250106103900675](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061039678.png)
+
+#### 缓存实现
+
+![image-20250106103924421](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061039572.png)
+
+#### lua 脚本执行 read_cnt 自增
+
+![image-20250106104803280](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061048385.png)
+
+## 点赞的设计与实现
+
+![image-20250106111326218](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061113349.png)
+
+![image-20250106151956308](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061519106.png)
+
+![image-20250106152013021](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061520176.png)
+
+![image-20250106152034051](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061520236.png)
+
+![image-20250106152042938](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061520854.png)
+
+![image-20250106152053971](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501061520536.png)
+
+### 面试要点
+
+**问题：** **查找点赞数量前 100 的** 
+
+**标准答案：ZSET(存在性能问题)** 
+
+> ```
+> 1. 定时计算
+> 1.1 定时计算 + 本地缓存
+> 2. 优化版本的 ZSET, 定时筛选 + 实时 ZSET 计算
+> ```
+
