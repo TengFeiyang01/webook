@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"webook/webook/internal/repository"
 	article2 "webook/webook/internal/repository/article"
-	"webook/webook/internal/repository/cache/code"
+	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/repository/dao/article"
@@ -36,7 +36,7 @@ func InitWebUser() *gin.Engine {
 	userCache := user.NewRedisUserCache(cmdable)
 	userRepository := repository.NewUserRepository(userDAO, userCache)
 	userService := service.NewUserService(userRepository, loggerV1)
-	codeCache := code.NewRedisCodeCache(cmdable)
+	codeCache := cache.NewRedisCodeCache(cmdable)
 	codeRepository := repository.NewCodeRepository(codeCache)
 	smsService := ioc.InitSMSService(cmdable)
 	codeService := service.NewCodeService(codeRepository, smsService)
@@ -45,7 +45,7 @@ func InitWebUser() *gin.Engine {
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, wechatHandlerConfig, handler)
 	articleDAO := article.NewGORMArticleDAO(db)
-	articleRepository := article2.NewArticleRepository(articleDAO)
+	articleRepository := article2.NewCachedArticleRepository(articleDAO)
 	articleService := service.NewArticleService(articleRepository)
 	articleHandler := web.NewArticleHandler(articleService, loggerV1)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)

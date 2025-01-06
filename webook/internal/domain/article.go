@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type ArticleStatus uint8
 
 const (
@@ -18,6 +20,17 @@ type Article struct {
 	Content string        `json:"content" json:"content,omitempty"`
 	Author  Author        `json:"author" json:"author"`
 	Status  ArticleStatus `json:"status" json:"status"`
+	Ctime   time.Time     `json:"ctime,omitempty"`
+	Utime   time.Time     `json:"utime,omitempty"`
+}
+
+func (a Article) Abstract() string {
+	// 摘要我们取前几句。
+	cs := []rune(a.Content)
+	if len(cs) < 100 {
+		return a.Content
+	}
+	return a.Content[:100]
 }
 
 func (s ArticleStatus) ToUint8() uint8 {

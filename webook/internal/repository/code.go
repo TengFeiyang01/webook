@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/cache/code"
 )
 
 // CodeRepository Code相关的功能
@@ -13,8 +12,8 @@ type CodeRepository interface {
 }
 
 var (
-	ErrCodeSendTooMany        = code.ErrCodeSendTooMany
-	ErrCodeVerifyTooManyTimes = code.ErrCodeVerifyTooManyTimes
+	ErrCodeSendTooMany        = cache.ErrCodeSendTooMany
+	ErrCodeVerifyTooManyTimes = cache.ErrCodeVerifyTooManyTimes
 )
 
 type CachedCodeRepository struct {

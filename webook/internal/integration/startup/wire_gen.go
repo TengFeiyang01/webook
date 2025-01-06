@@ -11,7 +11,7 @@ import (
 	"github.com/google/wire"
 	"webook/webook/internal/repository"
 	article2 "webook/webook/internal/repository/article"
-	"webook/webook/internal/repository/cache/code"
+	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/repository/dao/article"
@@ -33,28 +33,52 @@ func InitWebServer() *gin.Engine {
 	userCache := user.NewRedisUserCache(cmdable)
 	userRepository := repository.NewUserRepository(userDAO, userCache)
 	userService := service.NewUserService(userRepository, loggerV1)
-	codeCache := code.NewRedisCodeCache(cmdable)
+	codeCache := cache.NewRedisCodeCache(cmdable)
 	codeRepository := repository.NewCodeRepository(codeCache)
 	smsService := ioc.InitSMSService(cmdable)
 	codeService := service.NewCodeService(codeRepository, smsService)
-	userHandler := web.NewUserHandler(userService, codeService, cmdable, handler)
+	userHandler := web.NewUserHandler(userService, codeService, cmdable, handler, loggerV1)
 	wechatService := InitWechatService(loggerV1)
 	wechatHandlerConfig := InitWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, wechatHandlerConfig, handler)
 	articleDAO := article.NewGORMArticleDAO(gormDB)
-	articleRepository := article2.NewArticleRepository(articleDAO)
+	articleCache := cache.NewArticleCache(cmdable)
+	articleRepository := article2.NewCachedArticleRepository(articleDAO, loggerV1, userDAO, articleCache)
 	articleService := service.NewArticleService(articleRepository)
-	articleHandler := web.NewArticleHandler(articleService, loggerV1)
+	interactiveDAO := dao.NewGORMInteractiveDAO(gormDB)
+	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
+	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
+	interactiveService := service.NewInteractiveService(interactiveRepository)
+	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
 	return engine
 }
 
-func InitArticleHandler(d article.ArticleDAO) *web.ArticleHandler {
-	articleRepository := article2.NewArticleRepository(d)
-	articleService := service.NewArticleService(articleRepository)
+func InitArticleHandler(dao2 article.ArticleDAO) *web.ArticleHandler {
 	loggerV1 := InitLogger()
-	articleHandler := web.NewArticleHandler(articleService, loggerV1)
+	gormDB := ioc.InitDB(loggerV1)
+	userDAO := dao.NewUserDAO(gormDB)
+	cmdable := ioc.InitRedis()
+	articleCache := cache.NewArticleCache(cmdable)
+	articleRepository := article2.NewCachedArticleRepository(dao2, loggerV1, userDAO, articleCache)
+	articleService := service.NewArticleService(articleRepository)
+	interactiveDAO := dao.NewGORMInteractiveDAO(gormDB)
+	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
+	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
+	interactiveService := service.NewInteractiveService(interactiveRepository)
+	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
 	return articleHandler
+}
+
+func InitInteractiveService() service.InteractiveService {
+	loggerV1 := InitLogger()
+	gormDB := ioc.InitDB(loggerV1)
+	interactiveDAO := dao.NewGORMInteractiveDAO(gormDB)
+	cmdable := ioc.InitRedis()
+	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
+	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
+	interactiveService := service.NewInteractiveService(interactiveRepository)
+	return interactiveService
 }
 
 // wire.go:
@@ -62,3 +86,7 @@ func InitArticleHandler(d article.ArticleDAO) *web.ArticleHandler {
 var thirdPartySet = wire.NewSet(ioc.InitRedis, ioc.InitDB, InitLogger)
 
 var userSvcProvider = wire.NewSet(dao.NewUserDAO, user.NewRedisUserCache, repository.NewUserRepository, service.NewUserService)
+
+var articlSvcProvider = wire.NewSet(article2.NewCachedArticleRepository, cache.NewArticleCache, article.NewGORMArticleDAO, service.NewArticleService)
+
+var interactiveSvcSet = wire.NewSet(dao.NewGORMInteractiveDAO, service.NewInteractiveService, cache.NewInteractiveRedisCache, repository.NewCachedInteractiveRepository)

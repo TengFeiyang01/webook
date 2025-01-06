@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository/article"
 	"webook/webook/pkg/logger"
@@ -15,6 +16,18 @@ type articleService struct {
 	reader article.ArticleReaderRepository
 
 	l logger.LoggerV1
+}
+
+func (svc *articleService) GetPublishedById(ctx *gin.Context, id int64) (domain.Article, error) {
+	return svc.repo.GetPublishedById(ctx, id)
+}
+
+func (svc *articleService) GetById(ctx context.Context, id int64) (domain.Article, error) {
+	return svc.repo.GetByID(ctx, id)
+}
+
+func (svc *articleService) List(ctx context.Context, id int64, offset int, limit int) ([]domain.Article, error) {
+	return svc.repo.List(ctx, id, offset, limit)
 }
 
 func (svc *articleService) WithDraw(ctx context.Context, art domain.Article) error {

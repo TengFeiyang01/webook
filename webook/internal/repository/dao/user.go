@@ -19,8 +19,8 @@ type UserDAO interface {
 }
 
 var (
-	ErrUserDuplicate = errors.New("邮箱冲突")
-	ErrUserNotFound  = gorm.ErrRecordNotFound
+	ErrUserDuplicate  = errors.New("邮箱冲突")
+	ErrRecordNotFound = gorm.ErrRecordNotFound
 )
 
 type GORMUserDAO struct {

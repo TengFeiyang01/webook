@@ -2437,13 +2437,13 @@ func (s *ArticleTestSuite) TestEdit() {
 }
 ```
 
-## 发表文章
+## 发表接口
 
 **发表文章接口，我们使用单元测试TDD。** 
 
 ![image-20240925143852501](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409251438435.png)
 
-### Web层测试
+### Web层
 
 ```go
 func TestArticleHandler_Publish(t *testing.T) {
@@ -2808,13 +2808,13 @@ func Test_articleService_Publish(t *testing.T) {
 
 ![image-20240926102851057](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261028096.png)
 
-## 维护状态
+### 维护状态
 
-### 状态图
+#### 状态图
 
 ![image-20240926160955535](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261609704.png)
 
-### 状态定义
+#### 状态定义
 
 > 一般定义常量，最好不要把零值做成有意义的值
 
@@ -2829,7 +2829,7 @@ const (
 )
 ```
 
-### 状态流转
+#### 状态流转
 
 ![image-20240926163028118](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409261630335.png)
 
@@ -2841,7 +2841,7 @@ const (
 
 ![image-20240927103256243](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271032290.png)
 
-## MongoDB
+### MongoDB
 
 ![image-20240927110341490](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271103480.png)
 
@@ -2871,7 +2871,7 @@ const (
 
 ![image-20240927145646598](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271456648.png)
 
-### DAO 抽象
+#### DAO 抽象
 
 ![image-20240927154300249](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409271543317.png)
 
@@ -2891,15 +2891,15 @@ const (
 
 ![image-20240929100856769](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291009529.png)
 
-### 发布接口重构
+#### 发布接口重构
 
 ![image-20240929100934226](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291009535.png)
 
-# 利用OSS来存储数据
+### 利用OSS来存储数据
 
 ![image-20240929101945124](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291019028.png)
 
-## OSS入门
+#### OSS入门
 
 ![image-20240929102442763](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291024702.png)
 
@@ -2907,7 +2907,7 @@ const (
 
 ![image-20240929103027601](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291030767.png)
 
-## S3 API 入门
+#### S3 API 入门
 
 ![image-20240929103124701](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291031695.png)
 
@@ -2921,10 +2921,72 @@ const (
 
 ![image-20240929104910219](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049374.png)![image-20240929104918563](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291049665.png)
 
-## 总结
+### 总结
 
 ![image-20240929111614793](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291116979.png)
 
 ![image-20240929111712853](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291117883.png)
 
 ![image-20240929111545509](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409291115231.png)
+
+## 查询接口
+
+![image-20241231172634234](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202412311726555.png)
+
+### 创作者的列表接口
+
+![image-20241231172715229](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202412311727296.png)
+
+![image-20241231173332250](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202412311733341.png)
+
+![image-20250102111657832](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021117333.png)
+
+#### 缓存设计
+
+![image-20250102143753720](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021437824.png)
+
+![image-20250102144947783](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021449960.png)
+
+#### 缓存实现
+
+![image-20250102145553101](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021455009.png)
+
+##### 更新/新增操作清理缓存
+
+![image-20250102145621908](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021456517.png)
+
+### 创作者查看文章详情接口
+
+![image-20250102151035019](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021510442.png)
+
+#### 缓存方案
+
+![image-20250102152801711](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021528189.png)
+
+ye![image-20250102153028189](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021530436.png)
+
+#### 业务相关的缓存预加载
+
+![image-20250102155208110](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021552489.png)
+
+![image-20250102155149162](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021551292.png)
+
+### 读者查询接口
+
+![image-20250102155959137](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021600218.png)
+
+#### 缓存方案
+
+![image-20250102162214492](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021622778.png)
+
+![image-20250102163255371](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021632531.png)
+
+###  面试要点
+
+#### 缓存过期时间设置
+
+![image-20250102163838789](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021638120.png)
+
+#### 淘汰策略
+
+![image-20250102163857005](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501021638493.png)

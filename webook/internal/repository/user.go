@@ -23,7 +23,7 @@ type UserRepository interface {
 
 var (
 	ErrUserDuplicate = dao.ErrUserDuplicate
-	ErrUserNotFound  = dao.ErrUserNotFound
+	ErrUserNotFound  = dao.ErrRecordNotFound
 )
 
 // CachedUserRepository 接收的都是接口
