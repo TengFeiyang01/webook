@@ -14,10 +14,38 @@ type ArticleDAO interface {
 	Sync(ctx context.Context, art Article) (int64, error)
 	Upsert(ctx context.Context, art PublishedArticleV1) error
 	SyncStatus(ctx context.Context, id int64, author int64, status uint8) error
+	GetByAuthor(ctx context.Context, author int64, offset int, limit int) ([]Article, error)
+	GetById(ctx context.Context, id int64) (Article, error)
+	GetPubById(ctx context.Context, id int64) (Article, error)
 }
 
 type GORMArticleDAO struct {
 	db *gorm.DB
+}
+
+func (dao *GORMArticleDAO) GetPubById(ctx context.Context, id int64) (Article, error) {
+	var art Article
+	err := dao.db.WithContext(ctx).First(&art, "id = ?", id).Error
+	return art, err
+}
+
+func (dao *GORMArticleDAO) GetById(ctx context.Context, id int64) (Article, error) {
+	var art Article
+	err := dao.db.WithContext(ctx).Where("id=?", id).First(&art).Error
+	return art, err
+}
+
+func (dao *GORMArticleDAO) GetByAuthor(ctx context.Context, author int64, offset int, limit int) ([]Article, error) {
+	var arts []Article
+	err := dao.db.WithContext(ctx).Model(&Article{}).
+		Where("author = ?", author).
+		Offset(offset).
+		Limit(limit).
+		// 升序老徐. utime ASC
+		Order("utime DESC").
+		//Order(clause.OrderByColumn{Column: clause.Column{Name: "utime"}, Desc: true}).
+		Find(&arts).Error
+	return arts, err
 }
 
 func (dao *GORMArticleDAO) SyncStatus(ctx context.Context, id int64, author int64, status uint8) error {
@@ -77,7 +105,7 @@ func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishedArticleV1) e
 	now := time.Now().UnixMilli()
 	art.Ctime = now
 	art.Utime = now
-	err := dao.db.Clauses(clause.OnConflict{
+	err := dao.db.WithContext(ctx).Clauses(clause.OnConflict{
 		DoUpdates: clause.Assignments(map[string]interface{}{
 			"title":   art.Title,
 			"content": art.Content,
@@ -120,7 +148,7 @@ func (dao *GORMArticleDAO) Insert(ctx context.Context, art Article) (int64, erro
 	now := time.Now().UnixMilli()
 	art.Ctime = now
 	art.Utime = now
-	err := dao.db.Create(&art).Error
+	err := dao.db.WithContext(ctx).Create(&art).Error
 	return art.Id, err
 }
 

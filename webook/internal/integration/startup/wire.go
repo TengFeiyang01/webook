@@ -7,7 +7,7 @@ import (
 	"github.com/google/wire"
 	"webook/webook/internal/repository"
 	"webook/webook/internal/repository/article"
-	"webook/webook/internal/repository/cache/code"
+	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 	artdao "webook/webook/internal/repository/dao/article"
@@ -26,46 +26,61 @@ var userSvcProvider = wire.NewSet(
 	repository.NewUserRepository,
 	service.NewUserService)
 
+var articlSvcProvider = wire.NewSet(
+	article.NewCachedArticleRepository,
+	cache.NewArticleCache,
+	artdao.NewGORMArticleDAO,
+	service.NewArticleService)
+
+var interactiveSvcSet = wire.NewSet(
+	dao.NewGORMInteractiveDAO,
+	service.NewInteractiveService,
+	cache.NewInteractiveRedisCache,
+	repository.NewCachedInteractiveRepository,
+)
+
 func InitWebServer() *gin.Engine {
 	wire.Build(
 		thirdPartySet,
 		userSvcProvider,
-		// cache 部分
-		code.NewRedisCodeCache,
+		cache.NewRedisCodeCache,
 		artdao.NewGORMArticleDAO,
-
-		// repository 部分
+		cache.NewArticleCache,
+		cache.NewInteractiveRedisCache,
 		repository.NewCodeRepository,
-		article.NewArticleRepository,
-
-		// Service 部分
+		repository.NewCachedInteractiveRepository,
+		article.NewCachedArticleRepository,
 		ioc.InitSMSService,
 		service.NewCodeService,
 		service.NewArticleService,
+		service.NewInteractiveService,
+		dao.NewGORMInteractiveDAO,
 		InitWechatService,
-
-		// handler 部分
 		web.NewArticleHandler,
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
 		InitWechatHandlerConfig,
 		ijwt.NewRedisJWT,
-
 		ioc.InitGinMiddlewares,
-
 		ioc.InitWebServer,
+		//InitInteractiveService,
 	)
 	return gin.Default()
 }
 
-func InitArticleHandler(d artdao.ArticleDAO) *web.ArticleHandler {
+func InitArticleHandler(dao artdao.ArticleDAO) *web.ArticleHandler {
 	wire.Build(
 		thirdPartySet,
-		//userSvcProvider,
+		userSvcProvider,
+		interactiveSvcSet,
+		cache.NewArticleCache,
+		article.NewCachedArticleRepository,
 		service.NewArticleService,
-		web.NewArticleHandler,
-		article.NewArticleRepository,
-		//artdao.NewMongoDBArticleDAO,
-	)
+		web.NewArticleHandler)
 	return &web.ArticleHandler{}
+}
+
+func InitInteractiveService() service.InteractiveService {
+	wire.Build(thirdPartySet, interactiveSvcSet)
+	return service.NewInteractiveService(nil)
 }

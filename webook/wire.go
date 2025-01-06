@@ -7,7 +7,7 @@ import (
 	"github.com/google/wire"
 	"webook/webook/internal/repository"
 	artrepo "webook/webook/internal/repository/article"
-	"webook/webook/internal/repository/cache/code"
+	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/repository/dao/article"
@@ -29,12 +29,12 @@ func InitWebUser() *gin.Engine {
 		// 初始化 cache
 		user.NewRedisUserCache,
 		//cache.NewLocalCodeCache,
-		code.NewRedisCodeCache,
+		cache.NewRedisCodeCache,
 
 		// 初始化 repository
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
-		artrepo.NewArticleRepository,
+		artrepo.NewCachedArticleRepository,
 
 		// 初始化 service
 		service.NewUserService,

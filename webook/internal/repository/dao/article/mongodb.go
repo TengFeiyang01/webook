@@ -65,9 +65,9 @@ func (m *MongoDBArticleDAO) GetById(ctx context.Context, id int64) (Article, err
 	return art, nil
 }
 
-func (m *MongoDBArticleDAO) GetPubById(ctx context.Context, id int64) (PublishedArticleV1, error) {
+func (m *MongoDBArticleDAO) GetPubById(ctx context.Context, id int64) (Article, error) {
 	filter := bson.D{bson.E{Key: "id", Value: id}}
-	var art PublishedArticleV1
+	var art Article
 	err := m.liveCol.FindOne(ctx, filter).Decode(&art)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {

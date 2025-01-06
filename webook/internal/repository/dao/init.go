@@ -9,5 +9,9 @@ func InitTables(db *gorm.DB) error {
 	return db.AutoMigrate(&User{},
 		&article.Article{},
 		&article.PublishedArticleV1{},
-		&AsyncSms{})
+		&AsyncSms{},
+		&Interactive{},
+		&UserLikeBiz{},
+		&UserCollectionBiz{},
+	)
 }

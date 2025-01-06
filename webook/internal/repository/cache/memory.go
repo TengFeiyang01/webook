@@ -1,4 +1,4 @@
-package code
+package cache
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"sync"
 	"time"
-	"webook/webook/internal/repository/cache"
 )
 
 var ErrKeyNotExist = errors.New("key not exist")
@@ -19,7 +18,7 @@ type LocalCodeCache struct {
 	expiration time.Duration
 }
 
-func NewLocalCodeCache(c *lru.Cache, expiration time.Duration) cache.CodeCache {
+func NewLocalCodeCache(c *lru.Cache, expiration time.Duration) CodeCache {
 	return &LocalCodeCache{
 		cache:      c,
 		expiration: expiration,
