@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var ()
+var ErrRecordNotFound = gorm.ErrRecordNotFound
 
 type InteractiveDAO interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error

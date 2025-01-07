@@ -54,11 +54,13 @@ func (i *InteractiveRedisCache) Set(ctx context.Context,
 
 func (i *InteractiveRedisCache) Get(ctx context.Context, biz string, id int64) (domain.Interactive, error) {
 	key := i.key(biz, id)
+	// 之间使用 HMGet, 即使缓存里面没有对应的 key, 也不会返回 error
 	res, err := i.client.HGetAll(ctx, key).Result()
 	if err != nil {
 		return domain.Interactive{}, err
 	}
 	if len(res) == 0 {
+		// 缓存不存在，系统错误
 		return domain.Interactive{}, ErrKeyNotExist
 	}
 	var intr domain.Interactive

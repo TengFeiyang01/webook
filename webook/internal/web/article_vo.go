@@ -4,6 +4,11 @@ import "webook/webook/internal/domain"
 
 // VO view object, 对标前段的
 
+type CollectReq struct {
+	Id  int64 `json:"id"`
+	Cid int64 `json:"cid"`
+}
+
 type LikeReq struct {
 	// 点赞和取消点赞都复用这个
 	Id   int64 `json:"id"`
@@ -22,8 +27,17 @@ type ArticleVO struct {
 	// 1 -> 未发表
 	Status uint8  `json:"status"`
 	Author string `json:"author"`
-	Ctime  string `json:"ctime"`
-	Utime  string `json:"utime"`
+	// 计数
+	ReadCnt    int64 `json:"read_cnt"`
+	LikeCnt    int64 `json:"like_cnt"`
+	CollectCnt int64 `json:"collect_cnt"`
+
+	// 我个人有没有收藏，有没有点赞
+	Liked     bool `json:"liked"`
+	Collected bool `json:"collected"`
+
+	Ctime string `json:"ctime"`
+	Utime string `json:"utime"`
 }
 
 type ListReq struct {

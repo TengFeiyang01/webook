@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/dao"
@@ -36,9 +37,6 @@ func (c *CachedInteractiveRepository) Get(ctx context.Context, biz string, id in
 		return intr, nil
 	}
 	ie, err := c.dao.Get(ctx, biz, id)
-	if err != nil {
-		return domain.Interactive{}, err
-	}
 	if err == nil {
 		res := c.toDomain(ie)
 		err = c.cache.Set(ctx, biz, id, res)
@@ -56,10 +54,10 @@ func (c *CachedInteractiveRepository) Get(ctx context.Context, biz string, id in
 func (c *CachedInteractiveRepository) Liked(ctx context.Context,
 	biz string, id int64, uid int64) (bool, error) {
 	_, err := c.dao.GetLikeInfo(ctx, biz, id, uid)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		return true, nil
-	case dao.ErrRecordNotFound:
+	case errors.Is(err, dao.ErrRecordNotFound):
 		return false, nil
 	default:
 		return false, err
@@ -69,10 +67,10 @@ func (c *CachedInteractiveRepository) Liked(ctx context.Context,
 func (c *CachedInteractiveRepository) Collected(ctx context.Context,
 	biz string, id int64, uid int64) (bool, error) {
 	_, err := c.dao.GetCollectInfo(ctx, biz, id, uid)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		return true, nil
-	case dao.ErrRecordNotFound:
+	case errors.Is(err, dao.ErrRecordNotFound):
 		return false, nil
 	default:
 		return false, err
@@ -90,6 +88,8 @@ func (c *CachedInteractiveRepository) AddCollectionItem(ctx context.Context,
 	if err != nil {
 		return err
 	}
+	// 这个地方要不要考虑缓存
+	// 一个东西要不要缓存，就看用户会不会频繁访问
 	return c.cache.IncrCollectCntIfPresent(ctx, biz, id)
 }
 
