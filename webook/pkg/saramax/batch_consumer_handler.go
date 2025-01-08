@@ -38,7 +38,6 @@ func (b *BatchHandler[T]) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 	msgs := claim.Messages()
 	for {
 		ctx, cancel := context.WithTimeout(context.Background(), b.batchDuration)
-		var last *sarama.ConsumerMessage
 		batch := make([]*sarama.ConsumerMessage, 0, b.batchSize)
 		ts := make([]T, 0, b.batchSize)
 		var done = false
@@ -52,7 +51,6 @@ func (b *BatchHandler[T]) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 					cancel()
 					return nil
 				}
-				last = msg
 				var t T
 				err := json.Unmarshal(msg.Value, &t)
 				if err != nil {
@@ -75,16 +73,13 @@ func (b *BatchHandler[T]) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 		err := b.fn(batch, ts)
 		if err != nil {
 			b.l.Error("Failed to call business batch interface",
-				logger.Error(err),
-				// 整个批次都记录（没必要）
-				logger.String("topic", last.Topic),
-				logger.Int32("partition", last.Partition),
-				logger.Int64("offset", last.Offset))
+				logger.Error(err))
+			// 整个批次都记录（没必要）
 			// 还有继续往前消费
 		}
 		// 凑够了一批，然后你就处理
-		if last != nil {
-			session.MarkMessage(last, "")
+		for _, msg := range batch {
+			session.MarkMessage(msg, "")
 		}
 	}
 }

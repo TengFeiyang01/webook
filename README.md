@@ -3149,6 +3149,12 @@ Kafka 的设计比较复杂，涉及的知识点很多，但是基本上都是�
 
 ![image-20250107143942376](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071439452.png)
 
+## ISR 含义
+
+![image-20250107162314891](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071623449.png)
+
+
+
 ## Kafka API 入门
 
 ### 使用 Docker 启动 Kafka
@@ -3189,10 +3195,118 @@ kafka-console-producer.sh --bootstrap-server localhost:9092 --topic first_topic
 
 ![image-20250107154020283](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071540269.png)
 
+### Sarama 使用入门
 
+#### tools
 
+![image-20250107155339970](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071553216.png)
 
+> https://github.com/IBM/sarama/tree/main/tools
 
+```sh
+go install github.com/IBM/sarama/tools/kafka-console-consumer@latest
+go install github.com/IBM/sarama/tools/kafka-console-producer@latest
+```
 
+#### 发送消息
 
-> 
+![image-20250107155627616](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071556639.png)
+
+#### 指定分区
+
+![image-20250107155650197](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071556181.png)
+
+#### 异步发送
+
+![image-20250107155713609](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071557829.png)
+
+#### 指定 acks
+
+![image-20250107155733886](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071557989.png)
+
+![image-20250107155753952](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071557000.png)
+
+#### 启动消费者
+
+![image-20250108094950193](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501080949379.png)
+
+![image-20250108103307738](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081033570.png)
+
+#### 利用 context 来控制消费者退出
+
+![image-20250108103341645](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081033486.png)
+
+#### 指定偏移量消费
+
+![image-20250108103413847](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081034853.png)
+
+#### 异步消费，批量提交
+
+![image-20250108103438992](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081034986.png)
+
+## 利用消息队列改造代码
+
+![image-20250108172613839](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081726937.png)
+
+### 引入 Kafka 来解耦
+
+![image-20250108111332979](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081113453.png)
+
+![image-20250108111509525](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081115534.png)
+
+### 领域事件定义
+
+![image-20250108111528139](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081115153.png)
+
+### 消费者消费消息
+
+![image-20250108111604931](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081116953.png)
+
+### 批量处理消息提高性能
+
+![image-20250108125021614](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081250616.png)
+
+#### 批量处理的 ConsumerClaims
+
+> 基本上就是原本的批量处理的代码里面，稍微改一下就可以。
+
+两个步骤：
+
+- 凑够一批，要注意超时控制。
+- 发起调用。
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081720767.png" alt="image-20250108172005388" style="zoom: 33%;" /><img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081722910.png" alt="image-20250108172225504" style="zoom: 33%;" />
+
+### 开启批量消费
+
+![image-20250108125234239](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081252300.png)
+
+![image-20250108125243677](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081252720.png)
+
+### 组装消费者，启动消费者
+
+![image-20250108125311643](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081253758.png)
+
+## 阅读记录功能
+
+![image-20250108125330608](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081253803.png)
+
+## 小结
+
+![image-20250108193302499](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081933690.png)
+
+![image-20250108193315406](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081933723.png)
+
+## 面试要点
+
+### Kafka 面试点
+
+![image-20250108193337823](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081933763.png)
+
+#### 消息积压
+
+![image-20250108193407029](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081934341.png)
+
+#### 有序消息
+
+![image-20250108193421627](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081934691.png)
