@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"time"
 	"webook/webook/internal/domain"
 	events "webook/webook/internal/events/article"
 	"webook/webook/internal/repository/article"
@@ -17,12 +18,20 @@ type articleService struct {
 	reader   article.ArticleReaderRepository
 	producer events.Producer
 	l        logger.LoggerV1
+
+	ch chan readInfo
+}
+
+type readInfo struct {
+	aid int64 `json:"aid"`
+	uid int64 `json:"uid"`
 }
 
 func (svc *articleService) GetPublishedById(ctx *gin.Context, id int64, uid int64) (domain.Article, error) {
 	art, err := svc.repo.GetPublishedById(ctx, id)
 	if err == nil {
 		go func() {
+			// 生产者也可以通过改批量来提高性能
 			err := svc.producer.ProduceReadEvent(
 				ctx,
 				events.ReadEvent{
@@ -34,6 +43,13 @@ func (svc *articleService) GetPublishedById(ctx *gin.Context, id int64, uid int6
 			)
 			if err != nil {
 				svc.l.Error("failed to send read event")
+			}
+		}()
+
+		go func() {
+			svc.ch <- readInfo{
+				aid: art.Id,
+				uid: uid,
 			}
 		}()
 	}
@@ -100,10 +116,47 @@ func (svc *articleService) PublishV1(ctx context.Context, art domain.Article) (i
 	return id, err
 }
 
-func NewArticleService(repo article.ArticleRepository, producer events.Producer) ArticleService {
+func NewArticleService(repo article.ArticleRepository, producer events.Producer, l logger.LoggerV1) ArticleService {
 	return &articleService{
 		repo:     repo,
 		producer: producer,
+		l:        l,
+	}
+}
+
+func NewArticleServiceV2(repo article.ArticleRepository, producer events.Producer, l logger.LoggerV1) ArticleService {
+	ch := make(chan readInfo, 10)
+	go func() {
+		for {
+			uids := make([]int64, 0, 10)
+			aids := make([]int64, 0, 10)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			for i := 0; i < 10; i++ {
+				select {
+				case info, ok := <-ch:
+					if !ok {
+						cancel()
+						return
+					}
+					uids = append(uids, info.uid)
+					aids = append(aids, info.aid)
+				case <-ctx.Done():
+					break
+				}
+			}
+			cancel()
+			ctx, cancel = context.WithTimeout(context.Background(), time.Second)
+			producer.ProduceReadEventV1(ctx, events.ReadEventV1{
+				Uid: uids,
+				Aid: aids,
+			})
+		}
+	}()
+	return &articleService{
+		repo:     repo,
+		producer: producer,
+		l:        l,
+		ch:       ch,
 	}
 }
 

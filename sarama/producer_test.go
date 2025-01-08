@@ -13,24 +13,24 @@ func TestSyncProducer(t *testing.T) {
 	cfg.Producer.Return.Successes = true
 	producer, err := sarama.NewSyncProducer(addr, cfg)
 	cfg.Producer.Partitioner = sarama.NewRoundRobinPartitioner
-	//cfg.Producer.Partitioner = saramax.NewRandomPartitioner
-	//cfg.Producer.Partitioner = saramax.NewHashPartitioner
-	//cfg.Producer.Partitioner = saramax.NewManualPartitioner
-	//cfg.Producer.Partitioner = saramax.NewConsistentCRCHashPartitioner
-	//cfg.Producer.Partitioner = saramax.NewCustomPartitioner()
+	//cfg.Producer.Partitioner = sarama.NewRandomPartitioner
+	//cfg.Producer.Partitioner = sarama.NewHashPartitioner
+	//cfg.Producer.Partitioner = sarama.NewManualPartitioner
+	//cfg.Producer.Partitioner = sarama.NewConsistentCRCHashPartitioner
+	//cfg.Producer.Partitioner = sarama.NewCustomPartitioner()
 	assert.NoError(t, err)
 	for i := 0; i < 10; i++ {
 		_, _, err = producer.SendMessage(&sarama.ProducerMessage{
-			Topic: "test_topic",
-			Value: sarama.StringEncoder("这是一条消息"),
+			Topic: "read_article",
+			Value: sarama.StringEncoder(`{"aid": 1, "uid": 123}`),
 			// 会在生产者和消费者之间传递的
-			Headers: []sarama.RecordHeader{
-				{
-					Key:   []byte("key1"),
-					Value: []byte("value1"),
-				},
-			},
-			Metadata: "这是 metadata",
+			//Headers: []sarama.RecordHeader{
+			//	{
+			//		Key:   []byte("key1"),
+			//		Value: []byte("value1"),
+			//	},
+			//},
+			//Metadata: "这是 metadata",
 		})
 	}
 }

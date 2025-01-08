@@ -26,7 +26,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitWebUser() *App {
+func InitApp() *App {
 	cmdable := ioc.InitRedis()
 	handler := jwt.NewRedisJWT(cmdable)
 	loggerV1 := ioc.InitLogger()
@@ -50,15 +50,15 @@ func InitWebUser() *App {
 	client := ioc.InitKafka()
 	syncProducer := ioc.NewSyncProducer(client)
 	producer := article3.NewKafkaProducer(syncProducer)
-	articleService := service.NewArticleService(articleRepository, producer)
+	articleService := service.NewArticleService(articleRepository, producer, loggerV1)
 	interactiveDAO := dao.NewGORMInteractiveDAO(db)
 	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
 	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
 	interactiveService := service.NewInteractiveService(interactiveRepository)
 	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
-	interactiveKafkaConsumer := article3.NewInteractiveKafkaConsumer(client, interactiveRepository, loggerV1)
-	v2 := ioc.NewConsumers(interactiveKafkaConsumer)
+	interactiveReadEventBatchConsumer := article3.NewInteractiveReadEventBatchConsumer(client, interactiveRepository, loggerV1)
+	v2 := ioc.NewConsumers(interactiveReadEventBatchConsumer)
 	app := &App{
 		Server:    engine,
 		Consumers: v2,

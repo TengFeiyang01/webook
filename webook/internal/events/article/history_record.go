@@ -4,22 +4,23 @@ import (
 	"github.com/IBM/sarama"
 	"golang.org/x/net/context"
 	"time"
+	"webook/webook/internal/domain"
 	"webook/webook/internal/repository"
 	"webook/webook/pkg/logger"
 	"webook/webook/pkg/saramax"
 )
 
-type InteractiveEventConsumer struct {
+type HistoryRecordConsumer struct {
 	client sarama.Client
-	repo   repository.InteractiveRepository
+	repo   repository.HistoryRecordRepository
 	l      logger.LoggerV1
 }
 
-func NewInteractiveEventConsumer(client sarama.Client, repo repository.InteractiveRepository, l logger.LoggerV1) *InteractiveEventConsumer {
-	return &InteractiveEventConsumer{client: client, repo: repo, l: l}
+func NewHistoryRecordConsumer(client sarama.Client, repo repository.HistoryRecordRepository, l logger.LoggerV1) *HistoryRecordConsumer {
+	return &HistoryRecordConsumer{client: client, repo: repo, l: l}
 }
 
-func (r *InteractiveEventConsumer) Start() error {
+func (r *HistoryRecordConsumer) Start() error {
 	cg, err := sarama.NewConsumerGroupFromClient("interactive", r.client)
 	if err != nil {
 		return err
@@ -36,8 +37,13 @@ func (r *InteractiveEventConsumer) Start() error {
 }
 
 // Consume 这个不是幂等的
-func (r *InteractiveEventConsumer) Consume(message *sarama.ConsumerMessage, t ReadEvent) error {
+func (r *HistoryRecordConsumer) Consume(msg *sarama.ConsumerMessage,
+	event ReadEvent) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	return r.repo.IncrReadCnt(ctx, "article", t.Aid)
+	return r.repo.AddRecord(ctx, domain.HistoryRecord{
+		BizId: event.Aid,
+		Biz:   "article",
+		Uid:   event.Uid,
+	})
 }

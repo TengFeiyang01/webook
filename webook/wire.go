@@ -43,7 +43,8 @@ func InitApp() *App {
 		artrepo.NewCachedArticleRepository,
 		repository.NewCachedInteractiveRepository,
 
-		events.NewInteractiveKafkaConsumer,
+		// consumer
+		events.NewInteractiveReadEventBatchConsumer,
 		events.NewKafkaProducer,
 
 		// 初始化 service

@@ -11,6 +11,7 @@ import (
 
 type InteractiveRepository interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
+	BatchIncrReadCnt(ctx context.Context, biz []string, bizId []int64) error
 	IncrLike(ctx context.Context, biz string, id int64, uid int64) error
 	DecrLike(ctx context.Context, biz string, id int64, uid int64) error
 	AddCollectionItem(ctx context.Context, biz string, id int64, cid int64, uid int64) error
@@ -23,6 +24,19 @@ type CachedInteractiveRepository struct {
 	dao   dao.InteractiveDAO
 	cache cache.InteractiveCache
 	l     logger.LoggerV1
+}
+
+func (c *CachedInteractiveRepository) BatchIncrReadCnt(ctx context.Context,
+	bizs []string, bizIds []int64) error {
+	// 要不要检测 bizs 和 ids 的长度是否相等
+	err := c.dao.BatchIncrReadCnt(ctx, bizs, bizIds)
+	if err != nil {
+		return err
+	}
+	// 你也要批量的去修改 redis, 所以就要去改 lua 脚本
+	// c.cache.IncrReadCntIfPresent()
+	// TODO 新的 lua 脚本 / pipeline
+	return nil
 }
 
 func NewCachedInteractiveRepository(dao dao.InteractiveDAO,
