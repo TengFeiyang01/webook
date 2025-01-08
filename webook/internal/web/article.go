@@ -268,7 +268,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 	var eg errgroup.Group
 	// 读文章本体
 	eg.Go(func() error {
-		art, err = h.svc.GetPublishedById(ctx, id)
+		art, err = h.svc.GetPublishedById(ctx, id, usr.Uid)
 		return err
 	})
 	if err := eg.Wait(); err != nil {

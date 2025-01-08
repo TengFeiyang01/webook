@@ -3,8 +3,8 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
+	events "webook/webook/internal/events/article"
 	"webook/webook/internal/repository"
 	artrepo "webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache"
@@ -17,28 +17,40 @@ import (
 	"webook/webook/ioc"
 )
 
-func InitWebUser() *gin.Engine {
+func InitApp() *App {
 	wire.Build(
 		// 初始化 DB
 		ioc.InitDB, ioc.InitRedis,
 		ioc.InitLogger,
+		ioc.InitKafka,
+		ioc.NewConsumers,
+		ioc.NewSyncProducer,
 
 		// 初始化 DAO
 		dao.NewUserDAO,
+		dao.NewGORMInteractiveDAO,
 
 		// 初始化 cache
 		user.NewRedisUserCache,
 		//cache.NewLocalCodeCache,
 		cache.NewRedisCodeCache,
+		cache.NewArticleCache,
+		cache.NewInteractiveRedisCache,
 
 		// 初始化 repository
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
 		artrepo.NewCachedArticleRepository,
+		repository.NewCachedInteractiveRepository,
+
+		events.NewInteractiveKafkaConsumer,
+		events.NewKafkaProducer,
 
 		// 初始化 service
 		service.NewUserService,
 		service.NewCodeService,
+		service.NewInteractiveService,
+		service.NewArticleService,
 
 		ioc.InitSMSService,
 		ioc.InitOAuth2WechatService,
@@ -47,12 +59,12 @@ func InitWebUser() *gin.Engine {
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
 		web.NewArticleHandler,
-		service.NewArticleService,
 		article.NewGORMArticleDAO,
 		ijwt.NewRedisJWT,
 
 		ioc.InitGinMiddlewares,
 		ioc.InitWebServer,
+		wire.Struct(new(App), "*"),
 	)
-	return gin.Default()
+	return new(App)
 }

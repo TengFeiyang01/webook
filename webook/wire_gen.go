@@ -7,7 +7,7 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	article3 "webook/webook/internal/events/article"
 	"webook/webook/internal/repository"
 	article2 "webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache"
@@ -26,7 +26,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitWebUser() *gin.Engine {
+func InitWebUser() *App {
 	cmdable := ioc.InitRedis()
 	handler := jwt.NewRedisJWT(cmdable)
 	loggerV1 := ioc.InitLogger()
@@ -40,14 +40,28 @@ func InitWebUser() *gin.Engine {
 	codeRepository := repository.NewCodeRepository(codeCache)
 	smsService := ioc.InitSMSService(cmdable)
 	codeService := service.NewCodeService(codeRepository, smsService)
-	userHandler := web.NewUserHandler(userService, codeService, cmdable, handler)
+	userHandler := web.NewUserHandler(userService, codeService, cmdable, handler, loggerV1)
 	wechatService := ioc.InitOAuth2WechatService(loggerV1)
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, wechatHandlerConfig, handler)
 	articleDAO := article.NewGORMArticleDAO(db)
-	articleRepository := article2.NewCachedArticleRepository(articleDAO)
-	articleService := service.NewArticleService(articleRepository)
-	articleHandler := web.NewArticleHandler(articleService, loggerV1)
+	articleCache := cache.NewArticleCache(cmdable)
+	articleRepository := article2.NewCachedArticleRepository(articleDAO, loggerV1, userDAO, articleCache)
+	client := ioc.InitKafka()
+	syncProducer := ioc.NewSyncProducer(client)
+	producer := article3.NewKafkaProducer(syncProducer)
+	articleService := service.NewArticleService(articleRepository, producer)
+	interactiveDAO := dao.NewGORMInteractiveDAO(db)
+	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
+	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
+	interactiveService := service.NewInteractiveService(interactiveRepository)
+	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
-	return engine
+	interactiveKafkaConsumer := article3.NewInteractiveKafkaConsumer(client, interactiveRepository, loggerV1)
+	v2 := ioc.NewConsumers(interactiveKafkaConsumer)
+	app := &App{
+		Server:    engine,
+		Consumers: v2,
+	}
+	return app
 }

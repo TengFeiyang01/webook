@@ -33,5 +33,5 @@ type ArticleService interface {
 	PublishV1(ctx context.Context, art domain.Article) (int64, error)
 	List(ctx context.Context, id int64, offset int, limit int) ([]domain.Article, error)
 	GetById(ctx context.Context, id int64) (domain.Article, error)
-	GetPublishedById(ctx *gin.Context, id int64) (domain.Article, error)
+	GetPublishedById(ctx *gin.Context, id int64, uid int64) (domain.Article, error)
 }

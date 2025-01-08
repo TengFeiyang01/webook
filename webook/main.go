@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
@@ -18,12 +17,12 @@ func main() {
 	//initViperRemote()
 	//initViperWatch()
 	initLogger()
-	server := InitWebUser()
+	//server := InitApp()
 	//initViperV1()
-	server.GET("/hello", func(ctx *gin.Context) {
-		ctx.String(200, "hello world")
-	})
-	_ = server.Run(":8080")
+	//server.GET("/hello", func(ctx *gin.Context) {
+	//	ctx.String(200, "hello world")
+	//})
+	//_ = server.Run(":8080")
 }
 
 func initLogger() {

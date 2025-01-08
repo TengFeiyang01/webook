@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"webook/webook/internal/domain"
+	events "webook/webook/internal/events/article"
 	"webook/webook/internal/repository/article"
 	"webook/webook/pkg/logger"
 )
@@ -12,14 +13,31 @@ type articleService struct {
 	repo article.ArticleRepository
 
 	// V1
-	author article.ArticleAuthorRepository
-	reader article.ArticleReaderRepository
-
-	l logger.LoggerV1
+	author   article.ArticleAuthorRepository
+	reader   article.ArticleReaderRepository
+	producer events.Producer
+	l        logger.LoggerV1
 }
 
-func (svc *articleService) GetPublishedById(ctx *gin.Context, id int64) (domain.Article, error) {
-	return svc.repo.GetPublishedById(ctx, id)
+func (svc *articleService) GetPublishedById(ctx *gin.Context, id int64, uid int64) (domain.Article, error) {
+	art, err := svc.repo.GetPublishedById(ctx, id)
+	if err == nil {
+		go func() {
+			err := svc.producer.ProduceReadEvent(
+				ctx,
+				events.ReadEvent{
+					// 即便你的消费者要用 art 的数据
+					// 让它去查, 你不要在 event 里面带
+					Uid: uid,
+					Aid: art.Id,
+				},
+			)
+			if err != nil {
+				svc.l.Error("failed to send read event")
+			}
+		}()
+	}
+	return art, err
 }
 
 func (svc *articleService) GetById(ctx context.Context, id int64) (domain.Article, error) {
@@ -82,9 +100,10 @@ func (svc *articleService) PublishV1(ctx context.Context, art domain.Article) (i
 	return id, err
 }
 
-func NewArticleService(repo article.ArticleRepository) ArticleService {
+func NewArticleService(repo article.ArticleRepository, producer events.Producer) ArticleService {
 	return &articleService{
-		repo: repo,
+		repo:     repo,
+		producer: producer,
 	}
 }
 

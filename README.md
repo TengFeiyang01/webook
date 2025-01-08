@@ -7,7 +7,7 @@
 
 即先定义 Web 接口，再去考虑后面的数据库设计之类的东西。
 
-#### Handler 的用途
+### Handler 的用途
 
 ​	这里，我直接定义了一个 `UserHandler` ，之后**将所有和用户有关的路由都定义在了这个 `Handler` 上。**
 
@@ -51,7 +51,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 }
 ```
 
-#### 目录结构
+### 目录结构
 
 此时的目录结构如下图：
 
@@ -65,7 +65,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 
 等后续我们用到其他部分了，再继续增加别的目录。
 
-#### 前端
+### 前端
 
 前端代码是直接 `copy` 过来的，使用教程：
 
@@ -82,7 +82,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 
 如果出现 `'next' 不是内部或外部命令，也不是可运行的程序或批处理文件` 错误，尝试运行 `npm install`  后再去执行上述代码即可。
 
-#### 注册页面
+### 注册页面
 
 ​	这时候我们需要考虑前端页面长成什么样，然后**根据前端页面的字段，来确定后端接口输入和输出是什么样子的。** **点击注册的时候，会发一个请求到后端** `/users/signup` **上，默认情况下，前端用的是 ** `JSON` ** 来传递数据。**
 
@@ -115,17 +115,17 @@ if err := ctx.Bind(&req); err != nil {
 }
 ```
 
-##### 后端处理
+#### 后端处理
 
 - **接受请求并校验**
 - **调用业务逻辑处理请求**
 - **根据业务逻辑处理结果返回响应**
 
-###### 接收请求数据：`Bind` 方法
+##### 接收请求数据：`Bind` 方法
 
 ​	 `Bind` 方法是 `Gin` 里面最常用的用于接收请求的方法。`Bind` 方法会根据 `HTTP` 请求的 `Content-Type` 来决定怎么处理。比如我们的请求是 `JSON` 格式，`Content-Type` 是 `application/json`，那么 `Gin` 就会使用 `Json` 来反序列化。
 
-###### **校验请求**
+##### **校验请求**
 
 在我们这个注册的业务逻辑里面，校验分为两块：
 
@@ -143,7 +143,7 @@ emailExp := regexp.MustCompile(emailRegexPattern, regexp.None)
 ok, err := emailExp.MatchString(req.Email)
 ```
 
-##### 跨域问题
+#### 跨域问题
 
 我们的请求是从 `localhost:3000` 这个前端发送到后端 `localhost:8090` 的
 
@@ -161,7 +161,7 @@ ok, err := emailExp.MatchString(req.Email)
 
 ![image-20240104093450681](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941126.png)
 
-###### 使用 `middleware` 来解决 `CORS`
+##### 使用 `middleware` 来解决 `CORS`
 
 `Gin` 里面也提供了一个 `middleware` 实现来解决跨域问题，在 `https://github.com/gin-gonic/contrib` ，执行 `go get github.com/gin-gonic/contrib` 之后就可以在代码中使用。
 
@@ -200,7 +200,7 @@ services:
 #      - '6379:6379'
 ```
 
-#### Docker Compose 基本命令
+### Docker Compose 基本命令
 
 - `docker compose up` ：初始化 `docker compose` 并启动。
 - `docker compose down` ：删除 `docker compose` 里面创建的各种容器。
@@ -216,7 +216,7 @@ services:
 
 此时就需要考虑数据库相关的增删改查放哪里了？`UserHandler` ？**不可以，因为 `Handler` 只是负责和 `HTTP` 有关的东西，我们需要的是一个代表数据库抽象的东西。**
 
-#### 引入 `Service-Repository-DAO` 三层结构
+### 引入 `Service-Repository-DAO` 三层结构
 
 - **service：代表的是领域服务（domain service），代表一个业务的完整的处理过程。**
 - **repository：代表领域对象的存储，也即存储数据的抽象**
@@ -234,20 +234,20 @@ services:
 
 ![image-20240105112220350](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941280.png)
 
-#### 密码加密
+### 密码加密
 
 - 谁来加密？`service` 还是 `repository` 还是 `dao` ？
 - 怎么加密？怎么选择一个安全的加密算法？
 
 **PS：敏感信息应该是连日志都不能打**
 
-###### 加密的位置：
+##### 加密的位置：
 
 ![image-20240105113719864](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941959.png)
 
 这里我们选择在 `service` 加密。
 
-###### 如何加密
+##### 如何加密
 
 常见的加密算法（安全性逐步提高）：
 
@@ -276,11 +276,11 @@ services:
 
 ## 用户登录
 
-#### 实现登录功能
+### 实现登录功能
 
 ![image-20240105144629664](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941586.png)
 
-#### 登录校验
+### 登录校验
 
 登陆成功之后，我要去 `/users/profile` 的时候， **我怎么知道用户登录没登陆**
 
@@ -301,7 +301,7 @@ services:
 
 ![image-20240105162319316](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941240.png)
 
-#### 使用 `Gin` 的 `Session` 插件来实现登录功能
+### 使用 `Gin` 的 `Session` 插件来实现登录功能
 
 `https://github.com/gin-contrib/sessions` ![image-20240105163223432](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180941825.png)
 
@@ -360,7 +360,7 @@ server.Use(middleware.NewLoginMiddleBuilder().
 >
 > 解决方法：按下 `Win + R` 键，输入 `services.msc` 并按回车。在服务列表中找到`MySQL`服务，右键点击它，然后选择“停止”。或者通过命令行 `net stop mysql` 来停止 `MySQL`服务。
 
-##### 使用`Redis`
+#### 使用`Redis`
 
 ![image-20240108084510912](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942330.png)
 
@@ -378,11 +378,11 @@ if err != nil {
 }
 ```
 
-##### `Session` 参数
+#### `Session` 参数
 
 ![image-20240108090839733](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942717.png)
 
-###### 通过 `session` 设置刷新时间。
+##### 通过 `session` 设置刷新时间。
 
 ```go
 // web/user.go
@@ -3057,3 +3057,142 @@ ye![image-20250102153028189](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture
 > 2. 优化版本的 ZSET, 定时筛选 + 实时 ZSET 计算
 > ```
 
+## 收藏功能与实现
+
+![image-20250107090733695](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501070907372.png)
+
+![image-20250107093402292](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501070934913.png)
+
+### 数据库操作
+
+![image-20250107093505808](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501070935823.png)
+
+## 查询接口
+
+![image-20250107093523510](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501070935635.png)
+
+### Service实现
+
+![image-20250107093850199](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501070938090.png)
+
+### 缓存问题
+
+![image-20250107093916585](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501070939421.png)
+
+### 缓存一致性问题
+
+![image-20250107103327962](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071033633.png)
+
+**并发场景**
+
+![image-20250107103436307](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071034356.png)
+
+**如何处理**
+
+![image-20250107103500284](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071035142.png)
+
+## 小结
+
+![image-20250107103520582](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071035416.png)
+
+## 引入Redis来提高计数类业务的性能
+
+![image-20250107103600206](C:/Users/ytf/AppData/Roaming/Typora/typora-user-images/image-20250107103600206.png)
+
+# Kafka入门
+
+## 消息队列
+
+![image-20250107112538034](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071125311.png)
+
+## 基本概念
+
+Kafka 的设计比较复杂，涉及的知识点很多，但是基本上都是围绕这些基本概念来进行的。
+
+- 生产者 producer
+- 消费者 consumer
+- broker，也可以理解为消息服务器
+- topic 与分区（partition）
+- 消费者组与消费
+
+> Broker 的意思是“中间人”，是一个逻辑上的概念。
+> 在实践中，一个 broker 就是一个消息队列进程，
+> 也可以认为一个 broker 就是一台机器
+
+![image-20250107112801938](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071128647.png)
+
+### topic 和 分区
+
+![image-20250107113015788](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071130022.png)
+
+#### 主分区和从分区
+
+![image-20250107113050487](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071130701.png)
+
+### 分区和 broker 的关系
+
+![image-20250107113110469](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071131378.png)
+
+### 分区和生产者的关系
+
+![image-20250107143311302](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071433749.png)
+
+### 分区和消息有序性
+
+![image-20250107143335439](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071433729.png)
+
+### 分区和消费者组、消费者的关系
+
+![image-20250107143913580](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071439652.png)
+
+### 最多一个消费者的内涵
+
+![image-20250107143942376](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071439452.png)
+
+## Kafka API 入门
+
+### 使用 Docker 启动 Kafka
+
+![image-20250107151429615](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071514526.png)
+
+### 使用 Kafka 的 Shell 工具
+
+![image-20250107153526902](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071535364.png)
+
+#### 常见用法
+
+1. 创建topic:
+
+```sh
+kafka-topics.sh --bootstrap-server localhost:9092 --topic first_topic --create --partitions 3 --replication-factor 1
+```
+
+2. 查看一个 topic
+
+```sh
+kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic first_topic
+```
+
+3. 启动一个消费者，监控发送的消息
+
+```sh
+kafka-console-consumer.sh --bootstrap-server localhost:9092 -- topic first_topic
+```
+
+4. 启动生产者，发送一条消息
+
+```sh
+kafka-console-producer.sh --bootstrap-server localhost:9092 --topic first_topic
+```
+
+### Kafka Go 客户端比较
+
+![image-20250107154020283](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501071540269.png)
+
+
+
+
+
+
+
+> 
