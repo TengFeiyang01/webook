@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 	"webook/webook/internal/domain"
+	"webook/webook/internal/errs"
 	"webook/webook/internal/service"
 	ijwt "webook/webook/internal/web/jwt"
 	"webook/webook/pkg/ginx"
@@ -175,20 +176,20 @@ func (u *UserHandler) LoginJWT(ctx *gin.Context, req LoginReq) (ginx.Result, err
 	user, err := u.svc.Login(ctx, req.Email, req.Password)
 	if errors.Is(err, service.ErrInvalidUserOrPassword) {
 		return ginx.Result{
-			Code: http.StatusUnauthorized,
+			Code: errs.UserInvalidOrPassword,
 			Msg:  "用户名或密码不对",
 		}, err
 	}
 	if err != nil {
 		return ginx.Result{
-			Code: http.StatusInternalServerError,
+			Code: errs.UserInternalServerError,
 			Msg:  "系统错误",
 		}, fmt.Errorf("系统错误")
 	}
 
 	if err = u.SetLoginToken(ctx, user.ID); err != nil {
 		return ginx.Result{
-			Code: http.StatusInternalServerError,
+			Code: errs.UserInternalServerError,
 			Msg:  "系统错误",
 		}, fmt.Errorf("系统错误")
 	}

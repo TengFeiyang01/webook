@@ -3310,3 +3310,202 @@ go install github.com/IBM/sarama/tools/kafka-console-producer@latest
 #### 有序消息
 
 ![image-20250108193421627](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501081934691.png)
+
+# 可观测性
+
+> **概念**
+
+![image-20250109094651401](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501090946593.png)
+
+- **Metrics**
+
+![image-20250109094858892](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501090949521.png)
+
+- **Tracing**
+
+![image-20250109094956213](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501090949484.png)
+
+**Tracing** 解读
+
+![image-20250109095042067](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501090950706.png)
+
+## Prometheus
+
+### 基础架构
+
+![image-20250109095738761](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501090957254.png)
+
+### 安装
+
+使用 Docker 来安装 Prometheus。
+
+> 注意要暴露端口
+
+```yml
+services:
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - '9090:9090'
+```
+
+### 配置文件
+
+![image-20250109100329084](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501091003038.png)
+
+### 查看数据
+
+#### 启动服务
+
+![image-20250110103703395](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101037274.png)
+
+直接在浏览器中输入 `localhost:8081/metrics` 就能看到我们采集的数据。
+
+#### 图表
+
+下图是 Prometheus 自带的界面，打开 `localhost:9090` 就可以访问到。
+
+![image-20250110103806511](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101038697.png)
+
+## Prometheus API 入门
+
+### 指标类型
+
+![image-20250110103846466](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101038509.png)
+
+#### Gauge
+
+![image-20250110103905710](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101039744.png)
+
+#### Histogram
+
+![image-20250110103940214](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101039630.png)
+
+#### Summary
+
+![image-20250110104103511](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101041626.png)
+
+### Go使用
+
+#### Counter 和 Gauge
+
+在实践中，你可以考虑直接使用 Prometheus 的 Go SDK，也可以考虑使用 OpenTelemetry 的 API，它也提供了兼容 Prometheus 的适配器。
+
+直接使用 Prometheus API 也是很简单的，首先需要引入依赖：
+
+```sh
+go get github.com/prometheus/client_golang/prometheus@latest
+```
+
+可以根据自己的需要来创建需要采集的数据类型，如图，创建了 Counter 和 Gauge。
+
+![image-20250110104245690](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101042743.png)
+
+#### 通用配置
+
+在 Counter 和 Gauge 中，有几个基本的设置：
+
+- namespace：命名空间
+- subsystem：子系统
+- name：名字
+
+在不同的公司和不同的业务环境下可以有不同的设置。
+
+- namespace 代表部门，subsystem 代表这个部门下的某个具体的子系统，name 代表具体采集的数据。
+- namespace 代表小组，subsystem 代表这个小组下的某个系统/服务/模块，name代表具体采集的数据。
+
+> 基本上<font color='red'>**只需要做到 namespace + subsystem + name 能快速定位到具体业务就可以**。</font> 
+
+#### Histogram
+
+![image-20250110105558818](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101055863.png)
+
+#### Summary
+
+![image-20250110105634791](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101056898.png)
+
+#### Vector 的用法
+
+![image-20250110105712864](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101057067.png)
+
+### Prometheus 埋点技巧
+
+#### 利用 Gin middleware 来统计 HTTP 请求
+
+![image-20250110110703452](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101107045.png)
+
+##### 统计效果
+
+![image-20250110110722934](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101107930.png)
+
+##### Summary 响应时间解读
+
+![image-20250110110750898](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101107882.png)
+
+#### 使用 Gauge 来统计当前活跃请求数量
+
+![image-20250110153949775](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101539071.png)
+
+#### 利用 GORM 的 Plugin 来统计
+
+![image-20250110154020777](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101540045.png)
+
+![image-20250110155729296](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101557884.png)
+
+**解读 GORM 统计的数据**
+
+要关注的东西不多：
+
+- 首先关注 `gorm_dbstats_wait_count` 和 `gorm_dbstats_wait_duration`，两个值很大的话，都说明你的连接数量不够，要增大配置。
+- 其次要关注 `gorm_dbstats_idle`，这个如果很大，可以调小最大空闲连接数的值。
+- 如果 `gorm_dbstats_max_idletime_closed ` 的值很大，可能是你的最大空闲时间设置得太小。 
+
+> 但是，如果你想知道查询的执行时间，该怎么办？
+
+##### 使用 Callback 来统计查询时间
+
+![image-20250110155541532](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101555642.png)
+
+![image-20250110172723768](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501101727978.png)
+
+### 业务中埋点
+
+#### 错误码设计
+
+![image-20250111111911036](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111119159.png)
+
+#### 错误码定义和使用示例
+
+![image-20250111111852149](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111118141.png)
+
+#### 统一监控错误码
+
+![image-20250111111924450](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111119435.png)
+
+### 监控第三方调用
+
+#### 短信服务
+
+![image-20250111141958060](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111419063.png)
+
+#### 微信 API
+
+![image-20250111142021231](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111420239.png)
+
+### 监控缓存
+
+![image-20250111142052121](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111420136.png)
+
+## OpenTelemetry
+
+![image-20250111151139491](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111511619.png)
+
+### OpenTelemetry API 入门
+
+![image-20250111151233242](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111512194.png)
+
+![image-20250111151315641](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111513614.png)
+
+![image-20250111151333939](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111513882.png)

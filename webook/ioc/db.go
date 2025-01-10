@@ -1,12 +1,15 @@
 package ioc
 
 import (
+	promsdk "github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	glogger "gorm.io/gorm/logger"
+	"gorm.io/plugin/prometheus"
 	"time"
 	"webook/webook/internal/repository/dao"
+	"webook/webook/pkg/gormx"
 	"webook/webook/pkg/logger"
 )
 
@@ -19,8 +22,7 @@ func InitDB(l logger.LoggerV1) *gorm.DB {
 	}
 
 	// 看起来不支持 key 的分隔
-	err := viper.UnmarshalKey("db", &cfg)
-	if err != nil {
+	if err := viper.UnmarshalKey("db", &cfg); err != nil {
 		panic(err)
 	}
 	//dsn := viper.GetString("db.mysql.dsn")
@@ -40,10 +42,29 @@ func InitDB(l logger.LoggerV1) *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
-	err = dao.InitTables(db)
-	if err != nil {
+	if err := db.Use(prometheus.New(prometheus.Config{
+		DBName:          "webook",
+		RefreshInterval: 15,
+		StartServer:     false,
+		MetricsCollector: []prometheus.MetricsCollector{
+			&prometheus.MySQL{
+				VariableNames: []string{"thread_running"},
+			},
+		},
+	})); err != nil {
 		panic(err)
 	}
+
+	pcb := newCallbacks()
+	if err := pcb.Initialize(db); err != nil {
+		panic(err)
+	}
+
+	err = dao.InitTables(db)
+	if err != nil {
+		return nil
+	}
+
 	return db
 }
 
@@ -51,4 +72,25 @@ type gormLoggerFunc func(msg string, fields ...logger.Field)
 
 func (g gormLoggerFunc) Printf(msg string, args ...interface{}) {
 	g(msg, logger.Field{Key: "args", Value: args})
+}
+
+func newCallbacks() *gormx.Callbacks {
+	opts := promsdk.SummaryOpts{
+		// 在这边, 你要考虑设置各种 namespace
+		Namespace: "ytf",
+		Subsystem: "webook",
+		Name:      "gorm_query_time",
+		Help:      "统计 GORM 的执行时间",
+		ConstLabels: map[string]string{
+			"db": "webook",
+		},
+		Objectives: map[float64]float64{
+			0.5:   0.01,
+			0.9:   0.01,
+			0.99:  0.005,
+			0.999: 0.001,
+		},
+	}
+	pcb := gormx.NewCallbacks(opts)
+	return pcb
 }
