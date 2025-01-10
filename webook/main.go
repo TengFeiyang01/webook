@@ -18,8 +18,15 @@ func main() {
 	//initViperRemote()
 	//initViperWatch()
 	initLogger()
-	server := InitWebUser()
+	app := InitApp()
 	//initViperV1()
+	for _, c := range app.Consumers {
+		err := c.Start()
+		if err != nil {
+			panic(err)
+		}
+	}
+	server := app.Server
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(200, "hello world")
 	})

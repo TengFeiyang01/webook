@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
@@ -47,6 +48,18 @@ func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 	pub.GET("/:id", ginx.WrapToken[ijwt.UserClaims](h.PubDetail))
 	// 点赞和取消点赞都复用这个接口
 	pub.POST("/like", ginx.WrapBodyAndToken[LikeReq, ijwt.UserClaims](h.Like))
+	pub.POST("/collect", ginx.WrapBodyAndToken[CollectReq, ijwt.UserClaims](h.Collect))
+}
+
+func (h *ArticleHandler) Collect(ctx *gin.Context, req CollectReq, uc ijwt.UserClaims) (ginx.Result, error) {
+	err := h.interSvc.Collect(ctx, h.biz, req.Id, req.Cid, uc.Uid)
+	if err != nil {
+		return ginx.Result{
+			Code: http.StatusInternalServerError,
+			Msg:  "system error",
+		}, err
+	}
+	return ginx.Result{Code: http.StatusOK}, nil
 }
 
 func (h *ArticleHandler) Like(ctx *gin.Context, req LikeReq, uc ijwt.UserClaims) (ginx.Result, error) {
@@ -250,19 +263,43 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 			Msg:  "参数错误",
 		}, err
 	}
-	art, err := h.svc.GetPublishedById(ctx, id)
-	if err != nil {
+
+	var art domain.Article
+	var eg errgroup.Group
+	// 读文章本体
+	eg.Go(func() error {
+		art, err = h.svc.GetPublishedById(ctx, id, usr.Uid)
+		return err
+	})
+	if err := eg.Wait(); err != nil {
+		h.l.Error("failed to get published article", logger.Error(err))
 		return ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "system error",
 		}, err
 	}
+
 	// 不借助数据库查询来判断
 	if art.Author.Id != usr.Uid {
 		return ginx.Result{
 			Code: http.StatusBadRequest,
 			Msg:  "input error",
 		}, fmt.Errorf("非法访问文章，创作者 ID 不匹配 %d", usr.Uid)
+	}
+
+	// 要在这里获得文章的计数
+
+	var intr domain.Interactive
+	eg.Go(func() error {
+		intr, err = h.interSvc.Get(ctx, h.biz, id, usr.Uid)
+		return err
+	})
+	if err := eg.Wait(); err != nil {
+		h.l.Error("failed to get interactive article", logger.Error(err))
+		return ginx.Result{
+			Code: http.StatusInternalServerError,
+			Msg:  "system error",
+		}, err
 	}
 
 	// 增加阅读计数
@@ -274,13 +311,18 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 
 	return ginx.Result{
 		Data: ArticleVO{
-			Id:      art.Id,
-			Title:   art.Title,
-			Status:  art.Status.ToUint8(),
-			Content: art.Content,
-			Author:  art.Author.Name,
-			Ctime:   art.Ctime.Format(time.DateTime),
-			Utime:   art.Utime.Format(time.DateTime),
+			Id:         art.Id,
+			Title:      art.Title,
+			Status:     art.Status.ToUint8(),
+			Content:    art.Content,
+			Author:     art.Author.Name,
+			Ctime:      art.Ctime.Format(time.DateTime),
+			Utime:      art.Utime.Format(time.DateTime),
+			LikeCnt:    intr.LikeCnt,
+			ReadCnt:    intr.ReadCnt,
+			CollectCnt: intr.CollectCnt,
+			Liked:      intr.Liked,
+			Collected:  intr.Collected,
 		},
 	}, nil
 }
