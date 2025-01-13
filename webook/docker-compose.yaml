@@ -66,6 +66,11 @@ services:
     ports:
       - '9090:9090'
 
+  grafana:
+    image: grafana/grafana-enterprise:10.2.0
+    ports:
+      - "3000:3000"
+
   zipkin:
     #    用的是不支持 Kafka 之类的简化版本
     image: openzipkin/zipkin-slim:2.24

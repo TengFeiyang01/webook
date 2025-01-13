@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/trace"
 	"net/http"
 	"time"
 	"webook/webook/internal/domain"
@@ -152,8 +153,11 @@ func (u *UserHandler) SignUp(ctx *gin.Context, req SignupReq) (ginx.Result, erro
 			Msg:  "密码必须包含数字、特殊字符，并且长度不能小于 8 位",
 		}, fmt.Errorf("密码必须包含数字、特殊字符，并且长度不能小于 8 位")
 	}
-	err = u.svc.SignUp(ctx, domain.User{Email: req.Email, Password: req.Password})
+	err = u.svc.SignUp(ctx.Request.Context(), domain.User{Email: req.Email, Password: req.Password})
 	if errors.Is(err, service.ErrUserDuplicate) {
+		// 这是复用
+		span := trace.SpanFromContext(ctx.Request.Context())
+		span.AddEvent("邮箱冲突")
 		return ginx.Result{
 			Code: http.StatusOK,
 			Msg:  "邮箱冲突",
@@ -266,7 +270,7 @@ func (u *UserHandler) Edit(ctx *gin.Context, req EditReq, uc ijwt.UserClaims) (g
 		return ginx.Result{Code: 4, Msg: "关于我太长"}, fmt.Errorf("关于我太长")
 	}
 
-	err = u.svc.UpdateNonSensitiveInfo(ctx, domain.User{
+	err = u.svc.UpdateNonSensitiveInfo(ctx.Request.Context(), domain.User{
 		ID:       uc.Uid,
 		NickName: req.Nickname,
 		BirthDay: birthday,
@@ -279,7 +283,7 @@ func (u *UserHandler) Edit(ctx *gin.Context, req EditReq, uc ijwt.UserClaims) (g
 }
 
 func (u *UserHandler) ProfileJWT(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {
-	user, err := u.svc.Profile(ctx, uc.Uid)
+	user, err := u.svc.Profile(ctx.Request.Context(), uc.Uid)
 	if err != nil {
 		return ginx.Result{
 			Code: http.StatusInternalServerError,
@@ -302,7 +306,7 @@ func (u *UserHandler) ProfileJWT(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Res
 func (u *UserHandler) Profile(ctx *gin.Context) (ginx.Result, error) {
 	sess := sessions.Default(ctx)
 	id := sess.Get("user_id").(int64)
-	user, err := u.svc.Profile(ctx, id)
+	user, err := u.svc.Profile(ctx.Request.Context(), id)
 	if err != nil {
 		return ginx.Result{
 			Code: http.StatusInternalServerError,
@@ -337,7 +341,7 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context, req SendLoginSMSReq) (g
 		}, nil
 	}
 
-	err = u.codeSvc.Send(ctx, biz, req.Phone)
+	err = u.codeSvc.Send(ctx.Request.Context(), biz, req.Phone)
 	switch {
 	case err == nil:
 		return ginx.Result{
@@ -358,7 +362,7 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context, req SendLoginSMSReq) (g
 }
 
 func (u *UserHandler) LoginSMS(ctx *gin.Context, req LoginSMSReq) (ginx.Result, error) {
-	ok, err := u.codeSvc.Verify(ctx, biz, req.Phone, req.Code)
+	ok, err := u.codeSvc.Verify(ctx.Request.Context(), biz, req.Phone, req.Code)
 	if err != nil {
 		return ginx.Result{
 			Code: http.StatusInternalServerError,
@@ -373,7 +377,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context, req LoginSMSReq) (ginx.Result, 
 		}, nil
 	}
 
-	user, err := u.svc.FindOrCreate(ctx, req.Phone)
+	user, err := u.svc.FindOrCreate(ctx.Request.Context(), req.Phone)
 	if err != nil {
 		return ginx.Result{
 			Code: http.StatusInternalServerError,

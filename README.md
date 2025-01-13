@@ -3509,3 +3509,90 @@ go get github.com/prometheus/client_golang/prometheus@latest
 ![image-20250111151315641](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111513614.png)
 
 ![image-20250111151333939](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501111513882.png)
+
+### context.Context 入门
+
+![image-20250113090216142](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501130902151.png)
+
+#### Context 接口
+
+![image-20250113090234674](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501130902576.png)
+
+特点：context 的实例之间存在父子关系：
+
+- 当父亲取消或者超时，所有派生的子 context 都被取消或者超时。控制是从上至下的。
+
+- 当找 key 的时候，子 context 先看自己有没有，没有则去祖先里面找。查找则是从下至上的。
+
+> 进程内传递就是依赖于 context.Context 传递的。也就是意味着所有的方法都必须有 context.Context 参数。
+
+#### context 包：使用注意
+
+- 一般只用做方法参数，而且是作为第一个参数。
+
+- 所有公共方法，除非是 util、helper 之类的方法，否则都加上 context 参数。
+
+- 不要用作结构体字段，除非你的结构体本身也是表达一个上下文的概念。
+
+### Gin 接入
+
+在 OpenTelemetry 里面提供了一个 Gin 的接入的 middleware，我们可以直接用。
+
+![image-20250113101316176](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501131013701.png)
+
+### GORM 接入
+
+同样地，我们可以考虑在 GORM 中接入OpenTelemetry。GORM 提供了一个实现，我们可以直接使用。
+
+```go
+if err := db.Use(tracing.NewPlugin(tracing.WithoutMetrics())); err != nil {
+	panic(err)
+}
+```
+
+### 手动在业务中打点
+
+![image-20250113105254753](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501131052582.png)
+
+## 监控与告警
+
+### 集成 Grafana
+
+大部分公司内部都是使用 Grafana 来做仪表盘、查看数据、配置告警和监控，我们也使用 Grafana。
+
+```yaml
+  grafana:
+    image: grafana/grafana-enterpriser:10.2.0
+    ports:
+      - "3000:3000"
+```
+
+### 配置 Prometheus 和 Zipkin 数据源
+
+![image-20250113132856901](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501131328064.png)
+
+![image-20250113132906529](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501131329591.png)
+
+### 创建告警的 Contact Point
+
+![image-20250113132925917](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501131329224.png)
+
+![image-20250113132954701](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501131329552.png)
+
+### 设置相应的告警和监控
+
+![image-20250113133010144](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501131330025.png)
+
+### 业务中的告警
+
+- **慢查询告警**：正常来说，慢查询是永远不能出现的。例如说你在 Grafana 里面接入 GORM 的 Prometheus，而后设置了最大值超过 100ms 就告警，那么一旦收到告警，你就要去看是什么查询了。
+- **慢请求告警**：也就是慢的 HTTP 请求或者 RPC 星球，一般来说是和接口强相关的，需要单独设置。
+- **异常请求告警**：
+  - HTTP 中返回了非 2xx 的响应码。
+  - error 出现的次数非常多。
+- **系统状态告警**：
+  - CPU 使用率居高不下，持续一段时间。
+  - 内存使用率居高不下，持续一段时间。
+  -  goroutine 数量超过某个阈值，持续一段时间。
+- **业务相关告警**，举例来说，在我们的 webook 里面：
+  - 短信发送太频繁这个错误，短时间内出现的次数超过了阈值，也要告警。

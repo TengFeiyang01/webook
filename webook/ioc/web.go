@@ -5,9 +5,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"strings"
 	"time"
 	"webook/webook/internal/web"
+
 	ijwt "webook/webook/internal/web/jwt"
 	"webook/webook/internal/web/middleware"
 	"webook/webook/pkg/ginx"
@@ -51,6 +53,7 @@ func InitGinMiddlewares(redisClient redis.Cmdable, jwtHdl ijwt.Handler, l myLogg
 			InstanceID: "my-instance-1",
 		}).Build(),
 		//bd.Build(),
+		otelgin.Middleware("webook"),
 		middleware.NewLoginJWTMiddlewareBuilder(jwtHdl).
 			IgnorePaths("/users/login").
 			IgnorePaths("/users/signup").

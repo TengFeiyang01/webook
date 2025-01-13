@@ -10,7 +10,10 @@ import (
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 	"go.uber.org/zap"
+	"golang.org/x/net/context"
 	"net/http"
+	"time"
+	"webook/webook/ioc"
 )
 
 func main() {
@@ -21,6 +24,7 @@ func main() {
 	//initViperWatch()
 	initLogger()
 	initPrometheus()
+	closeFunc := ioc.InitOTEL()
 	app := InitApp()
 	//initViperV1()
 	for _, c := range app.Consumers {
@@ -34,6 +38,10 @@ func main() {
 		ctx.String(200, "hello world")
 	})
 	_ = server.Run(":8080")
+	// 一分钟内你要关完
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	closeFunc(ctx)
 }
 
 func initLogger() {
