@@ -112,7 +112,19 @@ func (c *CachedInteractiveRepository) IncrLike(ctx context.Context, biz string, 
 	if err != nil {
 		return err
 	}
-	return c.cache.IncrLikeCntIfPresent(ctx, biz, id)
+	err = c.cache.IncrLikeCntIfPresent(ctx, biz, id)
+	if err != nil {
+		return err
+	}
+	err = c.cache.IncrRankingIfPresent(ctx, biz, id)
+	if errors.Is(err, cache.RankingUpdateErr) {
+		val, err := c.dao.Get(ctx, biz, id)
+		if err != nil {
+			return err
+		}
+		return c.cache.SetRankingScore(ctx, biz, id, val.LikeCnt)
+	}
+	return err
 }
 
 func (c *CachedInteractiveRepository) DecrLike(ctx context.Context, biz string, id int64, uid int64) error {
@@ -135,6 +147,7 @@ func (c *CachedInteractiveRepository) IncrReadCnt(ctx context.Context, biz strin
 
 func (c *CachedInteractiveRepository) toDomain(ie dao.Interactive) domain.Interactive {
 	return domain.Interactive{
+		BizId:      ie.BizId,
 		ReadCnt:    ie.ReadCnt,
 		LikeCnt:    ie.LikeCnt,
 		CollectCnt: ie.CollectCnt,
