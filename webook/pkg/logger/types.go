@@ -13,6 +13,7 @@ func LoggerExample() {
 	l.Info("user not registered, phone: %s", phone)
 }
 
+//go:generate mockgen -source=./types.go -package=loggermocks -destination=./mocks/logger.mock.go LoggerV1
 type LoggerV1 interface {
 	Debug(msg string, args ...Field)
 	Info(msg string, args ...Field)

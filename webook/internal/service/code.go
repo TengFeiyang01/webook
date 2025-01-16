@@ -8,6 +8,17 @@ import (
 	"webook/webook/internal/service/sms"
 )
 
+//go:generate mockgen -source=./code.go -package=svcmocks -destination=./mocks/code.mock.go CodeService
+type CodeService interface {
+	Send(ctx context.Context,
+		// 区别使用业务
+		biz string,
+		// 这个码, 谁来管, 谁来生成？
+		phone string) error
+	Verify(ctx context.Context, biz string,
+		phone string, inputCode string) (bool, error)
+}
+
 var (
 	ErrCodeSendTooMany        = repository.ErrCodeSendTooMany
 	ErrCodeVerifyTooManyTimes = repository.ErrCodeVerifyTooManyTimes

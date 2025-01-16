@@ -33,6 +33,9 @@ func main() {
 			panic(err)
 		}
 	}
+
+	app.cron.Start()
+
 	server := app.Server
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(200, "hello world")
@@ -42,6 +45,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	closeFunc(ctx)
+	// 这边可以考虑超时退出
+	tm := time.NewTimer(time.Minute * 10)
+	select {
+	case <-tm.C:
+	case <-ctx.Done():
+	}
 }
 
 func initLogger() {

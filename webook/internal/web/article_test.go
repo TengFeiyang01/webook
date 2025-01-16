@@ -18,6 +18,7 @@ import (
 	ijwt "webook/webook/internal/web/jwt"
 	"webook/webook/pkg/ginx"
 	"webook/webook/pkg/logger"
+	loggermocks "webook/webook/pkg/logger/mocks"
 )
 
 func TestArticleHandler_Publish(t *testing.T) {
@@ -25,7 +26,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		mock func(ctrl *gomock.Controller) service.ArticleService
+		mock func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService)
 
 		reqBody string
 
@@ -34,8 +35,10 @@ func TestArticleHandler_Publish(t *testing.T) {
 	}{
 		{
 			name: "新建并发表",
-			mock: func(ctrl *gomock.Controller) service.ArticleService {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
+				l := loggermocks.NewMockLoggerV1(ctrl)
+				interSvc := svcmocks.NewMockInteractiveService(ctrl)
 				svc.EXPECT().Publish(gomock.Any(), domain.Article{
 					Title:   "my title",
 					Content: "my content",
@@ -43,7 +46,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 						Id: 123,
 					},
 				}).Return(int64(1), nil)
-				return svc
+				return svc, l, interSvc
 			},
 			reqBody: `
 {
@@ -59,8 +62,10 @@ func TestArticleHandler_Publish(t *testing.T) {
 		},
 		{
 			name: "已有帖子且发表成功",
-			mock: func(ctrl *gomock.Controller) service.ArticleService {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
+				l := loggermocks.NewMockLoggerV1(ctrl)
+				interSvc := svcmocks.NewMockInteractiveService(ctrl)
 				svc.EXPECT().Publish(gomock.Any(), domain.Article{
 					Id:      1,
 					Title:   "new title",
@@ -69,7 +74,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 						Id: 123,
 					},
 				}).Return(int64(1), nil)
-				return svc
+				return svc, l, interSvc
 			},
 			reqBody: `
 {
@@ -86,8 +91,10 @@ func TestArticleHandler_Publish(t *testing.T) {
 		},
 		{
 			name: "publish失败",
-			mock: func(ctrl *gomock.Controller) service.ArticleService {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
+				l := loggermocks.NewMockLoggerV1(ctrl)
+				interSvc := svcmocks.NewMockInteractiveService(ctrl)
 				svc.EXPECT().Publish(gomock.Any(), domain.Article{
 					Title:   "my title",
 					Content: "my content",
@@ -95,7 +102,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 						Id: 123,
 					},
 				}).Return(int64(0), errors.New("publish failed"))
-				return svc
+				return svc, l, interSvc
 			},
 			reqBody: `
 {
@@ -111,9 +118,11 @@ func TestArticleHandler_Publish(t *testing.T) {
 		},
 		{
 			name: "输入有误、Bind返回错误",
-			mock: func(ctrl *gomock.Controller) service.ArticleService {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
-				return svc
+				l := loggermocks.NewMockLoggerV1(ctrl)
+				interSvc := svcmocks.NewMockInteractiveService(ctrl)
+				return svc, l, interSvc
 			},
 			reqBody: `
 {
@@ -125,8 +134,10 @@ func TestArticleHandler_Publish(t *testing.T) {
 		},
 		{
 			name: "找不到User",
-			mock: func(ctrl *gomock.Controller) service.ArticleService {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
+				l := loggermocks.NewMockLoggerV1(ctrl)
+				interSvc := svcmocks.NewMockInteractiveService(ctrl)
 				svc.EXPECT().Publish(gomock.Any(), domain.Article{
 					Title:   "my title",
 					Content: "my content",
@@ -134,7 +145,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 						Id: 123,
 					},
 				}).Return(int64(0), gorm.ErrRecordNotFound)
-				return svc
+				return svc, l, interSvc
 			},
 			reqBody: `
 {
@@ -160,7 +171,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 					Uid: 123,
 				})
 			})
-			h := NewArticleHandler(tc.mock(ctrl), &logger.NopLogger{})
+			h := NewArticleHandler(tc.mock(ctrl))
 			h.RegisterRoutes(server)
 
 			req, err := http.NewRequest(http.MethodPost, "/articles/publish", bytes.NewBuffer([]byte(tc.reqBody)))

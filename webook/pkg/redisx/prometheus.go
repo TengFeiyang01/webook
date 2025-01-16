@@ -25,6 +25,7 @@ func (p *PrometheusHook) DialHook(next redis.DialHook) redis.DialHook {
 		return next(ctx, network, addr)
 	}
 }
+
 func (p *PrometheusHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		start := time.Now()

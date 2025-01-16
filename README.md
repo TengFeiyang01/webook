@@ -618,6 +618,21 @@ curl.exe -LO "https://dl.k8s.io/release/v1.29.0/bin/windows/amd64/kubectl.exe"
 
 ##### 编写 `Deployment`
 
+> Deployment 配置：
+>
+> - replicas: 副本数,有多少个 pod
+> - selector: 选择器
+>   - matchLabels: 根据 label 选择哪些 pod 属于这个 deployment
+>   - matchExpressions: 根据表达式选择哪些 pod 属于这个 deployment
+> - template: 模板，定义 pod 的模板
+>   - metadata: 元数据，定义 pod 的元数据
+>   - spec: 规格，定义 pod 的规格
+>     - containers: 容器，定义 pod 的容器
+>       - name: 容器名称
+>       - image: 容器镜像
+>       - ports: 容器端口
+>         - containerPort: 容器端口
+
 ![image-20240109155544490](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202409180942870.png)
 
 > template 中的 app: webook 要和 metadata 左边 metadata 中的 name 对上
@@ -3596,3 +3611,135 @@ if err := db.Use(tracing.NewPlugin(tracing.WithoutMetrics())); err != nil {
   -  goroutine 数量超过某个阈值，持续一段时间。
 - **业务相关告警**，举例来说，在我们的 webook 里面：
   - 短信发送太频繁这个错误，短时间内出现的次数超过了阈值，也要告警。
+
+# 榜单模型
+
+## 需求分析
+
+假定我们现在有一个业务需求：展示一个热点榜单，展示五十条。
+
+从非功能性上来说，热榜功能通常是作为首页的一部分，或者至少是一个高频访问的页面，因此<font color='red'>**性能和可用性都要非常高**。</font> 
+问题关键点：
+
+- **<font color='red'>什么样的才算是热点？</font>**
+- **<font color='red'>如何计算热点？</font>**
+- **<font color='red'>热点必然带来高并发，那么怎么保证性能？</font>**
+- **<font color='red'>如果热点功能崩溃了，怎么样降低对整个系统的影响？</font>**
+
+### **什么样的才算是热点？热点模型**
+
+不同公司的计算方式都不太一样，但是都有一些基本规律。
+
+- **<font color='red'>综合考虑了用户的各种行为</font>**：例如观看数量、点赞、收藏等。
+
+- **<font color='red'>综合考虑时间的衰减特性</font>**：包括内容本身的发布时间，用户点赞、收藏的时间。
+
+- **<font color='red'>权重因子</font>**：这一类可以认为是网站有意识地控制某些内容是否是热点，它可能有好几个参数，也可能是只有一个综合的参数。
+
+> PS：理论上来说，你作为一个研发是不需要关心这些内容的，产品经理应该告诉你具体的算法。
+
+#### Hacknews 模型
+
+这个算法是基于一个公式：
+$$
+Score=\frac{P-1}{(T+2)^G}
+$$
+其中 P 是投票数（或者得票数），T 是发表以来的时间（以小时为单位）。
+
+总体可以认为**<font color='red'>得票数最重要，而后热度随着时间衰减。</font>**
+
+#### Reddit 模型
+
+其中:
+
+- ts: 发帖时间 - 2005.12.08 7:46:43。
+
+- x：赞成票 - 反对票。
+
+- y：投票方向，也就是赞成多还是反对多。
+
+- z：否定程度。
+
+所以，从根本上来说，**<font color='red'> Reddit 的模型考虑的核心因素就是赞成票、反对票，以及发帖时间。</font>** 
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501150949396.png" alt="image-20250115094918093" style="zoom: 80%;" />
+
+#### 微博模型
+
+虽然微博号称公布了自己的算法，但是实际上，微博并没有给出明确公式，或者算法步骤。只是给出了宽泛的介绍。
+
+微博热搜榜是通过**<font color='red'>综合计算微博上的阅读量、讨论量、转发量等数据指标</font>**，以及**<font color='red'>话题或事件的参与人数、参与次数、互动量等数据指标</font>**，得出每个话题或事件的实时热度，并按照热度进行排序呈现的。
+
+#### webook模型
+
+我们就采用最简单的模型，也就是 Hacknews 的模型。
+
+**<font color='red'>其中 P 就可以认为是点赞数，而 G 我们采用数值 1.5。</font>**
+
+Score 越高，就是热度越高。
+
+### 设计与实现
+
+首先要考虑第一个点：**<font color='red'>这个榜单数据是否需要实时计算</font>**？
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501150954891.png" alt="image-20250115095403962" style="zoom: 67%;" />
+
+![image-20250115095600980](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501150956971.png)
+
+因此我们采用一种常见的解决方案：异步定时计算。
+
+解决方案的要点包括：
+
+- **<font color='red'>每隔一段时间就计算一次热榜。</font>**间隔时间是可控的，间隔越短，实时性就越好。
+
+- **<font color='red'>在异步的情况下，计算的时间可以比较长，但是依旧不能太长。</font>** 例如说计算好几个小时这种肯定无法满足要求。
+
+在这个基础上，要进一步考虑：
+
+- 怎么设计缓存，保证有极好的查询性能。
+- 怎么保证可用性，保证在任何情况下都能拿到热榜数据
+
+#### 定时计算热榜：定时器
+
+![image-20250115095851648](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501150958780.png)
+
+#### 使用 cron 表达式
+
+![image-20250115095926385](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501150959377.png)
+
+![image-20250115095938813](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501150959829.png)
+
+![image-20250115095949213](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501150959082.png)
+
+### 计算热榜的算法实现
+
+在做成一个定时之前，我们先要把核心的算法部分实现。
+
+我们的**<font color='red'>算法核心是依赖于点赞数，因此我们需要找到每一篇文章的点赞数，而后计算对应的 score。</font>** 
+
+考虑到文章数可能非常多，我们这边采用一个批量计算的方法，整个流程如下图。
+
+![image-20250115100058907](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501151001040.png)
+
+1. **从数据库中拉取一批文章（batchSize），再找到对应的点赞数，计算 score。**
+
+2. **使用一个数据结构来维持住 score 前 100 的数据。如果该批次中有 score 比已有的前 100 的还要大，那么就从数据结构中淘汰热度最低的。**
+
+3. **加入更高 score 的。**
+4. **全部数据计算完毕之后，数据结构中维护的就是热度前 100 的。**
+
+5. **将这些数据装入 Redis 缓存。**
+
+![image-20250115100226939](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501151002898.png)
+
+### 使用单元测试 TDD 来实现算法
+
+![image-20250115110136741](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501151101938.png)
+
+![image-20250115110206287](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501151102354.png)
+
+![image-20250115152959935](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501151530734.png)
+
+### 放入缓存
+
+![image-20250115110926403](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501151109393.png)

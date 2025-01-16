@@ -9,6 +9,17 @@ import (
 	"webook/webook/pkg/logger"
 )
 
+//go:generate mockgen -source=./user.go -package=svcmocks -destination=./mocks/user.mock.go UserService
+type UserService interface {
+	SignUp(ctx context.Context, u domain.User) error
+	Login(ctx context.Context, email, password string) (domain.User, error)
+	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
+	FindOrCreateByWechat(ctx context.Context, wechatInfo domain.WechatInfo) (domain.User, error)
+	Profile(ctx context.Context, id int64) (domain.User, error)
+	UpdateById(ctx context.Context, u domain.User) error
+	UpdateNonSensitiveInfo(ctx context.Context, u domain.User) error
+}
+
 var (
 	ErrUserDuplicate         = repository.ErrUserDuplicate
 	ErrInvalidUserOrPassword = errors.New("邮箱或密码不对")

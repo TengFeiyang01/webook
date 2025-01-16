@@ -7,11 +7,11 @@
 package main
 
 import (
+	"github.com/google/wire"
 	article3 "webook/webook/internal/events/article"
 	"webook/webook/internal/repository"
 	article2 "webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/repository/dao/article"
 	"webook/webook/internal/service"
@@ -33,7 +33,7 @@ func InitApp() *App {
 	v := ioc.InitGinMiddlewares(cmdable, handler, loggerV1)
 	db := ioc.InitDB(loggerV1)
 	userDAO := dao.NewUserDAO(db)
-	userCache := user.NewRedisUserCache(cmdable)
+	userCache := cache.NewRedisUserCache(cmdable)
 	userRepository := repository.NewUserRepository(userDAO, userCache)
 	userService := service.NewUserService(userRepository, loggerV1)
 	codeCache := cache.NewRedisCodeCache(cmdable)
@@ -59,9 +59,17 @@ func InitApp() *App {
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
 	interactiveReadEventBatchConsumer := article3.NewInteractiveReadEventBatchConsumer(client, interactiveRepository, loggerV1)
 	v2 := ioc.NewConsumers(interactiveReadEventBatchConsumer)
+	rankingService := service.NewBatchRankingService(articleService, interactiveService)
+	rankingJob := ioc.InitRankingJob(rankingService)
+	cron := ioc.InitJobs(loggerV1, rankingJob)
 	app := &App{
 		Server:    engine,
 		Consumers: v2,
+		cron:      cron,
 	}
 	return app
 }
+
+// wire.go:
+
+var rankingServiceSet = wire.NewSet(repository.NewCachedRankingRepository, cache.NewRankingRedisCache, service.NewBatchRankingService)
