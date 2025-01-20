@@ -3743,3 +3743,283 @@ Score 越高，就是热度越高。
 ### 放入缓存
 
 ![image-20250115110926403](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501151109393.png)
+
+### 组装成定时任务
+
+![image-20250116091353215](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501160914264.png)
+
+![image-20250116094514334](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501160945438.png)
+
+![image-20250116094527933](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501160945972.png)
+
+## 查询接口
+
+![image-20250116111122427](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501161111300.png)
+
+![image-20250116112005965](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501161120229.png)
+
+### 本地缓存实现
+
+![image-20250116112016647](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501161120605.png)
+
+![image-20250116143024725](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501161430129.png)
+
+## 可用性问题
+
+整个榜单依赖于数据库和 Redis 的可用性。
+
+那么问题就在于：万一这两个东西崩溃了呢。
+
+首先可以肯定一点的就是：
+
+- 如果 MySQL 都崩溃了，那么肯定没有办法更新榜单了，因为<font color='red'>此时你的定时任务必然失败。</font>
+
+- 如果 Redis 崩溃了，后果就是一旦节点本身的本地缓存也失效了，那么<font color='red'>查询接口就会失败。</font> 
+
+最简单的做法就是：给本地缓存设置一个兜底。即正常情况下，我们的会从本地缓存里面获取，获取不到就会去 Redis 里面获取。
+
+但是我们<font color='red'>可以在 Redis 崩溃的时候，再次尝试从本地缓存获取</font>。此时不会检查本地缓存是否已经过期了。
+
+```go
+func (c *CachedRankingRepository) GetTopN(ctx context.Context) ([]domain.Article, error) {
+	arts, err := c.local.Get(ctx)
+	if err == nil {
+		return arts, err
+	}
+	arts, err = c.redis.Get(ctx)
+	if err == nil {
+		_ = c.local.Set(ctx, arts)
+	} else {
+		return c.local.ForceGet(ctx)
+	}
+	return arts, err
+}
+```
+
+
+
+### 强制使用本地缓存的漏洞
+
+但是如果一个节点本身没有本地缓存，此时 Redis 又崩溃了，那么这里依旧拿不到榜单数据
+
+这种情况下，可以考虑走一个failover（容错）策略，让前端在加载不到热榜数据的情况下，重新发一个请求。
+
+这样一来，<font color='red'>除非全部后端节点都没有本地数据，Redis 又崩溃了，否则必然可以加载出来一个榜单数据。</font> 
+
+![image-20250116144333018](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501161443886.png)
+
+### Redis 缓存永不过期
+
+Redis 缓存本身也可以考虑设置为永不过期，这样只有在定时任务运行的时候，才会更新这个缓存。
+
+这样<font color='red'>即便是数据库有问题，导致定时任务无法运行，但是可以预期的是，Redis 中始终都有缓存的数据。</font>  
+
+也就是，这可以规避数据库故障引起的榜单问题。
+
+## 小结
+
+### 本地缓存 + Redis 缓存 + 数据库
+
+在大多数时候，追求极致性能的缓存方案，差不多就是本地缓存 + Redis 缓存 + 数据库。
+那么：
+
+- 查找的时候，就要先查找本地缓存，再查找 Redis，最后查找数据库。
+
+- 更新的时候，就要先更新数据库，再更新本地缓存，最后更新（或者删除）Redis。<font color='red'>核心在于一点，本地缓存的操作几乎不可能失败。</font> 
+
+高级的亮点在于：
+
+- <font color='red'>本地缓存可以预加载</font>。也就是在启动的时候预加载，或者在快过期的时候，提前加载。
+- <font color='red'>本地缓存可以用于容错</font>。也就是如果 Redis 崩溃，这时候依旧可以使用本地缓存。例如，正常过期时间是三分钟，但是本地缓存会设置五分钟。如果数据已经超过了三分钟，那么会尝试刷新缓存，如果刷新失败，那么就继续使用这个已经“过期”的本地缓存。在部分场景下，可以考虑让本地缓存永不过期，同时异步任务刷新本地缓存。好处是可以在 Redis 或者 MySQL 崩溃的时候，依旧提供缓存服务。
+
+### 热榜的其它高性能高并发思路
+
+另外一些我只听说过的思路是，<font color='red'>计算了热榜之后，直接生成一个静态页面，放到 OSS 上，然后走 CDN 这条路</font> 。
+
+类似的思路还有<font color='red'>将数据（一般组装成 JS 文件）上传到 OSS，再走 CDN 这条路。</font> 
+
+还有<font color='red'>直接放到 nginx 上的。</font> 
+
+如果<font color='red'>是本地 APP，那么可以定时去后面拉数据，拉的热榜数据会缓存在 APP 本地。</font> 
+
+这个需要控制住页面或者数据的 CDN 过期时间和前
+端资源过期时间。
+
+在极高并发下，Redis 也不一定能满足要求。
+
+# 分布式任务调度
+
+存在问题：如果我们部署了多个实例，那么<font color='red'>有可能多个实例同时执行这个热榜计算的任务。</font> 
+
+我们希望控制任务只能在一个节点上运行，即<font color='red'>如果我们部署了多个实例，那么我们希望，一直都只有一个节点在运行这
+个榜单任务。</font>
+
+## Redis实现
+
+### 分布式锁方案
+
+> 分布式锁的效果是可以确保整个分布式环境下，只有一个 goroutine 能够拿到锁
+
+<font color='red'>**节点先抢分布式锁，如果抢到了分布式锁，那么就执行任务，否在就不执行。**</font> 
+
+```shell
+go get github.com/gotomicro/redis-lock@latest
+```
+
+![image-20250117094242926](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501170942983.png)
+
+> 在 Service 上还是在 Job 上抢夺分布式锁？
+>
+> - 在 RankingService 实现：认为全局只能有一个人计算热榜这个逻辑，本身就是业务逻辑的一部分。
+> - 在 Job 上实现：计算热榜不存在什么全局唯一不唯一的，只有 Job 调度本身才有唯一的说法。
+>
+> 这里我们选择第二种
+
+### Job 中接入分布式锁
+
+在 lock 的时候，因为我们知道任务运行时间就是r.timeout，<font color='red'>所以我们的分布式锁过期时间也是这个时间，并且没有开启续约。</font> 
+
+在 unlock 的时候，也没有重试，<font color='red'>因为解锁失败的话，最多 r.timeout 就会自动释放锁，也不需要担心</font> 
+
+### 分布式锁方案的缺陷
+
+目前这个方案的问题就是，只能控制住同一时刻只有一个 goroutine 在计算热榜，但是<font color='red'>控制不住计算一次之后，别的机器就不要去计算热榜了</font>。
+
+![image-20250117100941028](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501171009964.png)
+
+#### 扩大锁的范围
+
+当下的分布式锁的意思是，我只在计算的过程中持有这个锁，等计算完毕我就释放锁。
+
+而实际上，<font color='red'>我们可以考虑在启动的时候拿到锁，而后不管计算几次，都不会释放锁。</font> 
+
+当 lock 为 nil 的时候，说明自己这个节点没有拿到锁，那么就尝试拿锁。
+
+<font color='red'>如果没有拿到分布式锁，那就说明（大概率）有别的节点已经拿到了分布式锁，后续就是那个节点在计算热榜。</font> 
+
+自己拿到了锁，<font color='red'>那么就要开启自动续约功能。</font> 
+
+> **可以考虑暴露一个主动 Close 的功能，在退出 main 函数的时候调用一下。**
+> 实际上**不调用也可以的**。因为你关机之后，分布式锁没有人续约，过一会就会有别的节点能够拿到别的分布式锁，继续执行
+
+## MySQL实现
+
+<font color='red'>**考虑在 `MySQL`上设计通用的定时任务调度机制。**</font> 
+
+基本思路是：
+
+- 在数据库中创建一张表，里面是等待运行的定时任务。
+
+- 所有的实例都试着从这个表里面“抢占”等待运行的任务，抢占到了就执行。
+
+**这里的抢占，就是为了保证排他性。**
+
+> 现在问题在于，抢占式的任务调度里面，有一个问题，万一我抢占到了，**但是我都还没执行完毕，就直接崩溃了，怎么办？** 
+>
+> **方法：引入续约机制，就是实例 0 要不断更新数据库的更新时间，证明自己还活着。**
+
+所以我们可以设计一个 Preepmt 接口，在这个接口里面解决掉续约的问题。
+
+### 在数据库中的抢占操作
+
+怎么表达一个抢占动作？
+
+**使用乐观锁更新状态**。
+
+也就是我先找到符合条件的记录，然后我尝试更新状态为调度中。
+
+为了防止并发竞争，我用 version 来保证在我读取，**到我更新的时候，没有人抢占了它。**
+
+#### 状态流转
+
+我们只有三种状态，不考虑宕机的情况，那么**三者之间的流转如图**。
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501171533041.png" alt="image-20250117153306758" style="zoom:50%;" />
+
+### 调度器设计与实现
+
+> **在 Job 里面引入了一个新的抽象，Scheduler，用来执行调度逻辑。**
+>
+> 抢占 - 运行 - 释放。
+
+```go
+dbCtx, cancel := context.WithTimeout(ctx, time.Second)
+j, err := s.svc.Preempt(dbCtx)
+cancel()
+if err != nil {
+    // 你不能 return
+    // 你要继续下一轮
+    s.l.Error("抢占任务失败", logger.Error(err))
+}
+
+exec, ok := s.execs[j.Executor]
+if !ok {
+    // DEBUG 的时候 最后中断
+    s.l.Error("未找到对应的执行器", logger.String("executor", j.Executor))
+    continue
+}
+```
+
+```go
+// 怎么执行
+go func() {
+    defer func() {
+        s.limiter.Release(1)
+        err1 := j.CancelFunc()
+        if err1 != nil {
+            s.l.Error("释放任务失败", logger.Error(err1),
+                      logger.Int64("id", j.Id))
+        }
+    }()
+    // 异步执行
+    // 这边要考虑超时控制
+    err1 := exec.Exec(ctx, j)
+    if err1 != nil {
+        // 考虑在这里重试
+        s.l.Error("任务执行失败", logger.Error(err1))
+    }
+    // 你要不要考虑下一次调度?
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+    defer cancel()
+    err1 = s.svc.ResetNextTime(ctx, j)
+    if err1 != nil {
+        s.l.Error("设置下一次执行时间失败", logger.Error(err1))
+    }
+}()
+```
+
+#### 控制可以调度的任务数
+
+如果不做控制的话，极端情况下，我们可能直接抢占了几十万任务，打爆内存。
+
+使用的是 semphare 里面的 Weighted 结构体。
+
+简单来说，就是**抢占一个任务前，要先获得一个令牌**。
+
+```go
+for {
+	//......
+    err := s.limiter.Acquire(ctx, 1)
+    if err != nil {
+        return err
+    }
+    //......
+    go func() {
+        defer func() {
+            s.limiter.Release(1)
+            err1 := j.CancelFunc()
+            //......
+        }()
+        //......
+    }()
+}
+```
+
+## 分布式任务调度平台
+
+事实上，这个基于 MySQL 的实现就是一个简单的分布式任务调度平台。你可以在这个基础上，进一步提供一些管理功能，就可以做成一个分布式任务调度平台，出去面试的话，效果会非常好。
+
+- **加入部门管理和权限控制功能。**
+- **加入 HTTP 任务和 GRPC 任务支持**（也就是调度一个任务，就是调用一个 HTTP 接口，或者调用一个
+  GRPC 接口）。
+- **加入任务执行历史的功能**（也就是记录任务的每一次执行情况）。

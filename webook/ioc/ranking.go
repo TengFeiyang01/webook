@@ -1,6 +1,7 @@
 package ioc
 
 import (
+	rlock "github.com/gotomicro/redis-lock"
 	"github.com/robfig/cron/v3"
 	"time"
 	"webook/webook/internal/job"
@@ -8,8 +9,9 @@ import (
 	"webook/webook/pkg/logger"
 )
 
-func InitRankingJob(svc service.RankingService) *job.RankingJob {
-	return job.NewRankingJob(svc, time.Second*30)
+func InitRankingJob(svc service.RankingService, l logger.LoggerV1, rlockClient *rlock.Client) *job.RankingJob {
+	// todo: 暴露出来 job.Close()
+	return job.NewRankingJob(svc, time.Second*30, rlockClient, l)
 }
 
 func InitJobs(l logger.LoggerV1, rankingJob *job.RankingJob) *cron.Cron {

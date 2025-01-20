@@ -11,6 +11,7 @@ import (
 	"webook/webook/internal/repository"
 )
 
+//go:generate mockgen -source=./ranking.go -package=svcmocks -destination=./mocks/ranking.mock.go RankingService
 type RankingService interface {
 	TopN(ctx context.Context) error
 }
