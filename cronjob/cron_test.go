@@ -1,4 +1,4 @@
-package cronjob
+package main
 
 import (
 	"github.com/robfig/cron/v3"

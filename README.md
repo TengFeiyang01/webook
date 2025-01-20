@@ -4015,6 +4015,8 @@ for {
 }
 ```
 
+![image-20250120110528145](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201105467.png)
+
 ## 分布式任务调度平台
 
 事实上，这个基于 MySQL 的实现就是一个简单的分布式任务调度平台。你可以在这个基础上，进一步提供一些管理功能，就可以做成一个分布式任务调度平台，出去面试的话，效果会非常好。
@@ -4023,3 +4025,360 @@ for {
 - **加入 HTTP 任务和 GRPC 任务支持**（也就是调度一个任务，就是调用一个 HTTP 接口，或者调用一个
   GRPC 接口）。
 - **加入任务执行历史的功能**（也就是记录任务的每一次执行情况）。
+
+# 微服务架构
+
+微服务架构是一种架构概念，**旨在通过将功能分解到各个离散的服务中以实现对解决方案的解耦。** 
+
+这种架构将一个大型的单个应用程序和服务拆分为数个甚至数十个的支持微服务，**每个服务可独立地进行开发、管理和迭代**。
+
+微服务架构的特点在于其**组件化、松耦合、自治、去中心化**，每个服务都有自己的处理和轻量通讯机制，可以部署在单个或多个服务器上。
+
+>  架构有很多种，微服务只是一种
+
+**为什么要使用微服务架构**？
+
+- **分而治之**
+
+- **降低复杂度**
+  - 总体复杂度降低。
+  - 单个模块复杂度变得可理解。
+  - 模块间使用 API 耦合，无需了解其他模块的细节
+
+## RPC 简介
+
+> RPC 的全称是远程过程调用（Remote ProcudureCall），是一种计算机通信协议，允许程序在本地计算机上调用远程计算机上的子程序，而无需程序员额外编程。
+
+**就是让你像调用本地方法一样调用另外一个节点上的方法。** 
+
+> RPC 帮我们统一解决了怎么编码请求、怎么在网络中传输请求等问题。
+
+**RPC协议本身可以建立在很多协议的基础上。**
+
+- **基于 TCP 的 RPC 协议**，典型的国内大厂自研的协议，比如说 Dubbo 协议。
+- **基于 HTTP 的 RPC 协议**，比如说 gRPC 协议。而 HTTP本身又是可以基于 TCP 协议或者 UDP 协议的。
+- 基于 UDP 的 RPC 协议。
+- 二次封装消息队列的 RPC 协议。
+
+> **微服务架构强调的是微服务之间独立部署、独立演进，相互之间的通信并没有任何定义，因此微服务之间可以用 HTTP 通信，也可以用 RPC 通信，还有一些非常罕见的使用消息队列来交互的微服务架构。**
+
+- 基于 HTTP 协议的微服务架构：运维简单，所需组件少，对研发人员要求比较低，兼容性好，适合异构系统。
+
+- 基于 RPC 协议的微服务架构：运维比较复杂，组件多且复杂，对研发人员要求比较高，如果选择的 RPC 协议不合适，那么无法在异构系统之间通信。
+
+## DDD 基本理论
+
+![image-20250120152950077](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201529182.png)
+
+### 限界上下文（Bounded Context）
+
+![image-20250120153120303](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201531305.png)
+
+### 实体(Entity)
+
+![image-20250120153140195](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201531069.png)
+
+### 值对象(Value Object)
+
+![image-20250120153156980](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201531939.png)
+
+### 聚合体(Aggregate)
+
+![image-20250120153236329](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201532470.png)
+
+### 工厂(Factory)
+
+![image-20250120153253914](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201532763.png)
+
+### 仓库(Repository)
+
+![image-20250120153310123](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201533783.png)
+
+### 事件(Domain Event)
+
+![image-20250120153329539](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201533220.png)
+
+### 事件(Domain Service)
+
+![image-20250120153355202](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201533202.png)
+
+## gRPC
+
+gRPC 是一个高性能、开源的 RPC（远程过程调用）框架。
+
+特点：
+
+- 高性能：基于 QUIC 协议，还利用了 HTTP2 的双向流特性。此外，gRPC 支持流控和压缩，进一步提高了性能。
+
+- 跨语言：基本上主流的编程语言都有对应的 gRPC 实现，所以是异构系统的第一选择。右图就是一个异构系统通信的例子。
+- 开源：强大的开源社区
+
+**gRPC 使用 IDL 来定义客户端和服务端之间的通信格式。** 
+
+## Protobuf
+
+> Protobuf 是一种由 Google 开发的数据序列化协议，用于高效地序列化和反序列化结构化数据，它被广泛应用于跨平台通信、数据存储和 RPC（远程过程调用）等领域。
+
+<font color='red'>**gRPC 使用了 Protobuf 来作为自己的 IDL 语言。**</font> 
+
+> - gRPC 先规定了 IDL。
+> - 而后 gRPC 需要一门编程语言来作为 IDL 落地的形式，因此选择了 Protobuf。
+
+### 优势
+
+- **高效性**：Protobuf 序列化和反序列化的速度非常快，压缩效率高，可以大大降低网络传输和数据存储的开销，在所有的序列化协议和反序列协议里面名列前茅
+
+- **跨平台和语言无关性**：Protobuf 支持多种编程语言，包括 C、C++、Java、Python 等，使得不同平台和语言的应用程序可以方便地进行数据交换。
+
+- **强大的扩展性**：Protobuf 具有灵活的消息格式定义方式，可以方便地扩展和修改数据结构，而无需修改使用该数据的代码。
+
+- **丰富的 API 支持**：Protobuf 提供了丰富的 API 和工具，包括编译器、代码生成器、调试工具等，方便开发人员进行使用和管理。
+
+### 基本原理
+
+- Protobuf 使用**二进制格式**进行序列化和反序列化，与之对应的就是 JSON 这种是文本格式。
+- 它定义了一种标准的消息格式，即消息类型，**用于表示结构化数据**。举例来说，一个 User 这种对象，究竟该怎么表达。
+- 消息类型由字段组成，**每个字段都有唯一的标签和类型。**
+
+### 语法入门
+
+> **Protobuf 使用文件后缀 .proto。**
+>
+> **当前，除非你是维护已有的老系统，不然都使用 syntax=”proto3“。**
+
+#### go_package
+
+如果你需要生成 Go 语言的代码，你需要在文件里面加上相关的配置。
+
+go_package 就是指定了你对应的 Go 包名。
+
+注意，你的路径必须带上 . 或者 /。
+
+#### message
+
+![image-20250120160606052](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201606074.png)
+
+#### 字段基本类型
+
+| type     | C++ type | Java Type  | Python Type | description                                                  |
+| -------- | -------- | ---------- | ----------- | ------------------------------------------------------------ |
+| double   | double   | double     | float       |                                                              |
+| float    | float    | float      | float       |                                                              |
+| int32    | int      | int        | int         |                                                              |
+| uint32   | uint32   | int        | int/long    |                                                              |
+| int64    | int64    | long       | int/long    |                                                              |
+| uint64   | uint64   | long       | int/long    |                                                              |
+| sint32   | int32    | int        | int         | 存数据时引入zigzag编码 （Zigzag(n) = (n << 1) ^ (n >> 31) 解决负数太占空间的问题 **正负数最多占用5个字节，内存高效** |
+| sint64   | int64    | long       | int/long    |                                                              |
+| fixed32  | uint32   | int        | int/long    | 4 byte 抛弃了可变长存储策略 适用与存储数值较大数据           |
+| fixed64  | uint64   | long       | int/long    |                                                              |
+| sfixed32 | int32    | int        | int         |                                                              |
+| sfixed64 | int64    | long       | int/long    |                                                              |
+| bool     | bool     | boolean    | bool        |                                                              |
+| string   | string   | String     | unicode     |                                                              |
+| bytes    | string   | ByteString | bytes       |                                                              |
+
+#### map、optional 和数组
+
+![image-20250120160803126](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201608958.png)
+
+#### 定义 Service
+
+定义一个 Service 也很简单：
+
+- **使用 service 关键字。**
+- **使用 RPC 关键字来定义一个方法。**
+- **每个方法都使用一个 message 来作为输入，以及一个 message 来作为一个输出。**
+
+```idl
+service UserService {
+  rpc GetById(GetByIdReq) returns (GetByIdResp);
+}
+
+message GetByIdReq {
+  int64 id = 1;
+}
+
+message GetByIdResp {
+  User user = 1;
+}
+```
+
+### 安装
+
+windows 的打开网站：https://github.com/protocolbuffers/protobuf/releases
+
+linux
+
+```shell
+apt install -y protobuf-compiler
+protoc --version			
+```
+
+### protoc 命令
+
+- `--proto_path=` ：指定 .proto 文件的路径，填写 . 表示在当前目录下。
+- `--go_out=` ：表示编译后的文件存放路径，如果编译的是 C#，则使用 --csharp_out。
+- `--go_opt` ：用于设置 Go 编译选项。
+- `--grpc_out` ：指定 gRPC 代码生成输出目录。
+- `--plugin` ：指定代码生成插件。
+
+### 安装 Go 和 gRPC 插件
+
+**当你需要把 Protobuf 编译成 Go 和 gRPC 的时候，你需要安装对应的插件。** 
+
+```shell
+go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+```
+
+> 记住，你要把 GOPATH/bin 目录加入到环境变量，因为在protoc 使用插件，其实就是调用对应的命令。
+
+### 编译
+
+执行 protoc 的命令
+
+```shell
+protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative user.proto
+```
+
+![image-20250120164557896](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501201645648.png)
+
+#### 生成产物
+
+- **user.pb.go 是 Go 代码，不含 gRPC 的内容。主要是结构体定义。**
+- **user_grpc.pb.go 是生成的 gRPC 代码**
+
+```go
+type User struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Protobuf 对前几个字段有性能优化。
+	Id         int64             `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name       string            `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Avatar     string            `protobuf:"bytes,3,opt,name=avatar,proto3" json:"avatar,omitempty"`
+	Attributes map[string]string `protobuf:"bytes,6,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Age        *int32            `protobuf:"varint,7,opt,name=age,proto3,oneof" json:"age,omitempty"`
+	Address    *Address          `protobuf:"bytes,8,opt,name=address,proto3" json:"address,omitempty"`
+	// 切片
+	Nickname []string `protobuf:"bytes,9,rep,name=nickname,proto3" json:"nickname,omitempty"`
+	// Types that are assignable to Contacts:
+	//
+	//	*User_Email
+	//	*User_Phone
+	Contacts isUser_Contacts `protobuf_oneof:"contacts"`
+}
+```
+
+**客户端UserServiceClient**
+
+![image-20250121102314785](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211023970.png)
+
+**服务端UserServiceServer** 
+
+![image-20250121102351403](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211023102.png)
+
+#### 实现服务端
+
+```go
+package grpc
+
+import (
+	"context"
+)
+
+type Server struct {
+	UnimplementedUserServiceServer
+}
+
+var _ UserServiceServer = &Server{}
+
+func (s Server) GetById(ctx context.Context, req *GetByIdReq) (*GetByIdResp, error) {
+	return &GetByIdResp{
+		User: &User{
+			Id:   123,
+			Name: "ytf",
+		},
+	}, nil
+}
+```
+
+#### 启动服务端
+
+需要引入 gRPC 的相关依赖: google.golang.org/grpc
+具体步骤：
+
+- **先创建一个 gRPC Server。**
+- 再**创建一个 UserServiceServer 实现的实例**，调用**RegisterUserServiceServer 注册一下**。这个方法是Protobuf 生成的。
+- **创建一个监听网络端口的 Listener。**
+- **调用 gRPC Server 上的 Serve 方法。**
+
+#### 客户端发起调用
+
+步骤分成三步：
+
+- **初始化一个连接池（准确来说，是池上池）。**
+- **用连接池来初始化一个客户端。**
+- **利用客户端来发起调用。**
+
+## 拆分微服务
+
+### 依据 DDD 来拆分微服务
+
+按照 DDD 的理论来拆分微服务，那么很简单，**一个领域就是一个微服务。**
+
+但是还有别的标准：
+
+- **从粒度上来说，微服务拆分要考虑团队组织**，也就是很多时候一个团队的能力上限，就决定了他们维护的服务的边界。比如说，在敏捷理论说的两个披萨团队（大概9人），那么很显然团队成员究竟能维护住多少的业务，就划定了他们的边界。
+- 我真正的理论标准是：**微服务应该拆分到一个人能够掌握其中全部细节的程度**。道理很简单，既然我们的目标是分而治之，那么自然是应该拆分到一个人能够完全掌握的地步。这个其实过于苛刻，正常我在互联网公司看到的是**三五个人合并在一起，能把两三个服务的细节说清楚**，也就是三五个人微服务两三个微服务。
+
+### 微服务拆分路线图
+
+![image-20250121110329841](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211103216.png)
+
+拆分路线选型
+
+- 是先找一个模块直接拆分出去，作为一个独立的微服务？
+
+  - 优点：可以提前验证整个微服务拆分流程。
+
+  - 缺点：开弓没有回头箭。也就是说，你没有办法在拆分了一个服务之后，觉得不妥就停下来。
+
+- 还是直接全部模块按照模块化 - 模块依赖化 - 微服务化进行？
+  - 优点：有后悔药。也就是我们可以在任何一个步骤停下来，比如说在模块化这里停下来，或者在模块依赖化这里停下来。
+  - 缺点：无法提前验证整个流程，所以在最后的模块依赖化到微服务化这一步骤，就会有很多问题，只能临时解决。
+
+![image-20250121111423577](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211114388.png)
+
+![image-20250121111454742](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211114780.png)
+
+![image-20250121111509532](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211115087.png)
+
+### 拆分前的准备工作
+
+#### 选择模块
+
+**选择模块的原则就是：先易后难**
+
+- 优先考虑业务影响力小的，即选那些即便崩了也没有什么大的影响的。
+
+- 其次考虑最为独立的模块，也就是说，依赖它的、它依赖的都很少的那种服务。
+
+- 最后考虑 QPS 低的服务。
+
+#### 检查测试覆盖率
+
+> 在所有的重构之前，都要确认，你有足够的测试去验证你的重构是否引入了问题。
+
+为了保证可以验证拆分过程是否引入了 BUG，需要把测试覆盖率提高到80% 以上，越高越好。
+
+要做到：
+
+- 点赞收藏这些服务的代码本身覆盖率有 80% 以上。
+- 使用了点赞收藏这些服务的代码覆盖率有 80% 以上。
+
+同时在补充完测试之后，
+  • 我们还要进一步检查代码，确保核心路径没有遗漏。
+  • 梳理业务，确保没有关键业务场景遗漏。

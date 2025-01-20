@@ -2,8 +2,11 @@ package job
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"golang.org/x/sync/semaphore"
+	"net/http"
 	"time"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/service"
@@ -17,6 +20,34 @@ type Executor interface {
 	// 具体实现来控制
 	// 真正去执行
 	Exec(ctx context.Context, j domain.Job) error
+}
+
+type HttpExecutor struct {
+}
+
+func (h HttpExecutor) Name() string {
+	return "http"
+}
+
+func (h HttpExecutor) Exec(ctx context.Context, j domain.Job) error {
+	type Config struct {
+		Endpoint string `json:"endpoint"`
+		Method   string `json:"method"`
+	}
+	var cfg Config
+	err := json.Unmarshal([]byte(j.Cfg), &cfg)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(cfg.Method, cfg.Endpoint, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("执行失败")
+	}
+	return nil
 }
 
 type LocalFuncExecutor struct {
