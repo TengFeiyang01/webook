@@ -5,10 +5,10 @@ package startup
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
+	article2 "webook/webook/internal/events/article"
 	"webook/webook/internal/repository"
 	"webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 	artdao "webook/webook/internal/repository/dao/article"
 	"webook/webook/internal/service"
@@ -18,11 +18,14 @@ import (
 )
 
 var thirdPartySet = wire.NewSet( // 第三方依赖
-	ioc.InitRedis, ioc.InitDB, InitLogger)
+	ioc.InitRedis, InitDB, InitLogger,
+	ioc.NewSyncProducer,
+	InitKafka,
+)
 
 var userSvcProvider = wire.NewSet(
 	dao.NewUserDAO,
-	user.NewRedisUserCache,
+	cache.NewRedisUserCache,
 	repository.NewUserRepository,
 	service.NewUserService)
 
@@ -47,18 +50,24 @@ func InitWebServer() *gin.Engine {
 		artdao.NewGORMArticleDAO,
 		cache.NewArticleCache,
 		cache.NewInteractiveRedisCache,
+
+		article2.NewKafkaProducer,
+
 		repository.NewCodeRepository,
 		repository.NewCachedInteractiveRepository,
 		article.NewCachedArticleRepository,
 		ioc.InitSMSService,
+
 		service.NewCodeService,
 		service.NewArticleService,
 		service.NewInteractiveService,
 		dao.NewGORMInteractiveDAO,
 		InitWechatService,
+
 		web.NewArticleHandler,
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
+
 		InitWechatHandlerConfig,
 		ijwt.NewRedisJWT,
 		ioc.InitGinMiddlewares,
@@ -76,7 +85,8 @@ func InitArticleHandler(dao artdao.ArticleDAO) *web.ArticleHandler {
 		cache.NewArticleCache,
 		article.NewCachedArticleRepository,
 		service.NewArticleService,
-		web.NewArticleHandler)
+		web.NewArticleHandler,
+		article2.NewKafkaProducer)
 	return &web.ArticleHandler{}
 }
 

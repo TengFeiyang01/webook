@@ -105,16 +105,11 @@ func (c *Callbacks) Before() func(db *gorm.DB) {
 func (c *Callbacks) After(typ string) func(db *gorm.DB) {
 	return func(db *gorm.DB) {
 		val, _ := db.Get("start_time")
-		startTime, ok := val.(time.Time)
-		if !ok {
-			return
+		start, ok := val.(time.Time)
+		if ok {
+			duration := time.Since(start).Milliseconds()
+			c.vector.WithLabelValues(typ, db.Statement.Table).
+				Observe(float64(duration))
 		}
-		// 准备上报给 prometheus
-		table := db.Statement.Table
-		if table == "" {
-			table = "unknown"
-		}
-		c.vector.WithLabelValues(typ, table).
-			Observe(float64(time.Since(startTime).Milliseconds()))
 	}
 }

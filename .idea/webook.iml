@@ -5,7 +5,7 @@
       <option name="os" value="windows" />
       <option name="customFlags">
         <array>
-          <option value="wireinject" />
+          <option value="e2e" />
         </array>
       </option>
     </buildTags>

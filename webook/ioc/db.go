@@ -10,7 +10,7 @@ import (
 	"gorm.io/plugin/prometheus"
 	"time"
 	"webook/webook/internal/repository/dao"
-	"webook/webook/pkg/gormx"
+	gormx "webook/webook/pkg/gormx"
 	"webook/webook/pkg/logger"
 )
 
@@ -56,26 +56,39 @@ func InitDB(l logger.LoggerV1) *gorm.DB {
 		panic(err)
 	}
 
-	pcb := newCallbacks()
-	if err := pcb.Initialize(db); err != nil {
-		panic(err)
-	}
-	if err := db.Use(pcb); err != nil {
+	cb := gormx.NewCallbacks(promsdk.SummaryOpts{
+		Namespace: "ytf",
+		Subsystem: "webook",
+		Name:      "gorm_db",
+		Help:      "统计 GORM 的数据库查询",
+		ConstLabels: map[string]string{
+			"instance_id": "my_instance",
+		},
+		Objectives: map[float64]float64{
+			0.5:   0.01,
+			0.75:  0.01,
+			0.9:   0.01,
+			0.99:  0.001,
+			0.999: 0.0001,
+		},
+	})
+
+	err = db.Use(cb)
+	if err != nil {
 		panic(err)
 	}
 
 	if err := db.Use(tracing.NewPlugin(tracing.WithDBName("webook"),
-		tracing.WithQueryFormatter(func(query string) string {
-			l.Debug("query", logger.String("query", query))
-			return query
-		}),
+		//tracing.WithQueryFormatter(func(query string) string {
+		//	l.Debug("query", logger.String("query", query))
+		//	return query
+		//}),
 		// 不要记录 metrics
 		tracing.WithoutMetrics(),
 		// 不用记录查询参数
 		tracing.WithoutQueryVariables())); err != nil {
 		panic(err)
 	}
-
 	err = dao.InitTables(db)
 	if err != nil {
 		return nil
@@ -88,25 +101,4 @@ type gormLoggerFunc func(msg string, fields ...logger.Field)
 
 func (g gormLoggerFunc) Printf(msg string, args ...interface{}) {
 	g(msg, logger.Field{Key: "args", Value: args})
-}
-
-func newCallbacks() *gormx.Callbacks {
-	opts := promsdk.SummaryOpts{
-		// 在这边, 你要考虑设置各种 namespace
-		Namespace: "ytf",
-		Subsystem: "webook",
-		Name:      "gorm_query_time",
-		Help:      "统计 GORM 的执行时间",
-		ConstLabels: map[string]string{
-			"db": "webook",
-		},
-		Objectives: map[float64]float64{
-			0.5:   0.01,
-			0.9:   0.01,
-			0.99:  0.005,
-			0.999: 0.001,
-		},
-	}
-	pcb := gormx.NewCallbacks(opts)
-	return pcb
 }

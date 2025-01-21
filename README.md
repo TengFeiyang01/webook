@@ -4376,9 +4376,47 @@ func (s Server) GetById(ctx context.Context, req *GetByIdReq) (*GetByIdResp, err
 
 要做到：
 
-- 点赞收藏这些服务的代码本身覆盖率有 80% 以上。
-- 使用了点赞收藏这些服务的代码覆盖率有 80% 以上。
+- **点赞收藏这些服务的代码本身覆盖率有 80% 以上。**
+- **使用了点赞收藏这些服务的代码覆盖率有 80% 以上。**
 
 同时在补充完测试之后，
-  • 我们还要进一步检查代码，确保核心路径没有遗漏。
-  • 梳理业务，确保没有关键业务场景遗漏。
+
+- **我们还要进一步检查代码，确保核心路径没有遗漏。**
+- **梳理业务，确保没有关键业务场景遗漏。**
+
+### 模块化
+
+#### 梳理重构点
+
+![image-20250121174038051](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211740069.png)
+
+#### 执行拆分
+
+![image-20250121174059555](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211741851.png)
+
+#### 解决数据库初始化的问题
+
+![image-20250121174125224](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211741153.png)
+
+#### 挪动消费者
+
+**在使用了 Kafka 的形态中，增加阅读数是通过订阅Kafka 的消息来实现的，所以对应的代码，我们也要**
+**挪动过来。**
+
+注意这一个部分，我们是直接复制出来一份，因为我们同样需要事件的定义。
+
+而后删除原本和生产者有关的代码，只保留
+InteractiveReadEventConsumer 相关代码，调整对应的 wire 代码。
+
+PS：**模块化的目标就是，它不再依赖原本webook/internal 里面的任何代码**，所以不能说抽取出来一个公共的 ReadEvent，而后大家都引用它
+
+#### 重新生成 wire 的文件
+
+有两个地方：
+
+- 集成测试的 wire 文件。
+- main 函数启动程序的 wire 文件。
+
+#### 模块依赖化
+
+接下来，我们要做的就是将整个模块的代码挪动到一个新的代码仓库。
