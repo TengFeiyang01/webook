@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"golang.org/x/sync/errgroup"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository"
+	"webook/webook/interactive/domain"
+	"webook/webook/interactive/repository"
 )
 
 //go:generate mockgen -source=./interactive.go -package=svcmocks -destination=./mocks/interactive.mock.go InteractiveService

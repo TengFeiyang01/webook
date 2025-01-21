@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
-	"webook/webook/internal/events"
+	"webook/webook/interactive/events"
 )
 
 type App struct {

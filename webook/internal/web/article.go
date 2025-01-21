@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	domain2 "webook/webook/interactive/domain"
+	service2 "webook/webook/interactive/service"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/service"
 	ijwt "webook/webook/internal/web/jwt"
@@ -21,17 +23,16 @@ var _ handler = (*ArticleHandler)(nil)
 
 type ArticleHandler struct {
 	svc      service.ArticleService
-	interSvc service.InteractiveService
+	interSvc service2.InteractiveService
 	biz      string
 	l        logger.LoggerV1
 }
 
-func NewArticleHandler(svc service.ArticleService, l logger.LoggerV1, interSvc service.InteractiveService) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, l logger.LoggerV1) *ArticleHandler {
 	return &ArticleHandler{
-		svc:      svc,
-		l:        l,
-		biz:      "article",
-		interSvc: interSvc,
+		svc: svc,
+		l:   l,
+		biz: "article",
 	}
 }
 func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
@@ -289,7 +290,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 
 	// 要在这里获得文章的计数
 
-	var intr domain.Interactive
+	var intr domain2.Interactive
 	eg.Go(func() error {
 		intr, err = h.interSvc.Get(ctx, h.biz, id, usr.Uid)
 		return err

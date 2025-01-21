@@ -10,9 +10,9 @@ import (
 	"log"
 	"testing"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/integration/startup"
-	"webook/webook/internal/repository/dao"
+	"webook/webook/interactive/domain"
+	"webook/webook/interactive/integration/startup"
+	"webook/webook/interactive/repository/dao"
 )
 
 type InteractiveTestSuite struct {

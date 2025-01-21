@@ -4,6 +4,11 @@ package main
 
 import (
 	"github.com/google/wire"
+	events2 "webook/webook/interactive/events"
+	repository2 "webook/webook/interactive/repository"
+	cache2 "webook/webook/interactive/repository/cache"
+	dao2 "webook/webook/interactive/repository/dao"
+	service2 "webook/webook/interactive/service"
 	events "webook/webook/internal/events/article"
 	"webook/webook/internal/repository"
 	artrepo "webook/webook/internal/repository/article"
@@ -37,29 +42,29 @@ func InitApp() *App {
 
 		// 初始化 DAO
 		dao.NewUserDAO,
-		dao.NewGORMInteractiveDAO,
+		dao2.NewGORMInteractiveDAO,
 
 		// 初始化 cache
 		cache.NewRedisUserCache,
 		//cache.NewLocalCodeCache,
 		cache.NewRedisCodeCache,
 		cache.NewArticleCache,
-		cache.NewInteractiveRedisCache,
+		cache2.NewInteractiveRedisCache,
 
 		// 初始化 repository
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
 		artrepo.NewCachedArticleRepository,
-		repository.NewCachedInteractiveRepository,
+		repository2.NewCachedInteractiveRepository,
 
 		// consumer
-		events.NewInteractiveReadEventBatchConsumer,
+		events2.NewInteractiveReadEventBatchConsumer,
 		events.NewKafkaProducer,
 
 		// 初始化 service
 		service.NewUserService,
 		service.NewCodeService,
-		service.NewInteractiveService,
+		service2.NewInteractiveService,
 		service.NewArticleService,
 
 		ioc.InitSMSService,

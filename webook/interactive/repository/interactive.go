@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"github.com/ecodeclub/ekit/slice"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/dao"
+	"webook/webook/interactive/domain"
+	"webook/webook/interactive/repository/cache"
+	"webook/webook/interactive/repository/dao"
 	"webook/webook/pkg/logger"
 )
 

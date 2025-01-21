@@ -48,43 +48,9 @@ func InitWebServer() *gin.Engine {
 	syncProducer := ioc.NewSyncProducer(client)
 	producer := article3.NewKafkaProducer(syncProducer)
 	articleService := service.NewArticleService(articleRepository, producer, loggerV1)
-	interactiveDAO := dao.NewGORMInteractiveDAO(gormDB)
-	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
-	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
-	interactiveService := service.NewInteractiveService(interactiveRepository)
-	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
+	articleHandler := web.NewArticleHandler(articleService, loggerV1)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
 	return engine
-}
-
-func InitArticleHandler(dao2 article.ArticleDAO) *web.ArticleHandler {
-	loggerV1 := InitLogger()
-	gormDB := InitDB()
-	userDAO := dao.NewUserDAO(gormDB)
-	cmdable := ioc.InitRedis()
-	articleCache := cache.NewArticleCache(cmdable)
-	articleRepository := article2.NewCachedArticleRepository(dao2, loggerV1, userDAO, articleCache)
-	client := InitKafka()
-	syncProducer := ioc.NewSyncProducer(client)
-	producer := article3.NewKafkaProducer(syncProducer)
-	articleService := service.NewArticleService(articleRepository, producer, loggerV1)
-	interactiveDAO := dao.NewGORMInteractiveDAO(gormDB)
-	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
-	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
-	interactiveService := service.NewInteractiveService(interactiveRepository)
-	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
-	return articleHandler
-}
-
-func InitInteractiveService() service.InteractiveService {
-	gormDB := InitDB()
-	interactiveDAO := dao.NewGORMInteractiveDAO(gormDB)
-	loggerV1 := InitLogger()
-	cmdable := ioc.InitRedis()
-	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
-	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
-	interactiveService := service.NewInteractiveService(interactiveRepository)
-	return interactiveService
 }
 
 // wire.go:
@@ -93,6 +59,4 @@ var thirdPartySet = wire.NewSet(ioc.InitRedis, InitDB, InitLogger, ioc.NewSyncPr
 
 var userSvcProvider = wire.NewSet(dao.NewUserDAO, cache.NewRedisUserCache, repository.NewUserRepository, service.NewUserService)
 
-var articlSvcProvider = wire.NewSet(article2.NewCachedArticleRepository, cache.NewArticleCache, article.NewGORMArticleDAO, service.NewArticleService)
-
-var interactiveSvcSet = wire.NewSet(dao.NewGORMInteractiveDAO, service.NewInteractiveService, cache.NewInteractiveRedisCache, repository.NewCachedInteractiveRepository)
+var articlSvcProvider = wire.NewSet(article2.NewCachedArticleRepository, article.NewGORMArticleDAO, service.NewArticleService)

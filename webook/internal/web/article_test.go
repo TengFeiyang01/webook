@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	service2 "webook/webook/interactive/service"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/service"
 	svcmocks "webook/webook/internal/service/mocks"
@@ -26,7 +27,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 	testCases := []struct {
 		name string
 
-		mock func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService)
+		mock func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service2.InteractiveService)
 
 		reqBody string
 
@@ -35,7 +36,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 	}{
 		{
 			name: "新建并发表",
-			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service2.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
 				l := loggermocks.NewMockLoggerV1(ctrl)
 				interSvc := svcmocks.NewMockInteractiveService(ctrl)
@@ -62,7 +63,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 		},
 		{
 			name: "已有帖子且发表成功",
-			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service2.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
 				l := loggermocks.NewMockLoggerV1(ctrl)
 				interSvc := svcmocks.NewMockInteractiveService(ctrl)
@@ -91,7 +92,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 		},
 		{
 			name: "publish失败",
-			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service2.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
 				l := loggermocks.NewMockLoggerV1(ctrl)
 				interSvc := svcmocks.NewMockInteractiveService(ctrl)
@@ -118,7 +119,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 		},
 		{
 			name: "输入有误、Bind返回错误",
-			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service2.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
 				l := loggermocks.NewMockLoggerV1(ctrl)
 				interSvc := svcmocks.NewMockInteractiveService(ctrl)
@@ -134,7 +135,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 		},
 		{
 			name: "找不到User",
-			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service.InteractiveService) {
+			mock: func(ctrl *gomock.Controller) (service.ArticleService, logger.LoggerV1, service2.InteractiveService) {
 				svc := svcmocks.NewMockArticleService(ctrl)
 				l := loggermocks.NewMockLoggerV1(ctrl)
 				interSvc := svcmocks.NewMockInteractiveService(ctrl)

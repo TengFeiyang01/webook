@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"math"
 	"time"
+	service2 "webook/webook/interactive/service"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository"
 )
@@ -18,7 +19,7 @@ type RankingService interface {
 
 type BatchRankingService struct {
 	artSvc    ArticleService
-	interSvc  InteractiveService
+	interSvc  service2.InteractiveService
 	repo      repository.RankingRepository
 	batchSize int
 	n         int
@@ -26,7 +27,7 @@ type BatchRankingService struct {
 	scoreFunc func(t time.Time, likeCnt int64) float64
 }
 
-func NewBatchRankingService(artSvc ArticleService, interSvc InteractiveService) RankingService {
+func NewBatchRankingService(artSvc ArticleService, interSvc service2.InteractiveService) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		interSvc:  interSvc,

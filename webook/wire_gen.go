@@ -8,6 +8,11 @@ package main
 
 import (
 	"github.com/google/wire"
+	"webook/webook/interactive/events"
+	repository2 "webook/webook/interactive/repository"
+	cache2 "webook/webook/interactive/repository/cache"
+	dao2 "webook/webook/interactive/repository/dao"
+	service2 "webook/webook/interactive/service"
 	article3 "webook/webook/internal/events/article"
 	"webook/webook/internal/repository"
 	article2 "webook/webook/internal/repository/article"
@@ -51,13 +56,13 @@ func InitApp() *App {
 	syncProducer := ioc.NewSyncProducer(client)
 	producer := article3.NewKafkaProducer(syncProducer)
 	articleService := service.NewArticleService(articleRepository, producer, loggerV1)
-	interactiveDAO := dao.NewGORMInteractiveDAO(db)
-	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
-	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
-	interactiveService := service.NewInteractiveService(interactiveRepository)
+	interactiveDAO := dao2.NewGORMInteractiveDAO(db)
+	interactiveCache := cache2.NewInteractiveRedisCache(cmdable)
+	interactiveRepository := repository2.NewCachedInteractiveRepository(interactiveDAO, loggerV1, interactiveCache)
+	interactiveService := service2.NewInteractiveService(interactiveRepository)
 	articleHandler := web.NewArticleHandler(articleService, loggerV1, interactiveService)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
-	interactiveReadEventBatchConsumer := article3.NewInteractiveReadEventBatchConsumer(client, interactiveRepository, loggerV1)
+	interactiveReadEventBatchConsumer := events.NewInteractiveReadEventBatchConsumer(client, interactiveRepository, loggerV1)
 	v2 := ioc.NewConsumers(interactiveReadEventBatchConsumer)
 	rankingService := service.NewBatchRankingService(articleService, interactiveService)
 	rankingJob := ioc.InitRankingJob(rankingService)
