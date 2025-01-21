@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/redis/go-redis/v9"
 	"time"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 )
 
@@ -24,6 +24,7 @@ type UserRepository interface {
 var (
 	ErrUserDuplicate = dao.ErrUserDuplicate
 	ErrUserNotFound  = dao.ErrUserNotFound
+	ErrKeyNotExist   = redis.Nil
 )
 
 // CachedUserRepository 接收的都是接口
@@ -66,7 +67,7 @@ func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.U
 	if err == nil {
 		return u, err
 	}
-	if errors.Is(err, user.ErrKeyNotExist) {
+	if errors.Is(err, ErrKeyNotExist) {
 		// 去数据库加载
 	}
 

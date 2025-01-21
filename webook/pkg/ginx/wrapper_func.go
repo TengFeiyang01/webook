@@ -2,11 +2,19 @@ package ginx
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
+	"strconv"
 	"webook/webook/pkg/logger"
 )
 
 var l = logger.NewNopLogger()
+var vector *prometheus.CounterVec
+
+func InitCounter(opt prometheus.CounterOpts) {
+	vector = prometheus.NewCounterVec(opt, []string{"code"})
+	prometheus.MustRegister(vector)
+}
 
 // WrapBodyAndToken bizFn 就是你的业务逻辑
 func WrapBodyAndToken[Req any, C any](bizFn func(ctx *gin.Context, req Req, uc C) (Result, error)) gin.HandlerFunc {
@@ -28,6 +36,7 @@ func WrapBodyAndToken[Req any, C any](bizFn func(ctx *gin.Context, req Req, uc C
 			return
 		}
 		res, err := bizFn(ctx, req, uc)
+		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
 		if err != nil {
 			l.Error("执行业务逻辑失败",
 				logger.String("path", ctx.Request.URL.Path),
@@ -59,6 +68,7 @@ func WrapBodyAndTokenV1[Req any, C any](l logger.LoggerV1, bizFn func(ctx *gin.C
 			return
 		}
 		res, err := bizFn(ctx, req, uc)
+		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
 		if err != nil {
 			l.Error("执行业务逻辑失败",
 				logger.String("path", ctx.Request.URL.Path),
@@ -80,6 +90,7 @@ func WrapBodyV1[Req any](bizFn func(ctx *gin.Context, req Req) (Result, error)) 
 		l.Debug("输入参数", logger.Field{Key: "req", Value: req})
 
 		res, err := bizFn(ctx, req)
+		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
 		if err != nil {
 			l.Error("执行业务逻辑失败",
 				logger.String("path", ctx.Request.URL.Path),
@@ -101,6 +112,7 @@ func WrapBody[Req any](l logger.LoggerV1, bizFn func(ctx *gin.Context, req Req) 
 		l.Debug("输入参数", logger.Field{Key: "req", Value: req})
 
 		res, err := bizFn(ctx, req)
+		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
 		if err != nil {
 			l.Error("执行业务逻辑失败",
 				logger.String("path", ctx.Request.URL.Path),
@@ -125,6 +137,7 @@ func WrapToken[C any](bizFn func(ctx *gin.Context, uc C) (Result, error)) gin.Ha
 			return
 		}
 		res, err := bizFn(ctx, uc)
+		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
 		if err != nil {
 			l.Error("执行业务逻辑失败",
 				logger.String("path", ctx.Request.URL.Path),
@@ -149,6 +162,7 @@ func WrapTokenV1[C any](l logger.LoggerV1, bizFn func(ctx *gin.Context, uc C) (R
 			return
 		}
 		res, err := bizFn(ctx, uc)
+		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
 		if err != nil {
 			l.Error("执行业务逻辑失败",
 				logger.String("path", ctx.Request.URL.Path),
@@ -173,6 +187,7 @@ func WrapClaimsV1[Claims any](bizFn func(ctx *gin.Context, uc Claims) (Result, e
 			return
 		}
 		res, err := bizFn(ctx, uc)
+		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
 		if err != nil {
 			l.Error("执行业务逻辑失败",
 				logger.String("path", ctx.Request.URL.Path),

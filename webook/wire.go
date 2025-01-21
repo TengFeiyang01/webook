@@ -8,13 +8,18 @@ import (
 	"webook/webook/internal/repository"
 	artrepo "webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/cache/user"
 	"webook/webook/internal/repository/dao"
 	"webook/webook/internal/repository/dao/article"
 	"webook/webook/internal/service"
 	"webook/webook/internal/web"
 	ijwt "webook/webook/internal/web/jwt"
 	"webook/webook/ioc"
+)
+
+var rankingServiceSet = wire.NewSet(
+	repository.NewCachedRankingRepository,
+	cache.NewRankingRedisCache,
+	service.NewBatchRankingService,
 )
 
 func InitApp() *App {
@@ -26,12 +31,16 @@ func InitApp() *App {
 		ioc.NewConsumers,
 		ioc.NewSyncProducer,
 
+		rankingServiceSet,
+		ioc.InitJobs,
+		ioc.InitRankingJob,
+
 		// 初始化 DAO
 		dao.NewUserDAO,
 		dao.NewGORMInteractiveDAO,
 
 		// 初始化 cache
-		user.NewRedisUserCache,
+		cache.NewRedisUserCache,
 		//cache.NewLocalCodeCache,
 		cache.NewRedisCodeCache,
 		cache.NewArticleCache,

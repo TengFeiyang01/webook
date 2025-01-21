@@ -1,6 +1,7 @@
 package ioc
 
 import (
+	rlock "github.com/gotomicro/redis-lock"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"time"
@@ -25,6 +26,10 @@ func InitRedis() redis.Cmdable {
 		})
 	}
 	return redisClient
+}
+
+func InitRLockClient(cmd redis.Cmdable) *rlock.Client {
+	return rlock.NewClient(cmd)
 }
 
 func NewRateLimiter(interval time.Duration, rate int) ratelimit.Limiter {

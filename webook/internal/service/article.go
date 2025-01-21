@@ -10,6 +10,21 @@ import (
 	"webook/webook/pkg/logger"
 )
 
+//@mockgen -source=webook/internal/service/types.go -package=svcmocks -destination=webook/internal/service/mocks/service.mock.go
+
+//go:generate mockgen -source=./article.go -destination=./mocks/service.mock.go -package=svcmocks ArticleService
+type ArticleService interface {
+	Save(ctx context.Context, art domain.Article) (int64, error)
+	WithDraw(ctx context.Context, art domain.Article) error
+	Publish(ctx context.Context, art domain.Article) (int64, error)
+	PublishV1(ctx context.Context, art domain.Article) (int64, error)
+	List(ctx context.Context, id int64, offset int, limit int) ([]domain.Article, error)
+	// ListPub 只会取 start 七天内的数据
+	ListPub(ctx context.Context, start time.Time, offset, limit int) ([]domain.Article, error)
+	GetById(ctx context.Context, id int64) (domain.Article, error)
+	GetPublishedById(ctx *gin.Context, id int64, uid int64) (domain.Article, error)
+}
+
 type articleService struct {
 	repo article.ArticleRepository
 
@@ -20,6 +35,10 @@ type articleService struct {
 	l        logger.LoggerV1
 
 	ch chan readInfo
+}
+
+func (svc *articleService) ListPub(ctx context.Context, start time.Time, offset, limit int) ([]domain.Article, error) {
+	return svc.repo.ListPub(ctx, start, offset, limit)
 }
 
 type readInfo struct {

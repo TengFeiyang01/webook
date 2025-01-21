@@ -16,6 +16,11 @@ type MongoDBArticleDAO struct {
 	liveCol *mongo.Collection
 }
 
+func (m *MongoDBArticleDAO) ListPub(ctx context.Context, start time.Time, offset int, limit int) ([]Article, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MongoDBArticleDAO) Upsert(ctx context.Context, art PublishedArticleV1) error {
 	now := time.Now().UnixMilli()
 	filter := bson.D{bson.E{Key: "id", Value: art.Id},

@@ -20,6 +20,7 @@ func NewInteractiveEventConsumer(client sarama.Client, repo repository.Interacti
 }
 
 func (r *InteractiveEventConsumer) Start() error {
+	// 在这里加入一个监控，上报 Prometheus 即可
 	cg, err := sarama.NewConsumerGroupFromClient("interactive", r.client)
 	if err != nil {
 		return err

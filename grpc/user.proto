@@ -1,0 +1,46 @@
+syntax = "proto3";
+option go_package = "webook/grpc";
+
+message User {
+  // Protobuf 对前几个字段有性能优化。
+  int64 id = 1;
+  string name = 2;
+  string avatar = 3;
+
+  map<string, string> attributes = 6;
+  optional int32 age = 7;
+  Address address = 8;
+
+  // 切片
+  repeated string nickname = 9;
+
+  oneof contacts {
+    string email = 10;
+    string phone = 11;
+  }
+
+  Gender gender = 12;
+}
+
+enum Gender {
+  Unknown = 0;
+  Female = 1;
+  Male = 2;
+}
+
+message Address {
+
+}
+
+
+service UserService {
+  rpc GetById(GetByIdReq) returns (GetByIdResp);
+}
+
+message GetByIdReq {
+  int64 id = 1;
+}
+
+message GetByIdResp {
+  User user = 1;
+}

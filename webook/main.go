@@ -5,10 +5,15 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 	"go.uber.org/zap"
+	"golang.org/x/net/context"
+	"net/http"
+	"time"
+	"webook/webook/ioc"
 )
 
 func main() {
@@ -18,6 +23,8 @@ func main() {
 	//initViperRemote()
 	//initViperWatch()
 	initLogger()
+	initPrometheus()
+	closeFunc := ioc.InitOTEL()
 	app := InitApp()
 	//initViperV1()
 	for _, c := range app.Consumers {
@@ -26,11 +33,24 @@ func main() {
 			panic(err)
 		}
 	}
+
+	app.cron.Start()
+
 	server := app.Server
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(200, "hello world")
 	})
 	_ = server.Run(":8080")
+	// 一分钟内你要关完
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	closeFunc(ctx)
+	// 这边可以考虑超时退出
+	tm := time.NewTimer(time.Minute * 10)
+	select {
+	case <-tm.C:
+	case <-ctx.Done():
+	}
 }
 
 func initLogger() {
@@ -111,4 +131,14 @@ func initViper() {
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
+}
+
+func initPrometheus() {
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		err := http.ListenAndServe(":8081", nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
 }
