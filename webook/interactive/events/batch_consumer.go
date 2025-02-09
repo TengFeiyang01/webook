@@ -1,10 +1,10 @@
-package article
+package events
 
 import (
 	"github.com/IBM/sarama"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/internal/repository"
+	"webook/webook/interactive/repository"
 	"webook/webook/pkg/logger"
 	"webook/webook/pkg/saramax"
 )

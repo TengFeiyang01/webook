@@ -3,9 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/dao"
+	"github.com/ecodeclub/ekit/slice"
+	"webook/webook/interactive/domain"
+	"webook/webook/interactive/repository/cache"
+	"webook/webook/interactive/repository/dao"
 	"webook/webook/pkg/logger"
 )
 
@@ -18,12 +19,23 @@ type InteractiveRepository interface {
 	Get(ctx context.Context, biz string, id int64) (domain.Interactive, error)
 	Liked(ctx context.Context, biz string, id int64, uid int64) (bool, error)
 	Collected(ctx context.Context, biz string, id int64, uid int64) (bool, error)
+	GetByIds(ctx context.Context, biz string, ids []int64) ([]domain.Interactive, error)
 }
 
 type CachedInteractiveRepository struct {
 	dao   dao.InteractiveDAO
 	cache cache.InteractiveCache
 	l     logger.LoggerV1
+}
+
+func (c *CachedInteractiveRepository) GetByIds(ctx context.Context, biz string, ids []int64) ([]domain.Interactive, error) {
+	intrs, err := c.dao.GetByIds(ctx, biz, ids)
+	if err != nil {
+		return nil, err
+	}
+	return slice.Map(intrs, func(idx int, src dao.Interactive) domain.Interactive {
+		return c.toDomain(src)
+	}), nil
 }
 
 func (c *CachedInteractiveRepository) BatchIncrReadCnt(ctx context.Context,
@@ -147,6 +159,7 @@ func (c *CachedInteractiveRepository) IncrReadCnt(ctx context.Context, biz strin
 
 func (c *CachedInteractiveRepository) toDomain(ie dao.Interactive) domain.Interactive {
 	return domain.Interactive{
+		Biz:        ie.Biz,
 		BizId:      ie.BizId,
 		ReadCnt:    ie.ReadCnt,
 		LikeCnt:    ie.LikeCnt,

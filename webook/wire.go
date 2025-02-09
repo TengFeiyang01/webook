@@ -4,6 +4,11 @@ package main
 
 import (
 	"github.com/google/wire"
+	events2 "webook/webook/interactive/events"
+	repository2 "webook/webook/interactive/repository"
+	cache2 "webook/webook/interactive/repository/cache"
+	dao2 "webook/webook/interactive/repository/dao"
+	service2 "webook/webook/interactive/service"
 	events "webook/webook/internal/events/article"
 	"webook/webook/internal/repository"
 	artrepo "webook/webook/internal/repository/article"
@@ -14,6 +19,13 @@ import (
 	"webook/webook/internal/web"
 	ijwt "webook/webook/internal/web/jwt"
 	"webook/webook/ioc"
+)
+
+var interactiveSvcSet = wire.NewSet(
+	dao2.NewGORMInteractiveDAO,
+	cache2.NewInteractiveRedisCache,
+	repository2.NewCachedInteractiveRepository,
+	service2.NewInteractiveService,
 )
 
 var rankingServiceSet = wire.NewSet(
@@ -30,36 +42,36 @@ func InitApp() *App {
 		ioc.InitKafka,
 		ioc.NewConsumers,
 		ioc.NewSyncProducer,
+		ioc.InitRLockClient,
 
 		rankingServiceSet,
 		ioc.InitJobs,
 		ioc.InitRankingJob,
+		ioc.InitIntrGRPCClient,
+		interactiveSvcSet,
 
 		// 初始化 DAO
 		dao.NewUserDAO,
-		dao.NewGORMInteractiveDAO,
 
 		// 初始化 cache
 		cache.NewRedisUserCache,
 		//cache.NewLocalCodeCache,
 		cache.NewRedisCodeCache,
 		cache.NewArticleCache,
-		cache.NewInteractiveRedisCache,
+		cache.NewRankingLocalCache,
 
 		// 初始化 repository
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
 		artrepo.NewCachedArticleRepository,
-		repository.NewCachedInteractiveRepository,
 
 		// consumer
-		events.NewInteractiveReadEventBatchConsumer,
+		events2.NewInteractiveReadEventBatchConsumer,
 		events.NewKafkaProducer,
 
 		// 初始化 service
 		service.NewUserService,
 		service.NewCodeService,
-		service.NewInteractiveService,
 		service.NewArticleService,
 
 		ioc.InitSMSService,

@@ -34,9 +34,9 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 		}
 
 		tokenStr := l.ExtractToken(ctx)
-		claims := &ijwt.UserClaims{}
+		claims := ijwt.UserClaims{}
 		// 一定要传入指针
-		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte("GpJCNEnLiNblrZj5xdY9aG5cgVdKHCxh"), nil
 		})
 		// 格式对了内容不对
@@ -64,7 +64,7 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		ctx.Set("claims", claims)
+		ctx.Set("user", claims)
 		//ctx.Set("user_id", claims.Uid)
 	}
 }

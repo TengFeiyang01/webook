@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"strconv"
 	"time"
-	"webook/webook/internal/domain"
+	"webook/webook/interactive/domain"
 )
 
 var (
@@ -134,6 +134,7 @@ func (i *InteractiveRedisCache) Get(ctx context.Context, biz string, id int64) (
 	intr.CollectCnt, _ = strconv.ParseInt(res[fieldCollectCnt], 10, 64)
 	intr.LikeCnt, _ = strconv.ParseInt(res[fieldLikeCnt], 10, 64)
 	intr.ReadCnt, _ = strconv.ParseInt(res[fieldReadCnt], 10, 64)
+	intr.BizId = id
 	return intr, nil
 }
 

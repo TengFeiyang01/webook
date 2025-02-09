@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"golang.org/x/sync/errgroup"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository"
+	"webook/webook/interactive/domain"
+	"webook/webook/interactive/repository"
 )
 
 //go:generate mockgen -source=./interactive.go -package=svcmocks -destination=./mocks/interactive.mock.go InteractiveService
@@ -22,8 +22,15 @@ type interactiveService struct {
 }
 
 func (i *interactiveService) GetByIds(ctx context.Context, biz string, bizIds []int64) (map[int64]domain.Interactive, error) {
-	//TODO implement me
-	panic("implement me")
+	intrs, err := i.repo.GetByIds(ctx, biz, bizIds)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[int64]domain.Interactive, len(intrs))
+	for _, intr := range intrs {
+		res[intr.BizId] = intr
+	}
+	return res, nil
 }
 
 func (i *interactiveService) Get(ctx context.Context, biz string, id int64, uid int64) (domain.Interactive, error) {

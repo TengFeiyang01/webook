@@ -23,7 +23,7 @@ func NewCronJobBuilder(l logger.LoggerV1) *CronJobBuilder {
 		Namespace: "ytf",
 		Subsystem: "webook",
 		Help:      "统计 定时任务 的执行情况",
-	}, []string{"name"})
+	}, []string{"job", "success"})
 	prometheus.MustRegister(p)
 
 	return &CronJobBuilder{
@@ -43,8 +43,8 @@ func (b *CronJobBuilder) Build(job Job) cron.Job {
 		defer func() {
 			b.l.Info("任务结束", logger.String("name", name), logger.String("job", job.Name()))
 			duration := time.Since(start).Milliseconds()
-			b.p.WithLabelValues(name,
-				strconv.FormatBool(success)).Observe(float64(duration))
+			b.p.WithLabelValues(name, strconv.FormatBool(success)).
+				Observe(float64(duration))
 		}()
 		err := job.Run()
 		success = err == nil

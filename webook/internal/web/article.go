@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	intrv1 "webook/webook/api/proto/gen/intr/v1"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/service"
 	ijwt "webook/webook/internal/web/jwt"
@@ -21,17 +22,17 @@ var _ handler = (*ArticleHandler)(nil)
 
 type ArticleHandler struct {
 	svc      service.ArticleService
-	interSvc service.InteractiveService
+	interSvc intrv1.InteractiveServiceClient
 	biz      string
 	l        logger.LoggerV1
 }
 
-func NewArticleHandler(svc service.ArticleService, l logger.LoggerV1, interSvc service.InteractiveService) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, l logger.LoggerV1, intrSvc intrv1.InteractiveServiceClient) *ArticleHandler {
 	return &ArticleHandler{
 		svc:      svc,
+		interSvc: intrSvc,
 		l:        l,
 		biz:      "article",
-		interSvc: interSvc,
 	}
 }
 func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
@@ -52,7 +53,12 @@ func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 }
 
 func (h *ArticleHandler) Collect(ctx *gin.Context, req CollectReq, uc ijwt.UserClaims) (ginx.Result, error) {
-	err := h.interSvc.Collect(ctx, h.biz, req.Id, req.Cid, uc.Uid)
+	_, err := h.interSvc.Collect(ctx, &intrv1.CollectRequest{
+		Biz:   h.biz,
+		BizId: req.Id,
+		Cid:   req.Cid,
+		Uid:   uc.Uid,
+	})
 	if err != nil {
 		return ginx.Result{
 			Code: http.StatusInternalServerError,
@@ -65,9 +71,17 @@ func (h *ArticleHandler) Collect(ctx *gin.Context, req CollectReq, uc ijwt.UserC
 func (h *ArticleHandler) Like(ctx *gin.Context, req LikeReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	var err error
 	if req.Like {
-		err = h.interSvc.Like(ctx, h.biz, req.Id, uc.Uid)
+		_, err = h.interSvc.Like(ctx, &intrv1.LikeRequest{
+			Biz:   h.biz,
+			BizId: req.Id,
+			Uid:   uc.Uid,
+		})
 	} else {
-		err = h.interSvc.CancelLike(ctx, h.biz, req.Id, uc.Uid)
+		_, err = h.interSvc.CancelLike(ctx, &intrv1.CancelLikeRequest{
+			Biz:   h.biz,
+			BizId: req.Id,
+			Uid:   uc.Uid,
+		})
 	}
 
 	if err != nil {
@@ -87,8 +101,8 @@ func (h *ArticleHandler) WithDraw(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	c := ctx.MustGet("claims")
-	claims, ok := c.(*ijwt.UserClaims)
+	c := ctx.MustGet("user")
+	claims, ok := c.(ijwt.UserClaims)
 	if !ok {
 		//ctx.AbortWithStatus(http.StatusUnauthorized)
 		ctx.JSON(http.StatusOK, ginx.Result{
@@ -126,8 +140,8 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 	}
 	// 检测输入、跳过这一步
 	// 调用 svc 的代码
-	c := ctx.MustGet("claims")
-	claims, ok := c.(*ijwt.UserClaims)
+	c := ctx.MustGet("user")
+	claims, ok := c.(ijwt.UserClaims)
 	if !ok {
 		//ctx.AbortWithStatus(http.StatusUnauthorized)
 		ctx.JSON(http.StatusOK, ginx.Result{
@@ -157,8 +171,8 @@ func (h *ArticleHandler) Publish(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	c := ctx.MustGet("claims")
-	claims, ok := c.(*ijwt.UserClaims)
+	c := ctx.MustGet("user")
+	claims, ok := c.(ijwt.UserClaims)
 	if !ok {
 		//ctx.AbortWithStatus(http.StatusUnauthorized)
 		ctx.JSON(http.StatusOK, ginx.Result{
@@ -289,9 +303,13 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 
 	// 要在这里获得文章的计数
 
-	var intr domain.Interactive
+	var resp *intrv1.GetResponse
 	eg.Go(func() error {
-		intr, err = h.interSvc.Get(ctx, h.biz, id, usr.Uid)
+		resp, err = h.interSvc.Get(ctx, &intrv1.GetRequest{
+			Biz:   h.biz,
+			BizId: id,
+			Uid:   usr.Uid,
+		})
 		return err
 	})
 	if err := eg.Wait(); err != nil {
@@ -304,7 +322,10 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 
 	// 增加阅读计数
 	go func() {
-		if err := h.interSvc.IncrReadCnt(ctx, h.biz, art.Id); err != nil {
+		if _, err := h.interSvc.IncrReadCnt(ctx, &intrv1.IncrReadCntRequest{
+			Biz:   h.biz,
+			BizId: art.Id,
+		}); err != nil {
 			h.l.Error("incrReadCnt failed", logger.Int64("aid", art.Id), logger.Error(err))
 		}
 	}()
@@ -318,11 +339,11 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 			Author:     art.Author.Name,
 			Ctime:      art.Ctime.Format(time.DateTime),
 			Utime:      art.Utime.Format(time.DateTime),
-			LikeCnt:    intr.LikeCnt,
-			ReadCnt:    intr.ReadCnt,
-			CollectCnt: intr.CollectCnt,
-			Liked:      intr.Liked,
-			Collected:  intr.Collected,
+			LikeCnt:    resp.Intr.LikeCnt,
+			ReadCnt:    resp.Intr.ReadCnt,
+			CollectCnt: resp.Intr.CollectCnt,
+			Liked:      resp.Intr.Liked,
+			Collected:  resp.Intr.Collected,
 		},
 	}, nil
 }

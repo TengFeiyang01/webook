@@ -69,7 +69,7 @@ services:
   grafana:
     image: grafana/grafana-enterprise:10.2.0
     ports:
-      - "3000:3000"
+      - "3300:3000"
 
   zipkin:
     #    用的是不支持 Kafka 之类的简化版本

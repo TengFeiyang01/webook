@@ -4376,9 +4376,160 @@ func (s Server) GetById(ctx context.Context, req *GetByIdReq) (*GetByIdResp, err
 
 要做到：
 
-- 点赞收藏这些服务的代码本身覆盖率有 80% 以上。
-- 使用了点赞收藏这些服务的代码覆盖率有 80% 以上。
+- **点赞收藏这些服务的代码本身覆盖率有 80% 以上。**
+- **使用了点赞收藏这些服务的代码覆盖率有 80% 以上。**
 
 同时在补充完测试之后，
-  • 我们还要进一步检查代码，确保核心路径没有遗漏。
-  • 梳理业务，确保没有关键业务场景遗漏。
+
+- **我们还要进一步检查代码，确保核心路径没有遗漏。**
+- **梳理业务，确保没有关键业务场景遗漏。**
+
+### 模块化
+
+#### 梳理重构点
+
+![image-20250121174038051](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211740069.png)
+
+#### 执行拆分
+
+![image-20250121174059555](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211741851.png)
+
+#### 解决数据库初始化的问题
+
+![image-20250121174125224](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202501211741153.png)
+
+#### 挪动消费者
+
+**在使用了 Kafka 的形态中，增加阅读数是通过订阅Kafka 的消息来实现的，所以对应的代码，我们也要**
+**挪动过来。**
+
+注意这一个部分，我们是直接复制出来一份，因为我们同样需要事件的定义。
+
+而后删除原本和生产者有关的代码，只保留
+InteractiveReadEventConsumer 相关代码，调整对应的 wire 代码。
+
+PS：**模块化的目标就是，它不再依赖原本webook/internal 里面的任何代码**，所以不能说抽取出来一个公共的 ReadEvent，而后大家都引用它
+
+#### 重新生成 wire 的文件
+
+有两个地方：
+
+- 集成测试的 wire 文件。
+- main 函数启动程序的 wire 文件。
+
+#### 模块依赖化
+
+接下来，我们要做的就是将整个模块的代码挪动到一个新的代码仓库。
+
+### 微服务化
+
+#### Go 中的微服务框架
+
+![image-20250207095022925](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502070950185.png)
+
+#### 环境准备
+
+![image-20250207095537195](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502070955302.png)
+
+#### API 管理
+
+![image-20250207095625860](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502070956971.png)
+
+##### 目录结构
+
+我们采用第一种方案来管理的 API，也就是在 webook下面创建一个 api 的目录，**里面放置 Protobuf 定义**。
+
+- api 下面，理论上来说还可以放别的定义，比如说 Thrift 定义、Swagger 定义等。
+- **proto 下面按照服务拆分目录**，并且有一个 gen 目录来放代码。
+- **具体的服务里面，加上版本号（你也可以省略）作为目录**。
+
+<img src="https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502071002584.png" alt="image-20250207100208677" style="zoom: 67%;" />
+
+##### Interactive 的定义
+
+```protobuf
+syntax = "proto3";
+package intr.v1;
+option go_package = "webook/api/proto/gen/intr;intrv1";
+
+service InteractiveService {
+  rpc IncrReadCnt(IncrReadCntRequest) returns (IncrReadCntResponse);
+  rpc Like(LikeRequest) returns (LikeResponse);
+  rpc CancelLike(CancelLikeRequest) returns (CancelLikeResponse);
+  rpc Collect(CollectRequest) returns (CollectResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc GetByIds(GetByIdsRequest) returns (GetByIdsResponse);
+}
+```
+
+##### 使用 buf 来简化 Protobuf 的管理难度
+
+直接使用 protoc 有几个难点：
+
+- 插件难管理。
+- protoc 命令本身也不好记，使用起来每次都要输入一大堆的参数。
+- 各种文件目录，package 定位简直要命。
+
+所以直接使用 protoc 是比较难的。因此我们可以考虑使用 buf 来管理。
+
+打开 https://buf.build/docs/installation，选择安装方式。
+
+##### 使用 buf 来编译
+
+在项目的顶级目录之下，有一个 buf.gen.yaml 文件，里面定义了 buf 怎么帮我们管理和编译 protobuf。
+
+```yaml
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: "webook/api/proto/gen"
+plugins:
+  - plugin: buf.build/protocolbuffers/go
+    out: webook/api/proto/gen
+    opt: paths=source_relative
+
+  - plugin: buf.build/grpc/go
+    out: webook/api/proto/gen
+    opt: paths=source_relative
+```
+
+
+
+- **go_package_prefix: 避免了每次写 go package 都要写老长一段的问题。**
+
+- **plugins: 这是比较关键的配置，这里指定了两个插件，并且在两个插件里面分别指定了 out 和 opt。**
+  - Go 语言插件
+  - gRPC 插件
+
+最终在顶级目录下运行我封装好的 make grpc 就可以，又或者直接执行 buf generate webook/api/proto。
+
+#### 实现 gRPC 接口
+
+在 API 定义出来之后，我们需要做得就是实现这些gRPC 接口。
+
+**注意，我们的实现都是放到了一个 gRPC 的包里面。从地位上来说 gRPC、 Job 和 Web 都是同一个级别的，是”服务对外表现形式“：**
+
+- 对 Job 来说，就是我以定时任务的形式暴露出去。
+- 对于 Web 来说，就是我以 HTTP 接口的形式暴露出去。
+- 对于 gRPC 来说，就是我以 RPC 接口的形式暴露出去。
+
+#### 调整集成测试：wire
+
+现在需要调整集成测试。原本的集成测试是在一个统一的 integration 包里面，**这里我们将 Interactive 的集成测试分离出来，放到 Interactive 内部的 integration 里面**。同时，将原本的集成测试调整为测试 gRPC 的 Server。
+
+> 所有的测试用例都要调整到判定 gRPC 返回的错误。
+
+#### 启动服务：配置文件
+
+配置文件也很简单，就是多了一个 gRPC 的启动端口，启动的时候要注意设置正确的 working directory 和 配置文件。
+
+![image-20250208152024785](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502081520976.png)
+
+#### 改造客户端
+
+![image-20250208155127141](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502081551066.png)
+
+##### 本地调用和 gRPC 调用并行方案
+
+![image-20250208155158394](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502081551420.png)

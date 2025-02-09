@@ -2,6 +2,7 @@ package dao
 
 import (
 	"gorm.io/gorm"
+	dao2 "webook/webook/interactive/repository/dao"
 	"webook/webook/internal/repository/dao/article"
 )
 
@@ -10,8 +11,8 @@ func InitTables(db *gorm.DB) error {
 		&article.Article{},
 		&article.PublishedArticleV1{},
 		&AsyncSms{},
-		&Interactive{},
-		&UserLikeBiz{},
-		&UserCollectionBiz{},
+		&dao2.Interactive{},
+		&dao2.UserLikeBiz{},
+		&dao2.UserCollectionBiz{},
 	)
 }

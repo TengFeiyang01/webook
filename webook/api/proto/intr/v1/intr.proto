@@ -1,0 +1,84 @@
+syntax = "proto3";
+package intr.v1;
+option go_package = "webook/api/proto/gen/intr;intrv1";
+
+service InteractiveService {
+  rpc IncrReadCnt(IncrReadCntRequest) returns (IncrReadCntResponse);
+  rpc Like(LikeRequest) returns (LikeResponse);
+  rpc CancelLike(CancelLikeRequest) returns (CancelLikeResponse);
+  rpc Collect(CollectRequest) returns (CollectResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc GetByIds(GetByIdsRequest) returns (GetByIdsResponse);
+}
+
+message IncrReadCntRequest {
+  string biz = 1;
+  int64 biz_id = 2;
+}
+
+message IncrReadCntResponse {
+  // No fields needed for now
+}
+
+message LikeRequest {
+  string biz = 1;
+  int64 biz_id = 2;
+  int64 uid = 3;
+}
+
+message LikeResponse {
+  // No fields needed for now
+}
+
+message CancelLikeRequest {
+  string biz = 1;
+  int64 biz_id = 2;
+  int64 uid = 3;
+}
+
+message CancelLikeResponse {
+  // No fields needed for now
+}
+
+message CollectRequest {
+  string biz = 1;
+  int64 biz_id = 2;
+  int64 cid = 3;
+  int64 uid = 4;
+}
+
+message CollectResponse {
+  // No fields needed for now
+}
+
+message GetRequest {
+  string biz = 1;
+  int64 biz_id = 2;
+  int64 uid = 3;
+}
+
+message GetResponse {
+  // Assuming domain.Interactive is a complex type, you need to define it
+  Interactive intr = 1;
+}
+
+message GetByIdsRequest {
+  string biz = 1;
+  repeated int64 biz_ids = 2;
+}
+
+message GetByIdsResponse {
+  // Assuming domain.Interactive is a complex type, you need to define it
+  map<int64, Interactive> intrs = 1;
+}
+
+// Define the Interactive message type
+message Interactive {
+  string biz = 1;
+  int64 biz_id = 2;
+  int64 read_cnt = 3;
+  int64 like_cnt = 4;
+  int64 collect_cnt = 5;
+  bool liked = 6;
+  bool collected = 7;
+}

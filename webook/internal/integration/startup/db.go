@@ -30,7 +30,7 @@ func InitDB() *gorm.DB {
 			if err == nil {
 				break
 			}
-			log.Println("wait for connect MySQL", err)
+			log.Println("等待连接 MySQL", err)
 		}
 		db, err = gorm.Open(mysql.Open(dsn))
 		if err != nil {
@@ -40,9 +40,11 @@ func InitDB() *gorm.DB {
 		if err != nil {
 			panic(err)
 		}
+		//db = db.Debug()
 	}
 	return db
 }
+
 func InitMongoDB() *mongo.Database {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
