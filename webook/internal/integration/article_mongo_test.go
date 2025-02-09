@@ -42,7 +42,7 @@ func (s *ArticleMongoDBHandlerSuite) SetupSuite() {
 		})
 	})
 	server.Use(func(ctx *gin.Context) {
-		ctx.Set("claims", &ijwt.UserClaims{
+		ctx.Set("user", &ijwt.UserClaims{
 			Uid: 123,
 		})
 	})

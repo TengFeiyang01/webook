@@ -131,7 +131,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context, req SignupReq) (ginx.Result, erro
 			Msg:  "你的邮箱格式不对",
 		}, fmt.Errorf("你的邮箱格式不对")
 	}
-
+	fmt.Println("==================")
 	if req.Password != req.ConfirmPassword {
 		return ginx.Result{
 			Code: http.StatusUnauthorized,

@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"math"
 	"time"
-	service2 "webook/webook/interactive/service"
+	intrv1 "webook/webook/api/proto/gen/intr/v1"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository"
 )
@@ -19,7 +19,7 @@ type RankingService interface {
 
 type BatchRankingService struct {
 	artSvc    ArticleService
-	interSvc  service2.InteractiveService
+	interSvc  intrv1.InteractiveServiceClient
 	repo      repository.RankingRepository
 	batchSize int
 	n         int
@@ -27,12 +27,13 @@ type BatchRankingService struct {
 	scoreFunc func(t time.Time, likeCnt int64) float64
 }
 
-func NewBatchRankingService(artSvc ArticleService, interSvc service2.InteractiveService) RankingService {
+func NewBatchRankingService(artSvc ArticleService, interSvc intrv1.InteractiveServiceClient, repo repository.RankingRepository) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		interSvc:  interSvc,
 		batchSize: 100,
 		n:         100,
+		repo:      repo,
 		scoreFunc: func(t time.Time, likeCnt int64) float64 {
 			sec := time.Since(t).Seconds()
 			return float64(likeCnt-1) / math.Pow(sec+2, 1.5)
@@ -77,14 +78,21 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 		})
 
 		// 要去找到对应的点赞数据
-		intrs, err := svc.interSvc.GetByIds(ctx, "article", ids)
+		resp, err := svc.interSvc.GetByIds(ctx, &intrv1.GetByIdsRequest{
+			Biz:    "article",
+			BizIds: ids,
+		})
 		if err != nil {
 			return nil, err
 		}
+		if len(resp.Intrs) == 0 {
+			return nil, errors.New("没有数据")
+		}
+
 		// 合并计算 score
 		// 排序
 		for _, art := range arts {
-			intr := intrs[art.Id]
+			intr := resp.Intrs[art.Id]
 
 			// 规避负数问题
 			score := svc.scoreFunc(art.Utime, intr.LikeCnt+2)

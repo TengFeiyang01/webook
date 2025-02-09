@@ -11,8 +11,15 @@ const onFinish = (values: any) => {
                 alert(res.statusText);
                 return
             }
-            alert(res.data)
-            router.push('/users/profile')
+            if(typeof res.data == 'string') {
+                alert(res.data);
+            } else {
+                const msg = res.data?.msg || JSON.stringify(res.data)
+                alert(msg);
+                if(res.data.code == 0) {
+                    router.push('/articles/list')
+                }
+            }
         }).catch((err) => {
             alert(err);
     })

@@ -37,7 +37,7 @@ func InitDB(l logger.LoggerV1) *gorm.DB {
 			IgnoreRecordNotFoundError: true,
 			Colorful:                  true,
 			ParameterizedQueries:      true,
-			LogLevel:                  glogger.Info,
+			LogLevel:                  glogger.Error,
 		}),
 	})
 	if err != nil {

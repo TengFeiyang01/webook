@@ -56,7 +56,7 @@ function WangEditor(props: Props) {
                     defaultConfig={editorConfig}
                     value={html}
                     onCreated={setEditor}
-                    onChange={(editor: { getHtml: () => any }) => setHtmlFn(editor.getHtml())}
+                    onChange={editor => setHtmlFn(editor.getHtml())}
                     mode="default"
                     style={{ height: '500px', overflowY: 'hidden' }}
                 />

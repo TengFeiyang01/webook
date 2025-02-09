@@ -21,6 +21,13 @@ import (
 	"webook/webook/ioc"
 )
 
+var interactiveSvcSet = wire.NewSet(
+	dao2.NewGORMInteractiveDAO,
+	cache2.NewInteractiveRedisCache,
+	repository2.NewCachedInteractiveRepository,
+	service2.NewInteractiveService,
+)
+
 var rankingServiceSet = wire.NewSet(
 	repository.NewCachedRankingRepository,
 	cache.NewRankingRedisCache,
@@ -35,27 +42,28 @@ func InitApp() *App {
 		ioc.InitKafka,
 		ioc.NewConsumers,
 		ioc.NewSyncProducer,
+		ioc.InitRLockClient,
 
 		rankingServiceSet,
 		ioc.InitJobs,
 		ioc.InitRankingJob,
+		ioc.InitIntrGRPCClient,
+		interactiveSvcSet,
 
 		// 初始化 DAO
 		dao.NewUserDAO,
-		dao2.NewGORMInteractiveDAO,
 
 		// 初始化 cache
 		cache.NewRedisUserCache,
 		//cache.NewLocalCodeCache,
 		cache.NewRedisCodeCache,
 		cache.NewArticleCache,
-		cache2.NewInteractiveRedisCache,
+		cache.NewRankingLocalCache,
 
 		// 初始化 repository
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
 		artrepo.NewCachedArticleRepository,
-		repository2.NewCachedInteractiveRepository,
 
 		// consumer
 		events2.NewInteractiveReadEventBatchConsumer,
@@ -64,7 +72,6 @@ func InitApp() *App {
 		// 初始化 service
 		service.NewUserService,
 		service.NewCodeService,
-		service2.NewInteractiveService,
 		service.NewArticleService,
 
 		ioc.InitSMSService,

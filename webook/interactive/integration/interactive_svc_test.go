@@ -10,7 +10,7 @@ import (
 	"log"
 	"testing"
 	"time"
-	"webook/webook/interactive/domain"
+	intrv1 "webook/webook/api/proto/gen/intr/v1"
 	"webook/webook/interactive/integration/startup"
 	"webook/webook/interactive/repository/dao"
 )
@@ -49,7 +49,8 @@ func (s *InteractiveTestSuite) TestIncrReadCnt() {
 		biz   string
 		bizId int64
 
-		wantErr error
+		wantErr  error
+		wantResp *intrv1.IncrReadCntResponse
 	}{
 		{
 			// DB 和缓存都有数据
@@ -96,8 +97,9 @@ func (s *InteractiveTestSuite) TestIncrReadCnt() {
 				err = s.rdb.Del(ctx, "interactive:test:2").Err()
 				assert.NoError(t, err)
 			},
-			biz:   "test",
-			bizId: 2,
+			biz:      "test",
+			bizId:    2,
+			wantResp: &intrv1.IncrReadCntResponse{},
 		},
 		{
 			// DB 有数据，缓存没有数据
@@ -139,8 +141,9 @@ func (s *InteractiveTestSuite) TestIncrReadCnt() {
 				assert.NoError(t, err)
 				assert.Equal(t, int64(0), cnt)
 			},
-			biz:   "test",
-			bizId: 3,
+			biz:      "test",
+			bizId:    3,
+			wantResp: &intrv1.IncrReadCntResponse{},
 		},
 		{
 			name:   "增加成功-都没有",
@@ -166,19 +169,25 @@ func (s *InteractiveTestSuite) TestIncrReadCnt() {
 				assert.NoError(t, err)
 				assert.Equal(t, int64(0), cnt)
 			},
-			biz:   "test",
-			bizId: 4,
+			biz:      "test",
+			bizId:    4,
+			wantResp: &intrv1.IncrReadCntResponse{},
 		},
 	}
 
 	// 不同于 AsyncSms 服务，我们不需要 mock，所以创建一个就可以
 	// 不需要每个测试都创建
-	svc := startup.InitInteractiveService()
+	// 理论上，你可以考虑用 grpc 的客户端调用，但是没必要
+	svc := startup.InitInteractiveGRPCServer()
 	for _, tc := range testCases {
 		s.T().Run(tc.name, func(t *testing.T) {
 			tc.before(t)
-			err := svc.IncrReadCnt(context.Background(), tc.biz, tc.bizId)
+			resp, err := svc.IncrReadCnt(context.Background(), &intrv1.IncrReadCntRequest{
+				Biz:   tc.biz,
+				BizId: tc.bizId,
+			})
 			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantResp, resp)
 			tc.after(t)
 		})
 	}
@@ -195,7 +204,8 @@ func (s *InteractiveTestSuite) TestLike() {
 		bizId int64
 		uid   int64
 
-		wantErr error
+		wantErr  error
+		wantResp *intrv1.LikeResponse
 	}{
 		{
 			name: "点赞-DB和cache都有",
@@ -259,9 +269,10 @@ func (s *InteractiveTestSuite) TestLike() {
 				err = s.rdb.Del(ctx, "interactive:test:2").Err()
 				assert.NoError(t, err)
 			},
-			biz:   "test",
-			bizId: 2,
-			uid:   123,
+			biz:      "test",
+			bizId:    2,
+			uid:      123,
+			wantResp: &intrv1.LikeResponse{},
 		},
 		{
 			name:   "点赞-都没有",
@@ -305,21 +316,27 @@ func (s *InteractiveTestSuite) TestLike() {
 				assert.NoError(t, err)
 				assert.Equal(t, int64(0), cnt)
 			},
-			biz:   "test",
-			bizId: 3,
-			uid:   123,
+			biz:      "test",
+			bizId:    3,
+			uid:      123,
+			wantResp: &intrv1.LikeResponse{},
 		},
 	}
 
-	svc := startup.InitInteractiveService()
+	svc := startup.InitInteractiveGRPCServer()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.before(t)
-			err := svc.Like(context.Background(), tc.biz, tc.bizId, tc.uid)
+			resp, err := svc.Like(context.Background(), &intrv1.LikeRequest{
+				Biz:   tc.biz,
+				BizId: tc.bizId,
+				Uid:   tc.uid,
+			})
 			if errors.Is(err, redis.Nil) {
 				err = nil
 			}
 			assert.NoError(t, err)
+			assert.Equal(t, tc.wantResp, resp)
 			tc.after(t)
 		})
 	}
@@ -336,7 +353,8 @@ func (s *InteractiveTestSuite) TestDislike() {
 		bizId int64
 		uid   int64
 
-		wantErr error
+		wantErr  error
+		wantResp *intrv1.CancelLikeResponse
 	}{
 		{
 			name: "取消点赞-DB和cache都有",
@@ -406,18 +424,24 @@ func (s *InteractiveTestSuite) TestDislike() {
 				err = s.rdb.Del(ctx, "interactive:test:2").Err()
 				assert.NoError(t, err)
 			},
-			biz:   "test",
-			bizId: 2,
-			uid:   123,
+			biz:      "test",
+			bizId:    2,
+			uid:      123,
+			wantResp: &intrv1.CancelLikeResponse{},
 		},
 	}
 
-	svc := startup.InitInteractiveService()
+	svc := startup.InitInteractiveGRPCServer()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.before(t)
-			err := svc.CancelLike(context.Background(), tc.biz, tc.bizId, tc.uid)
+			resp, err := svc.CancelLike(context.Background(), &intrv1.CancelLikeRequest{
+				Biz:   tc.biz,
+				BizId: tc.bizId,
+				Uid:   tc.uid,
+			})
 			assert.NoError(t, err)
+			assert.Equal(t, tc.wantResp, resp)
 			tc.after(t)
 		})
 	}
@@ -435,7 +459,8 @@ func (s *InteractiveTestSuite) TestCollect() {
 		cid   int64
 		uid   int64
 
-		wantErr error
+		wantErr  error
+		wantResp *intrv1.CollectResponse
 	}{
 		{
 			name:   "收藏成功,db和缓存都没有",
@@ -479,10 +504,11 @@ func (s *InteractiveTestSuite) TestCollect() {
 					Uid:   1,
 				}, cbiz)
 			},
-			bizId: 1,
-			biz:   "test",
-			cid:   1,
-			uid:   1,
+			bizId:    1,
+			biz:      "test",
+			cid:      1,
+			uid:      1,
+			wantResp: &intrv1.CollectResponse{},
 		},
 		{
 			name: "收藏成功,db有缓存没有",
@@ -538,10 +564,11 @@ func (s *InteractiveTestSuite) TestCollect() {
 					Uid:   1,
 				}, cbiz)
 			},
-			bizId: 2,
-			biz:   "test",
-			cid:   1,
-			uid:   1,
+			bizId:    2,
+			biz:      "test",
+			cid:      1,
+			uid:      1,
+			wantResp: &intrv1.CollectResponse{},
 		},
 		{
 			name: "收藏成功,db和缓存都有",
@@ -599,20 +626,27 @@ func (s *InteractiveTestSuite) TestCollect() {
 					Uid:   1,
 				}, cbiz)
 			},
-			bizId: 3,
-			biz:   "test",
-			cid:   1,
-			uid:   1,
+			bizId:    3,
+			biz:      "test",
+			cid:      1,
+			uid:      1,
+			wantResp: &intrv1.CollectResponse{},
 		},
 	}
 
-	svc := startup.InitInteractiveService()
+	svc := startup.InitInteractiveGRPCServer()
 
 	for _, tc := range testCases {
 		s.T().Run(tc.name, func(t *testing.T) {
 			tc.before(t)
-			err := svc.Collect(context.Background(), tc.biz, tc.bizId, tc.cid, tc.uid)
+			resp, err := svc.Collect(context.Background(), &intrv1.CollectRequest{
+				Biz:   tc.biz,
+				BizId: tc.bizId,
+				Cid:   tc.cid,
+				Uid:   tc.uid,
+			})
 			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantResp, resp)
 			tc.after(t)
 		})
 	}
@@ -628,8 +662,8 @@ func (s *InteractiveTestSuite) TestGet() {
 		biz   string
 		uid   int64
 
-		wantErr error
-		wantRes domain.Interactive
+		wantErr  error
+		wantResp *intrv1.GetResponse
 	}{
 		{
 			name:  "全部取出来了-无缓存",
@@ -650,11 +684,14 @@ func (s *InteractiveTestSuite) TestGet() {
 				}).Error
 				assert.NoError(t, err)
 			},
-			wantRes: domain.Interactive{
-				BizId:      12,
-				ReadCnt:    100,
-				CollectCnt: 200,
-				LikeCnt:    300,
+			wantResp: &intrv1.GetResponse{
+				Intr: &intrv1.Interactive{
+					Biz:        "test",
+					BizId:      12,
+					ReadCnt:    100,
+					CollectCnt: 200,
+					LikeCnt:    300,
+				},
 			},
 		},
 		{
@@ -694,22 +731,28 @@ func (s *InteractiveTestSuite) TestGet() {
 				log.Printf("Inserted UserLikeBiz: %+v", userLike)
 
 			},
-			wantRes: domain.Interactive{
-				BizId:      3,
-				CollectCnt: 1,
-				Collected:  true,
-				Liked:      true,
+			wantResp: &intrv1.GetResponse{
+				Intr: &intrv1.Interactive{
+					BizId:      3,
+					CollectCnt: 1,
+					Collected:  true,
+					Liked:      true,
+				},
 			},
 		},
 	}
 
-	svc := startup.InitInteractiveService()
+	svc := startup.InitInteractiveGRPCServer()
 	for _, tc := range testCases {
 		s.T().Run(tc.name, func(t *testing.T) {
 			tc.before(t)
-			res, err := svc.Get(context.Background(), tc.biz, tc.bizId, tc.uid)
+			resp, err := svc.Get(context.Background(), &intrv1.GetRequest{
+				BizId: tc.bizId,
+				Uid:   tc.uid,
+				Biz:   tc.biz,
+			})
 			assert.Equal(t, tc.wantErr, err)
-			assert.Equal(t, tc.wantRes, res)
+			assert.Equal(t, tc.wantResp, resp)
 		})
 	}
 }
@@ -740,43 +783,52 @@ func (s *InteractiveTestSuite) TestGetByIds() {
 		biz    string
 		ids    []int64
 
-		wantErr error
-		wantRes map[int64]domain.Interactive
+		wantErr  error
+		wantResp *intrv1.GetByIdsResponse
 	}{
 		{
 			name: "查找成功",
 			biz:  "test",
 			ids:  []int64{1, 2},
-			wantRes: map[int64]domain.Interactive{
-				1: {
-					BizId:      1,
-					ReadCnt:    1,
-					CollectCnt: 2,
-					LikeCnt:    3,
-				},
-				2: {
-					BizId:      2,
-					ReadCnt:    2,
-					CollectCnt: 3,
-					LikeCnt:    4,
+			wantResp: &intrv1.GetByIdsResponse{
+				Intrs: map[int64]*intrv1.Interactive{
+					1: {
+						Biz:        "test",
+						BizId:      1,
+						ReadCnt:    1,
+						CollectCnt: 2,
+						LikeCnt:    3,
+					},
+					2: {
+						Biz:        "test",
+						BizId:      2,
+						ReadCnt:    2,
+						CollectCnt: 3,
+						LikeCnt:    4,
+					},
 				},
 			},
 		},
 		{
-			name:    "没有对应的数据",
-			biz:     "test",
-			ids:     []int64{100, 200},
-			wantRes: map[int64]domain.Interactive{},
+			name: "没有对应的数据",
+			biz:  "test",
+			ids:  []int64{100, 200},
+			wantResp: &intrv1.GetByIdsResponse{
+				Intrs: map[int64]*intrv1.Interactive{},
+			},
 		},
 	}
 
-	svc := startup.InitInteractiveService()
+	svc := startup.InitInteractiveGRPCServer()
 	for _, tc := range testCases {
 		s.T().Run(tc.name, func(t *testing.T) {
-			res, err := svc.GetByIds(context.Background(), tc.biz, tc.ids)
+			resp, err := svc.GetByIds(context.Background(), &intrv1.GetByIdsRequest{
+				Biz:    tc.biz,
+				BizIds: tc.ids,
+			})
 			assert.Equal(t, tc.wantErr, err)
-			t.Log(res)
-			assert.Equal(t, tc.wantRes, res)
+			assert.Equal(t, tc.wantResp, resp)
+			t.Log(resp)
 		})
 	}
 }

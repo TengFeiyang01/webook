@@ -6,8 +6,8 @@ import (
 	"golang.org/x/net/context"
 	"testing"
 	"time"
-	domain2 "webook/webook/interactive/domain"
-	service2 "webook/webook/interactive/service"
+	intrv1 "webook/webook/api/proto/gen/intr/v1"
+	intrv1mocks "webook/webook/api/proto/gen/intr/v1/mocks"
 	"webook/webook/internal/domain"
 	svcmocks "webook/webook/internal/service/mocks"
 )
@@ -16,7 +16,7 @@ func TestRankingTopN(t *testing.T) {
 	now := time.Now()
 	testCases := []struct {
 		name string
-		mock func(ctrl *gomock.Controller) (ArticleService, service2.InteractiveService)
+		mock func(ctrl *gomock.Controller) (ArticleService, intrv1.InteractiveServiceClient)
 
 		wantErr  error
 		wantArts []domain.Article
@@ -24,9 +24,9 @@ func TestRankingTopN(t *testing.T) {
 		{
 			name: "计算成功",
 			// 怎么模拟我的数据
-			mock: func(ctrl *gomock.Controller) (ArticleService, service2.InteractiveService) {
+			mock: func(ctrl *gomock.Controller) (ArticleService, intrv1.InteractiveServiceClient) {
 				artSvc := svcmocks.NewMockArticleService(ctrl)
-				interSvc := svcmocks.NewMockInteractiveService(ctrl)
+				interSvc := intrv1mocks.NewMockInteractiveServiceClient(ctrl)
 				artSvc.EXPECT().ListPub(gomock.Any(), gomock.Any(), 0, 3).
 					Return([]domain.Article{
 						{Id: 1, Utime: now, Ctime: now},
@@ -36,14 +36,20 @@ func TestRankingTopN(t *testing.T) {
 				artSvc.EXPECT().ListPub(gomock.Any(), gomock.Any(), 3, 3).
 					Return([]domain.Article{}, nil)
 
-				interSvc.EXPECT().GetByIds(gomock.Any(), "article", []int64{1, 2, 3}).
-					Return(map[int64]domain2.Interactive{
+				interSvc.EXPECT().GetByIds(gomock.Any(), &intrv1.GetByIdsRequest{
+					Biz:    "article",
+					BizIds: []int64{1, 2, 3},
+				}).
+					Return(&intrv1.GetByIdsResponse{Intrs: map[int64]*intrv1.Interactive{
 						1: {BizId: 1, LikeCnt: 1},
 						2: {BizId: 2, LikeCnt: 2},
 						3: {BizId: 3, LikeCnt: 3},
-					}, nil)
-				interSvc.EXPECT().GetByIds(gomock.Any(), "article", []int64{}).
-					Return(map[int64]domain2.Interactive{}, nil)
+					}}, nil)
+				interSvc.EXPECT().GetByIds(gomock.Any(), &intrv1.GetByIdsRequest{
+					Biz:    "article",
+					BizIds: []int64{},
+				}).
+					Return(&intrv1.GetByIdsResponse{Intrs: map[int64]*intrv1.Interactive{}}, nil)
 				return artSvc, interSvc
 			},
 

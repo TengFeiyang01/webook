@@ -4,6 +4,7 @@ package startup
 
 import (
 	"github.com/google/wire"
+	"webook/webook/interactive/grpc"
 	"webook/webook/interactive/repository"
 	"webook/webook/interactive/repository/cache"
 	"webook/webook/interactive/repository/dao"
@@ -26,4 +27,9 @@ var interactiveSvcSet = wire.NewSet(
 func InitInteractiveService() service.InteractiveService {
 	wire.Build(thirdPartySet, interactiveSvcSet)
 	return service.NewInteractiveService(nil)
+}
+
+func InitInteractiveGRPCServer() *grpc.InteractiveServiceServer {
+	wire.Build(thirdPartySet, interactiveSvcSet, grpc.NewInteractiveServiceServer)
+	return new(grpc.InteractiveServiceServer)
 }
