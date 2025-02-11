@@ -11,3 +11,7 @@ grpc:
       addr: "localhost:8090"
       secure: false
       threshold: 100
+    art:
+      addr: "localhost:8091"
+      secure: false
+      threshold: 100

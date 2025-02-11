@@ -1,0 +1,99 @@
+syntax = "proto3";
+package art.v1;
+option go_package = "webook/api/proto/gen/art;artv1";
+
+service ArticleService {
+  rpc Save(SaveRequest) returns (SaveResponse);
+  rpc  WithDraw(WithDrawRequest) returns (WithDrawResponse);
+  rpc Publish(PublishRequest) returns (PublishResponse);
+  rpc List(ListRequest) returns (ListResponse);
+  rpc ListPub(ListPubRequest) returns (ListPubResponse);
+  rpc GetById(GetByIdRequest) returns (GetByIdResponse);
+  rpc GetPubById(GetPubByIdRequest) returns (GetPubByIdResponse);
+}
+
+message SaveRequest {
+  Article art = 1;
+}
+message SaveResponse {
+  int64 id = 1;
+}
+
+message WithDrawRequest {
+  Article art = 1;
+}
+
+message WithDrawResponse{
+
+}
+
+
+// ArticleStatus 枚举
+enum ArticleStatus {
+  ARTICLE_STATUS_UNKNOWN = 0;
+  ARTICLE_STATUS_UNPUBLISHED = 1;
+  ARTICLE_STATUS_PUBLISHED = 2;
+  ARTICLE_STATUS_PRIVATE = 3;
+}
+
+// 定义 Author 消息
+message Author {
+  int64 id = 1;
+  string name = 2;
+}
+
+// 定义 Article 消息
+message Article {
+  int64 id = 1;
+  string title = 2;
+  string content = 3;
+  Author author = 4;
+  uint32 status = 5;
+  int64 ctime = 6;
+  int64 utime = 7;
+}
+
+message PublishRequest {
+  Article art = 1;
+}
+
+message PublishResponse {
+  int64 id = 1;
+}
+
+message ListRequest {
+  int64 id = 1;
+  int32 offset = 2;
+  int32 limit = 3;
+}
+
+message ListResponse {
+  repeated Article arts = 1;
+}
+
+message ListPubRequest {
+  int64 timestamp = 1;
+  int32 offset = 2;
+  int32 limit = 3;
+}
+message ListPubResponse {
+  repeated Article arts = 1;
+}
+
+message GetByIdRequest {
+  int64 id = 1;
+}
+
+message GetByIdResponse {
+  Article art = 1;
+}
+
+message GetPubByIdRequest {
+  int64 id = 1;
+  int64 uid = 2;
+}
+
+message GetPubByIdResponse {
+  Article art = 1;
+}
+

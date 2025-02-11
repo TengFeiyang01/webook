@@ -4,6 +4,7 @@ import (
 	"github.com/IBM/sarama"
 	"golang.org/x/net/context"
 	"time"
+	"webook/webook/article/events"
 	"webook/webook/internal/domain"
 	"webook/webook/internal/repository"
 	"webook/webook/pkg/logger"
@@ -28,7 +29,7 @@ func (r *HistoryRecordConsumer) Start() error {
 	go func() {
 		err := cg.Consume(context.Background(),
 			[]string{"read_article"},
-			saramax.NewHandler[ReadEvent](r.l, r.Consume))
+			saramax.NewHandler[events.ReadEvent](r.l, r.Consume))
 		if err != nil {
 			r.l.Error("退出消费循环异常", logger.Error(err))
 		}
@@ -38,12 +39,12 @@ func (r *HistoryRecordConsumer) Start() error {
 
 // Consume 这个不是幂等的
 func (r *HistoryRecordConsumer) Consume(msg *sarama.ConsumerMessage,
-	event ReadEvent) error {
+	event events.ReadEvent) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	return r.repo.AddRecord(ctx, domain.HistoryRecord{
 		BizId: event.Aid,
-		Biz:   "article",
+		Biz:   "art",
 		Uid:   event.Uid,
 	})
 }

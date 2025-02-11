@@ -1,6 +1,8 @@
 package web
 
-import "webook/webook/internal/domain"
+import (
+	"webook/webook/article/domain"
+)
 
 // VO view object, 对标前段的
 

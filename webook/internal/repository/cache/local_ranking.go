@@ -5,7 +5,7 @@ import (
 	"github.com/ecodeclub/ekit/syncx/atomicx"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/internal/domain"
+	"webook/webook/article/domain"
 )
 
 type RankingLocalCache struct {

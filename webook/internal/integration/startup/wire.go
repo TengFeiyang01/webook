@@ -5,12 +5,14 @@ package startup
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
-	article2 "webook/webook/internal/events/article"
+	article2 "webook/webook/article/events"
+	repository2 "webook/webook/article/repository"
+	cache2 "webook/webook/article/repository/cache"
+	artdao "webook/webook/article/repository/dao"
+	service2 "webook/webook/article/service"
 	"webook/webook/internal/repository"
-	"webook/webook/internal/repository/article"
 	"webook/webook/internal/repository/cache"
 	"webook/webook/internal/repository/dao"
-	artdao "webook/webook/internal/repository/dao/article"
 	"webook/webook/internal/service"
 	"webook/webook/internal/web"
 	ijwt "webook/webook/internal/web/jwt"
@@ -30,9 +32,9 @@ var userSvcProvider = wire.NewSet(
 	service.NewUserService)
 
 var articlSvcProvider = wire.NewSet(
-	article.NewCachedArticleRepository,
+	repository2.NewCachedArticleRepository,
 	artdao.NewGORMArticleDAO,
-	service.NewArticleService)
+	service2.NewArticleService)
 
 func InitWebServer() *gin.Engine {
 	wire.Build(
@@ -41,7 +43,7 @@ func InitWebServer() *gin.Engine {
 		articlSvcProvider,
 
 		cache.NewRedisCodeCache,
-		cache.NewArticleCache,
+		cache2.NewArticleCache,
 
 		article2.NewKafkaProducer,
 

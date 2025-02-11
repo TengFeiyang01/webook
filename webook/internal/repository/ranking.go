@@ -2,7 +2,7 @@ package repository
 
 import (
 	"golang.org/x/net/context"
-	"webook/webook/internal/domain"
+	"webook/webook/article/domain"
 	"webook/webook/internal/repository/cache"
 )
 

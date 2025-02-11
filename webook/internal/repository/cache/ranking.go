@@ -5,7 +5,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/internal/domain"
+	"webook/webook/article/domain"
 )
 
 type RankingCache interface {

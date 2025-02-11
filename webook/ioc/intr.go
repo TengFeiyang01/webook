@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	intrv1 "webook/webook/api/proto/gen/intr/v1"
 	"webook/webook/interactive/service"
-	"webook/webook/internal/web/client"
+	"webook/webook/internal/web/client/intr"
 )
 
 func InitIntrGRPCClient(svc service.InteractiveService) intrv1.InteractiveServiceClient {
@@ -28,9 +28,9 @@ func InitIntrGRPCClient(svc service.InteractiveService) intrv1.InteractiveServic
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 	cc, err := grpc.NewClient(cfg.Addr, opts...)
-	local := client.NewInteractiveServiceAdapter(svc)
+	local := intr.NewInteractiveServiceAdapter(svc)
 	remote := intrv1.NewInteractiveServiceClient(cc)
-	res := client.NewGrayScaleInteractiveServiceClient(local, remote)
+	res := intr.NewGrayScaleInteractiveServiceClient(local, remote)
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		var cfg Config
 		err = viper.UnmarshalKey("grpc.client.intr", &cfg)

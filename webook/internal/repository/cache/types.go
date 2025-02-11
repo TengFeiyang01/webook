@@ -2,7 +2,7 @@ package cache
 
 import (
 	"golang.org/x/net/context"
-	"webook/webook/internal/domain"
+	"webook/webook/article/domain"
 )
 
 type Cache interface {

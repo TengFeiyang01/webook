@@ -4494,8 +4494,6 @@ plugins:
     opt: paths=source_relative
 ```
 
-
-
 - **go_package_prefix: 避免了每次写 go package 都要写老长一段的问题。**
 
 - **plugins: 这是比较关键的配置，这里指定了两个插件，并且在两个插件里面分别指定了 out 和 opt。**
@@ -4533,3 +4531,9 @@ plugins:
 ##### 本地调用和 gRPC 调用并行方案
 
 ![image-20250208155158394](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502081551420.png)
+
+##### 集成两种客户端与流量调度
+
+![image-20250209200328106](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502092003460.png)
+
+![image-20250209200419169](https://gcore.jsdelivr.net/gh/TengFeiyang01/picture@master/data/202502092004595.png)

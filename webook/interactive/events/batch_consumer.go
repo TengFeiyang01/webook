@@ -41,7 +41,7 @@ func (r *InteractiveReadEventBatchConsumer) Consume(message []*sarama.ConsumerMe
 	bizs := make([]string, 0, len(ts))
 	for _, evt := range ts {
 		ids = append(ids, evt.Aid)
-		bizs = append(bizs, "article")
+		bizs = append(bizs, "art")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
