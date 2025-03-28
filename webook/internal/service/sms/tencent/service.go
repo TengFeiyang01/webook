@@ -6,7 +6,7 @@ import (
 	"github.com/ecodeclub/ekit"
 	"github.com/ecodeclub/ekit/slice"
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
-	"webook/webook/pkg/ratelimit"
+	"github.com/TengFeiyang01/webook/webook/pkg/ratelimit"
 )
 
 type Service struct {

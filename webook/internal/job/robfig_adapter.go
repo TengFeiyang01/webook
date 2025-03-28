@@ -1,9 +1,9 @@
 package job
 
 import (
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"time"
-	"webook/webook/pkg/logger"
 )
 
 type RankingJobAdapter struct {

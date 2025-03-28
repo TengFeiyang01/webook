@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"testing"
-	"webook/webook/internal/service/sms"
-	smssvcmocks "webook/webook/internal/service/sms/mocks"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms"
+	smssvcmocks "github.com/TengFeiyang01/webook/webook/internal/service/sms/mocks"
 )
 
 func TestFailoverSMSService_Send(t *testing.T) {

@@ -14,7 +14,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 	reflect "reflect"
 	time "time"
-	"webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
 )
 
 // MockArticleService is a mock of ArticleService interface.

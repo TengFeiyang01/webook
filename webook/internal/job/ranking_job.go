@@ -1,12 +1,12 @@
 package job
 
 import (
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	rlock "github.com/gotomicro/redis-lock"
 	"golang.org/x/net/context"
 	"sync"
 	"time"
-	"webook/webook/internal/service"
-	"webook/webook/pkg/logger"
 )
 
 type RankingJob struct {

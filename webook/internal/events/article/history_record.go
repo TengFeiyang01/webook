@@ -2,13 +2,13 @@ package article
 
 import (
 	"github.com/IBM/sarama"
+	"github.com/TengFeiyang01/webook/webook/article/events"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/pkg/saramax"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/article/events"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository"
-	"webook/webook/pkg/logger"
-	"webook/webook/pkg/saramax"
 )
 
 type HistoryRecordConsumer struct {

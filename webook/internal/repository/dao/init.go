@@ -1,9 +1,9 @@
 package dao
 
 import (
+	"github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	dao2 "github.com/TengFeiyang01/webook/webook/interactive/repository/dao"
 	"gorm.io/gorm"
-	"webook/webook/article/repository/dao"
-	dao2 "webook/webook/interactive/repository/dao"
 )
 
 func InitTables(db *gorm.DB) error {

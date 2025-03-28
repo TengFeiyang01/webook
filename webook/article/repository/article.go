@@ -5,11 +5,11 @@ import (
 	"github.com/ecodeclub/ekit/slice"
 	"gorm.io/gorm"
 	"time"
-	"webook/webook/article/domain"
-	"webook/webook/article/repository/cache"
-	dao2 "webook/webook/article/repository/dao"
-	"webook/webook/internal/repository/dao"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/repository/cache"
+	dao2 "github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 type ArticleRepository interface {

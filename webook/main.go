@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/TengFeiyang01/webook/webook/ioc"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -13,7 +14,6 @@ import (
 	"golang.org/x/net/context"
 	"net/http"
 	"time"
-	"webook/webook/ioc"
 )
 
 func main() {

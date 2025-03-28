@@ -4,17 +4,17 @@ package startup
 
 import (
 	"github.com/google/wire"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/article/events"
-	"webook/webook/article/repository"
-	"webook/webook/article/repository/cache"
-	"webook/webook/article/repository/dao"
-	"webook/webook/article/service"
-	usrrepo "webook/webook/internal/repository"
-	usrcache "webook/webook/internal/repository/cache"
-	usrdao "webook/webook/internal/repository/dao"
-	usrsvc "webook/webook/internal/service"
-	"webook/webook/ioc"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/article/events"
+	"github.com/TengFeiyang01/webook/webook/article/repository"
+	"github.com/TengFeiyang01/webook/webook/article/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/article/service"
+	usrrepo "github.com/TengFeiyang01/webook/webook/internal/repository"
+	usrcache "github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	usrdao "github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	usrsvc "github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/ioc"
 )
 
 var thirdPartySet = wire.NewSet( // 第三方依赖

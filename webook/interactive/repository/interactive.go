@@ -3,11 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
+	"github.com/TengFeiyang01/webook/webook/interactive/domain"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"github.com/ecodeclub/ekit/slice"
-	"webook/webook/interactive/domain"
-	"webook/webook/interactive/repository/cache"
-	"webook/webook/interactive/repository/dao"
-	"webook/webook/pkg/logger"
 )
 
 type InteractiveRepository interface {

@@ -13,7 +13,7 @@ import (
 	context "context"
 	gomock "go.uber.org/mock/gomock"
 	reflect "reflect"
-	"webook/webook/interactive/domain"
+	"github.com/TengFeiyang01/webook/webook/interactive/domain"
 )
 
 // MockInteractiveService is a mock of InteractiveService interface.

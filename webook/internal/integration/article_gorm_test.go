@@ -3,6 +3,10 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/internal/integration/startup"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -10,10 +14,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"webook/webook/article/domain"
-	"webook/webook/article/repository/dao"
-	"webook/webook/internal/integration/startup"
-	ijwt "webook/webook/internal/web/jwt"
 )
 
 type ArticleHandlerSuite struct {

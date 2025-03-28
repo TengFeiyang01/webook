@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"time"
-	"webook/webook/article/domain"
-	"webook/webook/article/events"
-	"webook/webook/article/repository"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/events"
+	"github.com/TengFeiyang01/webook/webook/article/repository"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 //go:generate mockgen -source=./art.go -destination=./mocks/service.mock.go -package=svcmocks ArticleService

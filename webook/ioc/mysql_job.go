@@ -3,10 +3,10 @@ package ioc
 import (
 	"context"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/job"
-	"webook/webook/internal/service"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/job"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 func InitScheduler(l logger.LoggerV1, svc service.JobService, local *job.LocalFuncExecutor) *job.Schedule {

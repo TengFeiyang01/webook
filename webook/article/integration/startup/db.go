@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"time"
-	"webook/webook/interactive/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository/dao"
 )
 
 var db *gorm.DB

@@ -8,14 +8,14 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"strings"
 	"time"
-	"webook/webook/internal/web"
+	"github.com/TengFeiyang01/webook/webook/internal/web"
 
-	ijwt "webook/webook/internal/web/jwt"
-	"webook/webook/internal/web/middleware"
-	"webook/webook/pkg/ginx"
-	"webook/webook/pkg/ginx/middlewares/ratelimit"
-	myLogger "webook/webook/pkg/logger"
-	"webook/webook/pkg/metric"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/internal/web/middleware"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx/middlewares/ratelimit"
+	myLogger "github.com/TengFeiyang01/webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/pkg/metric"
 )
 
 func InitWebServer(middlewares []gin.HandlerFunc, userHandler *web.UserHandler,

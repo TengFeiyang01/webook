@@ -5,7 +5,7 @@ import (
 	"github.com/ecodeclub/ekit/syncx/atomicx"
 	"google.golang.org/grpc"
 	"math/rand"
-	artv1 "webook/webook/api/proto/gen/article/v1"
+	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
 )
 
 type GrayScaleArticleServiceClient struct {

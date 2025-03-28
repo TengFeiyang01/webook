@@ -8,10 +8,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"testing"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository"
-	repomocks "webook/webook/internal/repository/mocks"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	repomocks "github.com/TengFeiyang01/webook/webook/internal/repository/mocks"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 func Test_userService_Login(t *testing.T) {

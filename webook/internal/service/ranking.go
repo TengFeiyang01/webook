@@ -2,15 +2,15 @@ package service
 
 import (
 	"errors"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	service2 "github.com/TengFeiyang01/webook/webook/article/service"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
 	"github.com/ecodeclub/ekit/queue"
 	"github.com/ecodeclub/ekit/slice"
 	"golang.org/x/net/context"
 	"math"
 	"time"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/article/domain"
-	service2 "webook/webook/article/service"
-	"webook/webook/internal/repository"
 )
 
 //go:generate mockgen -source=./ranking.go -package=svcmocks -destination=./mocks/ranking.mock.go RankingService

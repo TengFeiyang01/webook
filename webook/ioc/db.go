@@ -9,9 +9,9 @@ import (
 	"gorm.io/plugin/opentelemetry/tracing"
 	"gorm.io/plugin/prometheus"
 	"time"
-	"webook/webook/internal/repository/dao"
-	gormx "webook/webook/pkg/gormx"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	gormx "github.com/TengFeiyang01/webook/webook/pkg/gormx"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 func InitDB(l logger.LoggerV1) *gorm.DB {

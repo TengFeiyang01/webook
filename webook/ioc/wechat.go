@@ -2,9 +2,9 @@ package ioc
 
 import (
 	"os"
-	"webook/webook/internal/service/oauth2/wechat"
-	"webook/webook/internal/web"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/service/oauth2/wechat"
+	"github.com/TengFeiyang01/webook/webook/internal/web"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 func InitOAuth2WechatService(l logger.LoggerV1) wechat.Service {

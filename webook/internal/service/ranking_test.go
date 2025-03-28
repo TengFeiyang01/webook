@@ -6,11 +6,11 @@ import (
 	"golang.org/x/net/context"
 	"testing"
 	"time"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	intrv1mocks "webook/webook/api/proto/gen/intr/v1/mocks"
-	"webook/webook/article/domain"
-	service2 "webook/webook/article/service"
-	svcmocks "webook/webook/internal/service/mocks"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	intrv1mocks "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1/mocks"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	service2 "github.com/TengFeiyang01/webook/webook/article/service"
+	svcmocks "github.com/TengFeiyang01/webook/webook/internal/service/mocks"
 )
 
 func TestRankingTopN(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
 	"github.com/redis/go-redis/v9"
 	"time"
-	"webook/webook/internal/domain"
 )
 
 // UserCache 和用户操作相关的缓存接口

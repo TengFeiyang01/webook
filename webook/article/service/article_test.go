@@ -6,9 +6,9 @@ import (
 	"go.uber.org/mock/gomock"
 	"golang.org/x/net/context"
 	"testing"
-	"webook/webook/article/domain"
-	"webook/webook/article/repository"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/repository"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 func Test_articleService_Publish(t *testing.T) {

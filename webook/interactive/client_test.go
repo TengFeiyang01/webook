@@ -1,12 +1,12 @@
 package main
 
 import (
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"testing"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
 )
 
 func TestGRPCClient(t *testing.T) {

@@ -3,11 +3,11 @@ package ioc
 import (
 	"github.com/redis/go-redis/v9"
 	"time"
-	"webook/webook/internal/service/sms"
-	"webook/webook/internal/service/sms/memory"
-	"webook/webook/internal/service/sms/ratelimit"
-	"webook/webook/internal/service/sms/retryable"
-	limiter "webook/webook/pkg/ratelimit"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms/memory"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms/ratelimit"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms/retryable"
+	limiter "github.com/TengFeiyang01/webook/webook/pkg/ratelimit"
 )
 
 func InitSMSService(cmd redis.Cmdable) sms.Service {

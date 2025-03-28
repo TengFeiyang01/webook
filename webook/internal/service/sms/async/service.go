@@ -3,10 +3,10 @@ package async
 import (
 	"context"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository"
-	sms "webook/webook/internal/service/sms"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	sms "github.com/TengFeiyang01/webook/webook/internal/service/sms"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 type Service struct {

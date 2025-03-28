@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"golang.org/x/sync/semaphore"
 	"net/http"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/service"
-	"webook/webook/pkg/logger"
 )
 
 type Executor interface {

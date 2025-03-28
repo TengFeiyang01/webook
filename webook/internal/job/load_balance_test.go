@@ -1,6 +1,8 @@
 package job
 
 import (
+	svcmocks "github.com/TengFeiyang01/webook/webook/internal/service/mocks"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	rlock "github.com/gotomicro/redis-lock"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/mock/gomock"
@@ -8,8 +10,6 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-	svcmocks "webook/webook/internal/service/mocks"
-	"webook/webook/pkg/logger"
 )
 
 func TestRankingJobHomework(t *testing.T) {

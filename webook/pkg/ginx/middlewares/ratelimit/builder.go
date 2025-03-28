@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"webook/webook/pkg/ratelimit"
+	"github.com/TengFeiyang01/webook/webook/pkg/ratelimit"
 )
 
 type Builder struct {

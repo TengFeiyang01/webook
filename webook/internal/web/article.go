@@ -10,12 +10,12 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	artv1 "webook/webook/api/proto/gen/article/v1"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/article/domain"
-	ijwt "webook/webook/internal/web/jwt"
-	"webook/webook/pkg/ginx"
-	"webook/webook/pkg/logger"
+	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 var _ handler = (*ArticleHandler)(nil)

@@ -6,7 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
 )
 
 type ArticleCache interface {

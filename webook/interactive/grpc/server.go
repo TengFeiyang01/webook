@@ -2,12 +2,12 @@ package grpc
 
 import (
 	"context"
+	"github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/interactive/domain"
+	"github.com/TengFeiyang01/webook/webook/interactive/service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/interactive/domain"
-	"webook/webook/interactive/service"
 )
 
 // InteractiveServiceServer 我这里只是把 service 包装成一个 grpc 而已

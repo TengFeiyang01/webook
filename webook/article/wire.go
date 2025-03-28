@@ -3,15 +3,15 @@
 package main
 
 import (
+	"github.com/TengFeiyang01/webook/webook/article/events"
+	"github.com/TengFeiyang01/webook/webook/article/grpc"
+	"github.com/TengFeiyang01/webook/webook/article/ioc"
+	"github.com/TengFeiyang01/webook/webook/article/repository"
+	"github.com/TengFeiyang01/webook/webook/article/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/article/service"
+	usrdao "github.com/TengFeiyang01/webook/webook/internal/repository/dao"
 	"github.com/google/wire"
-	"webook/webook/article/events"
-	"webook/webook/article/grpc"
-	"webook/webook/article/ioc"
-	"webook/webook/article/repository"
-	"webook/webook/article/repository/cache"
-	"webook/webook/article/repository/dao"
-	"webook/webook/article/service"
-	usrdao "webook/webook/internal/repository/dao"
 )
 
 var thirdPartySet = wire.NewSet(

@@ -1,6 +1,8 @@
 package job
 
 import (
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"github.com/google/uuid"
 	rlock "github.com/gotomicro/redis-lock"
 	"github.com/hashicorp/go-multierror"
@@ -9,8 +11,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"webook/webook/internal/service"
-	"webook/webook/pkg/logger"
 )
 
 type LoadBalanceJob struct {

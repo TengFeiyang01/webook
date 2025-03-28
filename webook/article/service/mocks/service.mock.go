@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 	time "time"
-	domain "webook/webook/article/domain"
+	domain "github.com/TengFeiyang01/webook/webook/article/domain"
 
 	gomock "go.uber.org/mock/gomock"
 )

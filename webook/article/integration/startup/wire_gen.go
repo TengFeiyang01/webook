@@ -8,17 +8,17 @@ package startup
 
 import (
 	"github.com/google/wire"
-	"webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/article/events"
-	"webook/webook/article/repository"
-	"webook/webook/article/repository/cache"
-	"webook/webook/article/repository/dao"
-	"webook/webook/article/service"
-	repository2 "webook/webook/internal/repository"
-	cache2 "webook/webook/internal/repository/cache"
-	dao2 "webook/webook/internal/repository/dao"
-	service2 "webook/webook/internal/service"
-	"webook/webook/ioc"
+	"github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/article/events"
+	"github.com/TengFeiyang01/webook/webook/article/repository"
+	"github.com/TengFeiyang01/webook/webook/article/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/article/service"
+	repository2 "github.com/TengFeiyang01/webook/webook/internal/repository"
+	cache2 "github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	dao2 "github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	service2 "github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/ioc"
 )
 
 // Injectors from wire.go:

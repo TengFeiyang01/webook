@@ -1,11 +1,11 @@
 package intr
 
 import (
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/interactive/domain"
+	"github.com/TengFeiyang01/webook/webook/interactive/service"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/interactive/domain"
-	"webook/webook/interactive/service"
 )
 
 // InteractiveServiceAdapter 将一个本地实现伪装成一个 gRPC 客户端

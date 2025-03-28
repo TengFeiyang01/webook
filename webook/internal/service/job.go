@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository"
-	"webook/webook/pkg/logger"
 )
 
 //go:generate mockgen -source=./job.go -package=svcmocks -destination=./mocks/job.mock.go JobService

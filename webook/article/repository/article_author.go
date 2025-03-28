@@ -2,7 +2,7 @@ package repository
 
 import (
 	"golang.org/x/net/context"
-	"webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
 )
 
 type ArticleAuthorRepository interface {

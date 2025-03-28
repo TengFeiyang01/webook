@@ -5,7 +5,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"time"
-	"webook/webook/pkg/ratelimit"
+	"github.com/TengFeiyang01/webook/webook/pkg/ratelimit"
 )
 
 var redisClient *redis.Client

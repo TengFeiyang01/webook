@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms"
 	"math/rand"
-	"webook/webook/internal/repository"
-	"webook/webook/internal/service/sms"
 )
 
 //go:generate mockgen -source=./code.go -package=svcmocks -destination=./mocks/code.mock.go CodeService

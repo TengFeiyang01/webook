@@ -1,11 +1,11 @@
 package intr
 
 import (
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
 	"github.com/ecodeclub/ekit/syncx/atomicx"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"math/rand"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
 )
 
 type GrayScaleInteractiveServiceClient struct {

@@ -3,7 +3,7 @@ package logger
 import (
 	"context"
 	"go.uber.org/zap"
-	"webook/webook/internal/service/sms"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms"
 )
 
 type Service struct {

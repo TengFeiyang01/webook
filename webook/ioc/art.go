@@ -5,9 +5,9 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	artv1 "webook/webook/api/proto/gen/article/v1"
-	"webook/webook/article/service"
-	"webook/webook/internal/web/client/art"
+	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
+	"github.com/TengFeiyang01/webook/webook/article/service"
+	"github.com/TengFeiyang01/webook/webook/internal/web/client/art"
 )
 
 func InitArtGRPCClient(svc service.ArticleService) artv1.ArticleServiceClient {

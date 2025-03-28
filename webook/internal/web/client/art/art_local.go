@@ -5,9 +5,9 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"time"
-	artv1 "webook/webook/api/proto/gen/article/v1"
-	"webook/webook/article/domain"
-	"webook/webook/article/service"
+	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/service"
 )
 
 type ArticleServiceAdapter struct {

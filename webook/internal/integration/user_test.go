@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/TengFeiyang01/webook/webook/internal/integration/startup"
+	"github.com/TengFeiyang01/webook/webook/ioc"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
-	"webook/webook/internal/integration/startup"
-	"webook/webook/ioc"
-	"webook/webook/pkg/ginx"
 )
 
 func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {

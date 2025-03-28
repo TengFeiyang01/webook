@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 	"sync/atomic"
-	"webook/webook/internal/service/sms"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms"
 )
 
 type FailoverSMSService struct {

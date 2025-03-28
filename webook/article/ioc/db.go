@@ -7,9 +7,9 @@ import (
 	"gorm.io/gorm"
 	glogger "gorm.io/gorm/logger"
 	"gorm.io/plugin/prometheus"
-	"webook/webook/article/repository/dao"
-	gormx "webook/webook/pkg/gormx"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	gormx "github.com/TengFeiyang01/webook/webook/pkg/gormx"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 func InitDB(l logger.LoggerV1) *gorm.DB {

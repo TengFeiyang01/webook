@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/internal/integration/startup"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -14,9 +17,6 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-	"webook/webook/article/repository/dao"
-	"webook/webook/internal/integration/startup"
-	ijwt "webook/webook/internal/web/jwt"
 )
 
 type ArticleMongoDBHandlerSuite struct {

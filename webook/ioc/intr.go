@@ -5,9 +5,9 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/interactive/service"
-	"webook/webook/internal/web/client/intr"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/interactive/service"
+	"github.com/TengFeiyang01/webook/webook/internal/web/client/intr"
 )
 
 func InitIntrGRPCClient(svc service.InteractiveService) intrv1.InteractiveServiceClient {
