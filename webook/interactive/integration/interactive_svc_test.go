@@ -10,9 +10,9 @@ import (
 	"log"
 	"testing"
 	"time"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/interactive/integration/startup"
-	"webook/webook/interactive/repository/dao"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/interactive/integration/startup"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository/dao"
 )
 
 type InteractiveTestSuite struct {

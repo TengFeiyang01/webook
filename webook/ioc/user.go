@@ -4,11 +4,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
-	"webook/webook/internal/repository"
-	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/service"
-	"webook/webook/pkg/logger"
-	"webook/webook/pkg/redisx"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/pkg/redisx"
 )
 
 func InitUserHandler(repo repository.UserRepository) service.UserService {

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"webook/webook/internal/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
 )
 
 // CodeRepository Code相关的功能

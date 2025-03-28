@@ -2,14 +2,15 @@ package service
 
 import (
 	"errors"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	service2 "github.com/TengFeiyang01/webook/webook/article/service"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
 	"github.com/ecodeclub/ekit/queue"
 	"github.com/ecodeclub/ekit/slice"
 	"golang.org/x/net/context"
 	"math"
 	"time"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository"
 )
 
 //go:generate mockgen -source=./ranking.go -package=svcmocks -destination=./mocks/ranking.mock.go RankingService
@@ -18,7 +19,7 @@ type RankingService interface {
 }
 
 type BatchRankingService struct {
-	artSvc    ArticleService
+	artSvc    service2.ArticleService
 	interSvc  intrv1.InteractiveServiceClient
 	repo      repository.RankingRepository
 	batchSize int
@@ -27,13 +28,12 @@ type BatchRankingService struct {
 	scoreFunc func(t time.Time, likeCnt int64) float64
 }
 
-func NewBatchRankingService(artSvc ArticleService, interSvc intrv1.InteractiveServiceClient, repo repository.RankingRepository) RankingService {
+func NewBatchRankingService(artSvc service2.ArticleService, interSvc intrv1.InteractiveServiceClient) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		interSvc:  interSvc,
 		batchSize: 100,
 		n:         100,
-		repo:      repo,
 		scoreFunc: func(t time.Time, likeCnt int64) float64 {
 			sec := time.Since(t).Seconds()
 			return float64(likeCnt-1) / math.Pow(sec+2, 1.5)
@@ -79,7 +79,7 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 
 		// 要去找到对应的点赞数据
 		resp, err := svc.interSvc.GetByIds(ctx, &intrv1.GetByIdsRequest{
-			Biz:    "article",
+			Biz:    "art",
 			BizIds: ids,
 		})
 		if err != nil {

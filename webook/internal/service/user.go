@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 //go:generate mockgen -source=./user.go -package=svcmocks -destination=./mocks/user.mock.go UserService

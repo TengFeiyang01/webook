@@ -1,15 +1,15 @@
 package dao
 
 import (
+	"github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	dao2 "github.com/TengFeiyang01/webook/webook/interactive/repository/dao"
 	"gorm.io/gorm"
-	dao2 "webook/webook/interactive/repository/dao"
-	"webook/webook/internal/repository/dao/article"
 )
 
 func InitTables(db *gorm.DB) error {
 	return db.AutoMigrate(&User{},
-		&article.Article{},
-		&article.PublishedArticleV1{},
+		&dao.Article{},
+		&dao.PublishedArticleV1{},
 		&AsyncSms{},
 		&dao2.Interactive{},
 		&dao2.UserLikeBiz{},

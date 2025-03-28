@@ -9,16 +9,18 @@ package startup
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
-	article3 "webook/webook/internal/events/article"
-	"webook/webook/internal/repository"
-	article2 "webook/webook/internal/repository/article"
-	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/dao"
-	"webook/webook/internal/repository/dao/article"
-	"webook/webook/internal/service"
-	"webook/webook/internal/web"
-	"webook/webook/internal/web/jwt"
-	"webook/webook/ioc"
+	article3 "github.com/TengFeiyang01/webook/webook/article/events"
+	article2 "github.com/TengFeiyang01/webook/webook/article/repository"
+	cache2 "github.com/TengFeiyang01/webook/webook/article/repository/cache"
+	dao2 "github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	service2 "github.com/TengFeiyang01/webook/webook/article/service"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/internal/web"
+	"github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/ioc"
 )
 
 // Injectors from wire.go:
@@ -41,13 +43,13 @@ func InitWebServer() *gin.Engine {
 	wechatService := InitWechatService(loggerV1)
 	wechatHandlerConfig := InitWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, wechatHandlerConfig, handler)
-	articleDAO := article.NewGORMArticleDAO(gormDB)
-	articleCache := cache.NewArticleCache(cmdable)
+	articleDAO := dao2.NewGORMArticleDAO(gormDB)
+	articleCache := cache2.NewArticleCache(cmdable)
 	articleRepository := article2.NewCachedArticleRepository(articleDAO, loggerV1, userDAO, articleCache)
 	client := InitKafka()
 	syncProducer := ioc.NewSyncProducer(client)
 	producer := article3.NewKafkaProducer(syncProducer)
-	articleService := service.NewArticleService(articleRepository, producer, loggerV1)
+	articleService := service2.NewArticleService(articleRepository, producer, loggerV1)
 	articleHandler := web.NewArticleHandler(articleService, loggerV1)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
 	return engine
@@ -59,4 +61,4 @@ var thirdPartySet = wire.NewSet(ioc.InitRedis, InitDB, InitLogger, ioc.NewSyncPr
 
 var userSvcProvider = wire.NewSet(dao.NewUserDAO, cache.NewRedisUserCache, repository.NewUserRepository, service.NewUserService)
 
-var articlSvcProvider = wire.NewSet(article2.NewCachedArticleRepository, article.NewGORMArticleDAO, service.NewArticleService)
+var articlSvcProvider = wire.NewSet(article2.NewCachedArticleRepository, dao2.NewGORMArticleDAO, service2.NewArticleService)

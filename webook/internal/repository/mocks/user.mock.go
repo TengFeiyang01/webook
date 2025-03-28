@@ -11,8 +11,8 @@ package repomocks
 
 import (
 	context "context"
+	domain "github.com/TengFeiyang01/webook/webook/internal/domain"
 	reflect "reflect"
-	domain "webook/webook/internal/domain"
 
 	gomock "go.uber.org/mock/gomock"
 )

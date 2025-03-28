@@ -12,14 +12,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	service2 "webook/webook/interactive/service"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/service"
-	svcmocks "webook/webook/internal/service/mocks"
-	ijwt "webook/webook/internal/web/jwt"
-	"webook/webook/pkg/ginx"
-	"webook/webook/pkg/logger"
-	loggermocks "webook/webook/pkg/logger/mocks"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/article/service"
+	service2 "github.com/TengFeiyang01/webook/webook/interactive/service"
+	svcmocks "github.com/TengFeiyang01/webook/webook/internal/service/mocks"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
+	loggermocks "github.com/TengFeiyang01/webook/webook/pkg/logger/mocks"
 )
 
 func TestArticleHandler_Publish(t *testing.T) {

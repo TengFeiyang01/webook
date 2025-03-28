@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"strconv"
 	"time"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 type HandlerV1[T any] struct {

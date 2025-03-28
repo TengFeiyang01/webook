@@ -5,7 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"strconv"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 var l = logger.NewNopLogger()

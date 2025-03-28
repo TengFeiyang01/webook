@@ -1,6 +1,7 @@
 package job
 
 import (
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/robfig/cron/v3"
 	"go.opentelemetry.io/otel"
@@ -8,7 +9,6 @@ import (
 	"golang.org/x/net/context"
 	"strconv"
 	"time"
-	"webook/webook/pkg/logger"
 )
 
 type CronJobBuilder struct {

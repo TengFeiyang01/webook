@@ -2,7 +2,7 @@ package startup
 
 import (
 	"github.com/IBM/sarama"
-	"webook/webook/interactive/events"
+	"github.com/TengFeiyang01/webook/webook/interactive/events"
 )
 
 func InitKafka() sarama.Client {

@@ -2,10 +2,10 @@ package cache
 
 import (
 	"errors"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
 	"github.com/ecodeclub/ekit/syncx/atomicx"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/internal/domain"
 )
 
 type RankingLocalCache struct {

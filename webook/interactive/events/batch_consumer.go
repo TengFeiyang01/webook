@@ -4,9 +4,9 @@ import (
 	"github.com/IBM/sarama"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/interactive/repository"
-	"webook/webook/pkg/logger"
-	"webook/webook/pkg/saramax"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/pkg/saramax"
 )
 
 type InteractiveReadEventBatchConsumer struct {
@@ -41,7 +41,7 @@ func (r *InteractiveReadEventBatchConsumer) Consume(message []*sarama.ConsumerMe
 	bizs := make([]string, 0, len(ts))
 	for _, evt := range ts {
 		ids = append(ids, evt.Aid)
-		bizs = append(bizs, "article")
+		bizs = append(bizs, "art")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

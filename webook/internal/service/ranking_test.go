@@ -6,17 +6,18 @@ import (
 	"golang.org/x/net/context"
 	"testing"
 	"time"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
-	intrv1mocks "webook/webook/api/proto/gen/intr/v1/mocks"
-	"webook/webook/internal/domain"
-	svcmocks "webook/webook/internal/service/mocks"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	intrv1mocks "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1/mocks"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	service2 "github.com/TengFeiyang01/webook/webook/article/service"
+	svcmocks "github.com/TengFeiyang01/webook/webook/internal/service/mocks"
 )
 
 func TestRankingTopN(t *testing.T) {
 	now := time.Now()
 	testCases := []struct {
 		name string
-		mock func(ctrl *gomock.Controller) (ArticleService, intrv1.InteractiveServiceClient)
+		mock func(ctrl *gomock.Controller) (service2.ArticleService, intrv1.InteractiveServiceClient)
 
 		wantErr  error
 		wantArts []domain.Article
@@ -24,7 +25,7 @@ func TestRankingTopN(t *testing.T) {
 		{
 			name: "计算成功",
 			// 怎么模拟我的数据
-			mock: func(ctrl *gomock.Controller) (ArticleService, intrv1.InteractiveServiceClient) {
+			mock: func(ctrl *gomock.Controller) (service2.ArticleService, intrv1.InteractiveServiceClient) {
 				artSvc := svcmocks.NewMockArticleService(ctrl)
 				interSvc := intrv1mocks.NewMockInteractiveServiceClient(ctrl)
 				artSvc.EXPECT().ListPub(gomock.Any(), gomock.Any(), 0, 3).
@@ -37,7 +38,7 @@ func TestRankingTopN(t *testing.T) {
 					Return([]domain.Article{}, nil)
 
 				interSvc.EXPECT().GetByIds(gomock.Any(), &intrv1.GetByIdsRequest{
-					Biz:    "article",
+					Biz:    "art",
 					BizIds: []int64{1, 2, 3},
 				}).
 					Return(&intrv1.GetByIdsResponse{Intrs: map[int64]*intrv1.Interactive{
@@ -46,7 +47,7 @@ func TestRankingTopN(t *testing.T) {
 						3: {BizId: 3, LikeCnt: 3},
 					}}, nil)
 				interSvc.EXPECT().GetByIds(gomock.Any(), &intrv1.GetByIdsRequest{
-					Biz:    "article",
+					Biz:    "art",
 					BizIds: []int64{},
 				}).
 					Return(&intrv1.GetByIdsResponse{Intrs: map[int64]*intrv1.Interactive{}}, nil)

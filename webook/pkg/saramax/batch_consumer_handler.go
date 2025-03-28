@@ -5,7 +5,7 @@ import (
 	"github.com/IBM/sarama"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 type BatchHandler[T any] struct {

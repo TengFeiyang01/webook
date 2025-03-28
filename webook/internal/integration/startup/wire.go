@@ -5,16 +5,18 @@ package startup
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
-	article2 "webook/webook/internal/events/article"
-	"webook/webook/internal/repository"
-	"webook/webook/internal/repository/article"
-	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/dao"
-	artdao "webook/webook/internal/repository/dao/article"
-	"webook/webook/internal/service"
-	"webook/webook/internal/web"
-	ijwt "webook/webook/internal/web/jwt"
-	"webook/webook/ioc"
+	article2 "github.com/TengFeiyang01/webook/webook/article/events"
+	repository2 "github.com/TengFeiyang01/webook/webook/article/repository"
+	cache2 "github.com/TengFeiyang01/webook/webook/article/repository/cache"
+	artdao "github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	service2 "github.com/TengFeiyang01/webook/webook/article/service"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/internal/web"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/ioc"
 )
 
 var thirdPartySet = wire.NewSet( // 第三方依赖
@@ -30,9 +32,9 @@ var userSvcProvider = wire.NewSet(
 	service.NewUserService)
 
 var articlSvcProvider = wire.NewSet(
-	article.NewCachedArticleRepository,
+	repository2.NewCachedArticleRepository,
 	artdao.NewGORMArticleDAO,
-	service.NewArticleService)
+	service2.NewArticleService)
 
 func InitWebServer() *gin.Engine {
 	wire.Build(
@@ -41,7 +43,7 @@ func InitWebServer() *gin.Engine {
 		articlSvcProvider,
 
 		cache.NewRedisCodeCache,
-		cache.NewArticleCache,
+		cache2.NewArticleCache,
 
 		article2.NewKafkaProducer,
 

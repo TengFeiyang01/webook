@@ -11,8 +11,8 @@ package intrv1mocks
 
 import (
 	context "context"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
 	reflect "reflect"
-	intrv1 "webook/webook/api/proto/gen/intr/v1"
 
 	gomock "go.uber.org/mock/gomock"
 	grpc "google.golang.org/grpc"

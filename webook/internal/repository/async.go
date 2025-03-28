@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"github.com/ecodeclub/ekit/sqlx"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
 )
 
 var ErrWaitingSMSNotFound = dao.ErrWaitingSMSNotFound

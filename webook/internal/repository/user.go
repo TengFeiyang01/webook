@@ -6,9 +6,9 @@ import (
 	"errors"
 	"github.com/redis/go-redis/v9"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
 )
 
 // UserRepository 所有的 User 相关的功能

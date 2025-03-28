@@ -8,12 +8,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"testing"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository/cache"
-	cachemocks "webook/webook/internal/repository/cache/mocks"
-	"webook/webook/internal/repository/cache/user"
-	"webook/webook/internal/repository/dao"
-	daomocks "webook/webook/internal/repository/dao/mocks"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	cachemocks "github.com/TengFeiyang01/webook/webook/internal/repository/cache/mocks"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache/user"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	daomocks "github.com/TengFeiyang01/webook/webook/internal/repository/dao/mocks"
 )
 
 func TestCachedUserRepository_FindById(t *testing.T) {

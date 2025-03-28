@@ -8,11 +8,11 @@ package startup
 
 import (
 	"github.com/google/wire"
-	"webook/webook/interactive/grpc"
-	"webook/webook/interactive/repository"
-	"webook/webook/interactive/repository/cache"
-	"webook/webook/interactive/repository/dao"
-	"webook/webook/interactive/service"
+	"github.com/TengFeiyang01/webook/webook/interactive/grpc"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/interactive/service"
 )
 
 // Injectors from wire.go:

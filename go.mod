@@ -1,4 +1,4 @@
-module webook
+module github.com/TengFeiyang01/webook
 
 go 1.22.7
 

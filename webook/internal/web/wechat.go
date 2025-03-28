@@ -8,10 +8,10 @@ import (
 	uuid "github.com/lithammer/shortuuid/v4"
 	"net/http"
 	"time"
-	"webook/webook/internal/service"
-	"webook/webook/internal/service/oauth2/wechat"
-	ijwt "webook/webook/internal/web/jwt"
-	"webook/webook/pkg/ginx"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/internal/service/oauth2/wechat"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
 )
 
 type OAuth2WechatHandler struct {

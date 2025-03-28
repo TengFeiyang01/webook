@@ -8,8 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"webook/webook/internal/domain"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 var redirectURI = url.PathEscape("https://wxwbaby.cn/oauth2/wechat/callback")

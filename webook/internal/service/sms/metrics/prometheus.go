@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/prometheus/client_golang/prometheus"
 	"time"
-	"webook/webook/internal/service/sms"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms"
 )
 
 type PrometheusDecorator struct {

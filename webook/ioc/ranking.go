@@ -4,9 +4,9 @@ import (
 	rlock "github.com/gotomicro/redis-lock"
 	"github.com/robfig/cron/v3"
 	"time"
-	"webook/webook/internal/job"
-	"webook/webook/internal/service"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/job"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 func InitRankingJob(svc service.RankingService, l logger.LoggerV1, rlockClient *rlock.Client) *job.RankingJob {

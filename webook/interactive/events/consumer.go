@@ -4,9 +4,9 @@ import (
 	"github.com/IBM/sarama"
 	"golang.org/x/net/context"
 	"time"
-	"webook/webook/interactive/repository"
-	"webook/webook/pkg/logger"
-	"webook/webook/pkg/saramax"
+	"github.com/TengFeiyang01/webook/webook/interactive/repository"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/pkg/saramax"
 )
 
 type Consumer interface {
@@ -44,5 +44,5 @@ func (r *InteractiveEventConsumer) Start() error {
 func (r *InteractiveEventConsumer) Consume(message *sarama.ConsumerMessage, t ReadEvent) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	return r.repo.IncrReadCnt(ctx, "article", t.Aid)
+	return r.repo.IncrReadCnt(ctx, "art", t.Aid)
 }

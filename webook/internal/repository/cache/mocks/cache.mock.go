@@ -12,7 +12,7 @@ package cachemocks
 import (
 	context "context"
 	reflect "reflect"
-	domain "webook/webook/internal/domain"
+	domain "github.com/TengFeiyang01/webook/webook/internal/domain"
 
 	gomock "go.uber.org/mock/gomock"
 )

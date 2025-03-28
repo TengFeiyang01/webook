@@ -3,8 +3,8 @@ package ioc
 import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	grpc2 "webook/webook/interactive/grpc"
-	"webook/webook/pkg/grpcx"
+	grpc2 "github.com/TengFeiyang01/webook/webook/interactive/grpc"
+	"github.com/TengFeiyang01/webook/webook/pkg/grpcx"
 )
 
 func NewGRPCxServer(intrServer *grpc2.InteractiveServiceServer) *grpcx.Server {

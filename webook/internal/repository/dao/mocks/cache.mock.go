@@ -12,7 +12,7 @@ package daomocks
 import (
 	context "context"
 	reflect "reflect"
-	dao "webook/webook/internal/repository/dao"
+	dao "github.com/TengFeiyang01/webook/webook/internal/repository/dao"
 
 	gomock "go.uber.org/mock/gomock"
 )

@@ -2,8 +2,8 @@ package repository
 
 import (
 	"golang.org/x/net/context"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
 )
 
 type RankingRepository interface {

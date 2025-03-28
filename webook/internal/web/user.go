@@ -11,12 +11,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"net/http"
 	"time"
-	"webook/webook/internal/domain"
-	"webook/webook/internal/errs"
-	"webook/webook/internal/service"
-	ijwt "webook/webook/internal/web/jwt"
-	"webook/webook/pkg/ginx"
-	"webook/webook/pkg/logger"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/errs"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 const biz = "login"

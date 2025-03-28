@@ -3,22 +3,24 @@
 package main
 
 import (
+	artevents "github.com/TengFeiyang01/webook/webook/article/events"
+	artrepo "github.com/TengFeiyang01/webook/webook/article/repository"
+	artcache "github.com/TengFeiyang01/webook/webook/article/repository/cache"
+	artdao "github.com/TengFeiyang01/webook/webook/article/repository/dao"
+	artsvc "github.com/TengFeiyang01/webook/webook/article/service"
+	events2 "github.com/TengFeiyang01/webook/webook/interactive/events"
+	repository2 "github.com/TengFeiyang01/webook/webook/interactive/repository"
+	cache2 "github.com/TengFeiyang01/webook/webook/interactive/repository/cache"
+	dao2 "github.com/TengFeiyang01/webook/webook/interactive/repository/dao"
+	service2 "github.com/TengFeiyang01/webook/webook/interactive/service"
+	"github.com/TengFeiyang01/webook/webook/internal/repository"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	"github.com/TengFeiyang01/webook/webook/internal/web"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/ioc"
 	"github.com/google/wire"
-	events2 "webook/webook/interactive/events"
-	repository2 "webook/webook/interactive/repository"
-	cache2 "webook/webook/interactive/repository/cache"
-	dao2 "webook/webook/interactive/repository/dao"
-	service2 "webook/webook/interactive/service"
-	events "webook/webook/internal/events/article"
-	"webook/webook/internal/repository"
-	artrepo "webook/webook/internal/repository/article"
-	"webook/webook/internal/repository/cache"
-	"webook/webook/internal/repository/dao"
-	"webook/webook/internal/repository/dao/article"
-	"webook/webook/internal/service"
-	"webook/webook/internal/web"
-	ijwt "webook/webook/internal/web/jwt"
-	"webook/webook/ioc"
 )
 
 var interactiveSvcSet = wire.NewSet(
@@ -26,6 +28,13 @@ var interactiveSvcSet = wire.NewSet(
 	cache2.NewInteractiveRedisCache,
 	repository2.NewCachedInteractiveRepository,
 	service2.NewInteractiveService,
+)
+
+var articleSvcSet = wire.NewSet(
+	artcache.NewArticleCache,
+	artrepo.NewCachedArticleRepository,
+	artsvc.NewArticleService,
+	artdao.NewGORMArticleDAO,
 )
 
 var rankingServiceSet = wire.NewSet(
@@ -50,6 +59,9 @@ func InitApp() *App {
 		ioc.InitIntrGRPCClient,
 		interactiveSvcSet,
 
+		articleSvcSet,
+		ioc.InitArtGRPCClient,
+
 		// 初始化 DAO
 		dao.NewUserDAO,
 
@@ -57,22 +69,18 @@ func InitApp() *App {
 		cache.NewRedisUserCache,
 		//cache.NewLocalCodeCache,
 		cache.NewRedisCodeCache,
-		cache.NewArticleCache,
-		cache.NewRankingLocalCache,
 
 		// 初始化 repository
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
-		artrepo.NewCachedArticleRepository,
 
 		// consumer
 		events2.NewInteractiveReadEventBatchConsumer,
-		events.NewKafkaProducer,
+		artevents.NewKafkaProducer,
 
 		// 初始化 service
 		service.NewUserService,
 		service.NewCodeService,
-		service.NewArticleService,
 
 		ioc.InitSMSService,
 		ioc.InitOAuth2WechatService,
@@ -81,7 +89,6 @@ func InitApp() *App {
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
 		web.NewArticleHandler,
-		article.NewGORMArticleDAO,
 		ijwt.NewRedisJWT,
 
 		ioc.InitGinMiddlewares,

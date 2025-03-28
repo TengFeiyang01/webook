@@ -2,9 +2,9 @@ package opentelemetry
 
 import (
 	"context"
+	"github.com/TengFeiyang01/webook/webook/internal/service/sms"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
-	"webook/webook/internal/service/sms"
 )
 
 type Service struct {
@@ -14,7 +14,7 @@ type Service struct {
 
 func NewService(svc sms.Service) *Service {
 	tp := otel.GetTracerProvider()
-	tracer := tp.Tracer("webook/webook/internal/service/sms/opentelemetry")
+	tracer := tp.Tracer("github.com/TengFeiyang01/webook/webook/internal/service/sms/opentelemetry")
 	return &Service{
 		svc:    svc,
 		tracer: tracer,
