@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"errors"
-	"golang.org/x/crypto/bcrypt"
 	"github.com/TengFeiyang01/webook/webook/internal/domain"
 	"github.com/TengFeiyang01/webook/webook/internal/repository"
 	"github.com/TengFeiyang01/webook/webook/pkg/logger"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //go:generate mockgen -source=./user.go -package=svcmocks -destination=./mocks/user.mock.go UserService

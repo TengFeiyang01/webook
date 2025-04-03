@@ -1,19 +1,18 @@
-package repository
+﻿package repository
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
+	cachemocks "github.com/TengFeiyang01/webook/webook/internal/repository/cache/mocks"
+	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	daomocks "github.com/TengFeiyang01/webook/webook/internal/repository/dao/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"testing"
 	"time"
-	"github.com/TengFeiyang01/webook/webook/internal/domain"
-	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
-	cachemocks "github.com/TengFeiyang01/webook/webook/internal/repository/cache/mocks"
-	"github.com/TengFeiyang01/webook/webook/internal/repository/cache/user"
-	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
-	daomocks "github.com/TengFeiyang01/webook/webook/internal/repository/dao/mocks"
 )
 
 func TestCachedUserRepository_FindById(t *testing.T) {
@@ -35,7 +34,7 @@ func TestCachedUserRepository_FindById(t *testing.T) {
 			mock: func(ctrl *gomock.Controller) (dao.UserDAO, cache.UserCache) {
 				// 缓存未命中，查了缓存，但是没结果
 				c := cachemocks.NewMockUserCache(ctrl)
-				c.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{}, user.ErrKeyNotExist)
+				c.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{}, cache.ErrKeyNotExist)
 				d := daomocks.NewMockUserDAO(ctrl)
 				d.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.User{
 					ID: 123,
@@ -104,7 +103,7 @@ func TestCachedUserRepository_FindById(t *testing.T) {
 			mock: func(ctrl *gomock.Controller) (dao.UserDAO, cache.UserCache) {
 				// 缓存未命中，查了缓存，但是没结果
 				c := cachemocks.NewMockUserCache(ctrl)
-				c.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{}, user.ErrKeyNotExist)
+				c.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{}, cache.ErrKeyNotExist)
 				d := daomocks.NewMockUserDAO(ctrl)
 				d.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.User{}, errors.New("mock error"))
 				return d, c
