@@ -2,11 +2,11 @@ package events
 
 import (
 	"github.com/IBM/sarama"
-	"golang.org/x/net/context"
-	"time"
 	"github.com/TengFeiyang01/webook/webook/interactive/repository"
 	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"github.com/TengFeiyang01/webook/webook/pkg/saramax"
+	"golang.org/x/net/context"
+	"time"
 )
 
 type Consumer interface {
