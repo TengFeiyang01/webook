@@ -1,10 +1,10 @@
 package middleware
 
 import (
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
-	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
 )
 
 // LoginJWTMiddlewareBuilder JWT 登录校验

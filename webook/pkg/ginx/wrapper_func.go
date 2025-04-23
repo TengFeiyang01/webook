@@ -1,11 +1,12 @@
 package ginx
 
 import (
+	"fmt"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"strconv"
-	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 var l = logger.NewNopLogger()
@@ -14,6 +15,20 @@ var vector *prometheus.CounterVec
 func InitCounter(opt prometheus.CounterOpts) {
 	vector = prometheus.NewCounterVec(opt, []string{"code"})
 	prometheus.MustRegister(vector)
+}
+
+func Wrap(bizFn func(ctx *gin.Context) (Result, error)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		res, err := bizFn(c)
+		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
+		if err != nil {
+			l.Error("执行业务逻辑失败",
+				logger.String("path", c.Request.URL.Path),
+				logger.String("route", c.FullPath()),
+				logger.Error(err))
+		}
+		c.JSON(http.StatusOK, res)
+	}
 }
 
 // WrapBodyAndToken bizFn 就是你的业务逻辑
@@ -112,6 +127,7 @@ func WrapBody[Req any](l logger.LoggerV1, bizFn func(ctx *gin.Context, req Req) 
 		l.Debug("输入参数", logger.Field{Key: "req", Value: req})
 
 		res, err := bizFn(ctx, req)
+		l.Debug(res.Msg, logger.Field{Key: "res", Value: res})
 		vector.WithLabelValues(strconv.Itoa(res.Code)).Inc()
 		if err != nil {
 			l.Error("执行业务逻辑失败",
@@ -145,6 +161,7 @@ func WrapToken[C any](bizFn func(ctx *gin.Context, uc C) (Result, error)) gin.Ha
 				logger.Error(err))
 			return
 		}
+		fmt.Println(res)
 		ctx.JSON(http.StatusOK, res)
 	}
 }

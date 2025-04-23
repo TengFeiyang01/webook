@@ -27,12 +27,18 @@ instance.interceptors.response.use(function (resp) {
     }
     return resp
 }, (err) => {
-    console.log(err)
-    if (err.response.status == 401) {
-        window.location.href="/users/login"
+    console.log(err); // 查看完整的错误对象
+    if (err.response) {
+        console.log(err.response); // 查看响应对象
+        if (err.response.status === 401) {
+            window.location.href = "/users/login";
+        }
+    } else {
+        console.error("Error without response:", err);
+        // 处理没有响应的错误，例如网络错误
     }
-    return err
-})
+    return Promise.reject(err);
+});
 
 // 在这里让每一个请求都加上 authorization 的头部
 instance.interceptors.request.use((req) => {

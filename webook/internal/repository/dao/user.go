@@ -95,8 +95,8 @@ type User struct {
 	// 但是不能有多个 ""
 	Phone    sql.NullString `gorm:"unique"`
 	NickName string         `gorm:"type=varchar(128)"`
-	BirthDay time.Time      `gorm:"default:null"`
-	AboutMe  string         `gorm:"type=varchar(4096)"`
+	BirthDay int64
+	AboutMe  string `gorm:"type=varchar(4096)"`
 
 	// 微信的字段
 	WechatUnionID sql.NullString

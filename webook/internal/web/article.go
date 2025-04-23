@@ -3,6 +3,12 @@ package web
 import (
 	"errors"
 	"fmt"
+	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
+	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
+	"github.com/TengFeiyang01/webook/webook/article/domain"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
@@ -10,12 +16,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
-	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
-	"github.com/TengFeiyang01/webook/webook/article/domain"
-	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
-	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
-	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 var _ handler = (*ArticleHandler)(nil)
@@ -37,9 +37,9 @@ func NewArticleHandler(svc artv1.ArticleServiceClient, l logger.LoggerV1, intrSv
 }
 func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 	g := server.Group("/articles")
-	g.POST("/edit", h.Edit)
+	g.POST("/edit", ginx.WrapBodyAndToken[ArticleReq, ijwt.UserClaims](h.Edit))
 	g.POST("/withdraw", h.WithDraw)
-	g.POST("/publish", h.Publish)
+	g.POST("/publish", ginx.WrapBodyAndToken[ArticleReq, ijwt.UserClaims](h.Publish))
 	// 创作者的查询接口
 	// 这个是获取数据的接口，理论上来说（遵循 RESTful 规范），应该是 GET 方法
 	g.POST("/list", ginx.WrapBodyAndToken[ListReq, ijwt.UserClaims](h.List))
@@ -134,95 +134,53 @@ func (h *ArticleHandler) WithDraw(ctx *gin.Context) {
 	})
 }
 
-func (h *ArticleHandler) Edit(ctx *gin.Context) {
-
-	var req ArticleReq
-	if err := ctx.Bind(&req); err != nil {
-		return
-	}
-	// 检测输入、跳过这一步
-	// 调用 svc 的代码
-	c := ctx.MustGet("user")
-	claims, ok := c.(ijwt.UserClaims)
-	if !ok {
-		//ctx.AbortWithStatus(http.StatusUnauthorized)
-		ctx.JSON(http.StatusOK, ginx.Result{
-			Code: 5,
-			Msg:  "系统错误",
-		})
-		h.l.Error("failed to find user's session message")
-		return
-	}
+func (h *ArticleHandler) Edit(ctx *gin.Context, req ArticleReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	resp, err := h.svc.Save(ctx, &artv1.SaveRequest{
 		Art: &artv1.Article{
 			Id:      req.Id,
 			Title:   req.Title,
 			Content: req.Content,
 			Author: &artv1.Author{
-				Id: claims.Uid,
+				Id: uc.Uid,
 			},
 		},
 	})
 	if err != nil {
-		ctx.JSON(http.StatusOK, ginx.Result{
-			Code: 5,
-			Msg:  "系统错误",
-		})
 		h.l.Info("保存帖子失败", logger.Error(err))
-		return
+		return ginx.Result{Code: 5}, nil
 	}
-	ctx.JSON(http.StatusOK, ginx.Result{
-		Msg:  "OK",
-		Data: resp.GetId(),
-	})
+	return ginx.Result{Code: http.StatusOK, Data: resp.GetId()}, nil
 }
 
-func (h *ArticleHandler) Publish(ctx *gin.Context) {
-	var req ArticleReq
-	if err := ctx.Bind(&req); err != nil {
-		return
-	}
-	c := ctx.MustGet("user")
-	claims, ok := c.(ijwt.UserClaims)
-	if !ok {
-		//ctx.AbortWithStatus(http.StatusUnauthorized)
-		ctx.JSON(http.StatusOK, ginx.Result{
-			Code: 5,
-			Msg:  "系统错误",
-		})
-		h.l.Error("failed to find user's session message")
-		return
-	}
+func (h *ArticleHandler) Publish(ctx *gin.Context, req ArticleReq, uc ijwt.UserClaims) (ginx.Result, error) {
 	resp, err := h.svc.Publish(ctx, &artv1.PublishRequest{
 		Art: &artv1.Article{
 			Id:      req.Id,
 			Title:   req.Title,
 			Content: req.Content,
 			Author: &artv1.Author{
-				Id: claims.Uid,
+				Id: uc.Uid,
 			},
 		},
 	})
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		ctx.JSON(http.StatusOK, ginx.Result{
+		h.l.Error("failed to publish art, used not found")
+		return ginx.Result{
 			Code: http.StatusUnauthorized,
 			Msg:  "找不到用户",
-		})
-		h.l.Error("failed to publish art, used not found")
-		return
+		}, err
 	}
 	if err != nil {
-		ctx.JSON(http.StatusOK, ginx.Result{
+		h.l.Info("发布帖子失败", logger.Error(err))
+		return ginx.Result{
 			Code: 5,
 			Msg:  "系统错误",
-		})
-		h.l.Info("发布帖子失败", logger.Error(err))
-		return
+		}, err
 	}
-	ctx.JSON(http.StatusOK, ginx.Result{
+	return ginx.Result{
 		Msg:  "OK",
 		Data: resp.GetId(),
-	})
+	}, nil
 }
 
 func (h *ArticleHandler) Abstract(content string) string {
@@ -312,6 +270,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 
 	var art domain.Article
 	var eg errgroup.Group
+
 	// 读文章本体
 	eg.Go(func() error {
 		resp, err := h.svc.GetPubById(ctx, &artv1.GetPubByIdRequest{Id: id, Uid: usr.Uid})
@@ -319,14 +278,18 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 			Id:      resp.Art.Id,
 			Title:   resp.Art.Title,
 			Content: resp.Art.Content,
-			Status:  domain.ArticleStatus(resp.Art.Status),
-			Ctime:   time.UnixMilli(resp.Art.Ctime),
-			Utime:   time.UnixMilli(resp.Art.Utime),
+			Author: domain.Author{
+				Id:   resp.Art.Author.Id,
+				Name: resp.Art.Author.Name,
+			},
+			Status: domain.ArticleStatus(resp.Art.Status),
+			Ctime:  time.UnixMilli(resp.Art.Ctime),
+			Utime:  time.UnixMilli(resp.Art.Utime),
 		}
 		return err
 	})
-	if err := eg.Wait(); err != nil {
-		h.l.Error("failed to get published art", logger.Error(err))
+	if err1 := eg.Wait(); err1 != nil {
+		h.l.Error("failed to get published art", logger.Error(err1))
 		return ginx.Result{
 			Code: http.StatusInternalServerError,
 			Msg:  "system error",
@@ -352,6 +315,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.
 		})
 		return err
 	})
+
 	if err := eg.Wait(); err != nil {
 		h.l.Error("failed to get interactive art", logger.Error(err))
 		return ginx.Result{

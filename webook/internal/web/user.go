@@ -3,6 +3,12 @@ package web
 import (
 	"errors"
 	"fmt"
+	"github.com/TengFeiyang01/webook/webook/internal/domain"
+	"github.com/TengFeiyang01/webook/webook/internal/errs"
+	"github.com/TengFeiyang01/webook/webook/internal/service"
+	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
+	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
+	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -11,12 +17,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"net/http"
 	"time"
-	"github.com/TengFeiyang01/webook/webook/internal/domain"
-	"github.com/TengFeiyang01/webook/webook/internal/errs"
-	"github.com/TengFeiyang01/webook/webook/internal/service"
-	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
-	"github.com/TengFeiyang01/webook/webook/pkg/ginx"
-	"github.com/TengFeiyang01/webook/webook/pkg/logger"
 )
 
 const biz = "login"

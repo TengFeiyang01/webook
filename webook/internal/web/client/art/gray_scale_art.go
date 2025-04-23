@@ -2,10 +2,10 @@ package art
 
 import (
 	"context"
+	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
 	"github.com/ecodeclub/ekit/syncx/atomicx"
 	"google.golang.org/grpc"
 	"math/rand"
-	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
 )
 
 type GrayScaleArticleServiceClient struct {
@@ -55,6 +55,5 @@ func (g *GrayScaleArticleServiceClient) GetById(ctx context.Context, in *artv1.G
 }
 
 func (g *GrayScaleArticleServiceClient) GetPubById(ctx context.Context, in *artv1.GetPubByIdRequest, opts ...grpc.CallOption) (*artv1.GetPubByIdResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	return g.client().GetPubById(ctx, in)
 }

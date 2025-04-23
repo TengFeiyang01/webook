@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/redis/go-redis/v9"
-	"time"
 	"github.com/TengFeiyang01/webook/webook/internal/domain"
 	"github.com/TengFeiyang01/webook/webook/internal/repository/cache"
 	"github.com/TengFeiyang01/webook/webook/internal/repository/dao"
+	"github.com/redis/go-redis/v9"
+	"time"
 )
 
 // UserRepository 所有的 User 相关的功能
@@ -162,7 +162,7 @@ func (r *CachedUserRepository) toEntity(u domain.User) dao.User {
 			Valid:  u.WechatInfo.UnionID != "",
 		},
 		NickName: u.NickName,
-		BirthDay: u.BirthDay,
+		BirthDay: u.BirthDay.UnixMilli(),
 		AboutMe:  u.AboutMe,
 		Ctime:    u.Ctime.UnixMilli(),
 	}
@@ -175,7 +175,7 @@ func (r *CachedUserRepository) toDomain(u dao.User) domain.User {
 		Password: u.Password,
 		Phone:    u.Phone.String,
 		NickName: u.NickName,
-		BirthDay: u.BirthDay,
+		BirthDay: time.UnixMilli(u.BirthDay),
 		WechatInfo: domain.WechatInfo{
 			OpenID:  u.WechatOpenID.String,
 			UnionID: u.WechatUnionID.String,

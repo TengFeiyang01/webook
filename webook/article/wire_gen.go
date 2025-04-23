@@ -33,7 +33,7 @@ func InitAPP() *App {
 	producer := events.NewKafkaProducer(syncProducer)
 	articleService := service.NewArticleService(articleRepository, producer, loggerV1)
 	articleServiceServer := grpc.NewArticleServiceServer(articleService)
-	server := ioc.NewGRPCxServer(articleServiceServer)
+	server := ioc.NewGRPCxServer(loggerV1, articleServiceServer)
 	app := &App{
 		server: server,
 	}

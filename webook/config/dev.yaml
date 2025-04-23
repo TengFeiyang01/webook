@@ -5,13 +5,27 @@ redis:
 kafka:
   addrs:
     - "localhost:9094"
+
+etcd:
+  endpoints:
+    - "localhost:12379"
+
 grpc:
   client:
     intr:
-      addr: "localhost:8090"
+      name: "interactive"
       secure: false
-      threshold: 100
     art:
-      addr: "localhost:8091"
+      name: "article"
       secure: false
-      threshold: 100
+
+#grpc:
+#  client:
+#    intr:
+#      addr: "localhost:8090"
+#      secure: false
+#      threshold: 100
+#    art:
+#      addr: "localhost:8091"
+#      secure: false
+#      threshold: 100

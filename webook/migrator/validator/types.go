@@ -24,6 +24,11 @@ type Validator[T migrator.Entity] struct {
 	batchSize int
 
 	highLoad *atomicx.Value[bool]
+
+	utime int64
+	// <=0 说明 直接退出校验循环
+	// >0 真的是 sleep
+	sleepInterval time.Duration
 }
 
 func NewValidator[T migrator.Entity](base *gorm.DB, target *gorm.DB, l logger.LoggerV1, direction string, p events.Producer) *Validator[T] {
@@ -40,12 +45,10 @@ func NewValidator[T migrator.Entity](base *gorm.DB, target *gorm.DB, l logger.Lo
 func (v *Validator[T]) Validate(ctx context.Context) error {
 	var eg errgroup.Group
 	eg.Go(func() error {
-		v.validateBaseToTarget(ctx)
-		return nil
+		return v.validateBaseToTarget(ctx)
 	})
 	eg.Go(func() error {
-		v.validateTargetToBase(ctx)
-		return nil
+		return v.validateTargetToBase(ctx)
 	})
 	return eg.Wait()
 }
@@ -53,21 +56,25 @@ func (v *Validator[T]) Validate(ctx context.Context) error {
 // Validate 调用者可以通过 ctx 来控制校验程序退出
 // 全量校验，是不是一条条对比
 // 从数据库里面一条条查询
-func (v *Validator[T]) validateBaseToTarget(ctx context.Context) {
-	offset := -1
+func (v *Validator[T]) validateBaseToTarget(ctx context.Context) error {
+	offset := 0
 	for {
 		if v.highLoad.Load() {
 			// 挂起
 		}
-		offset++
 		dbctx, cancel := context.WithTimeout(ctx, time.Second)
 		var src T
-		err := v.base.WithContext(dbctx).Offset(offset).Order("id").First(&src).Error
+		err := v.base.WithContext(dbctx).
+			Where("utime > ?", v.utime).
+			Offset(offset).
+			Order("utime").First(&src).Error
 		cancel()
 		switch {
 		case errors.Is(err, nil):
 			var dst T
-			err1 := v.target.WithContext(ctx).Where("id = ?", src.ID()).First(&dst).Error
+			err1 := v.target.WithContext(ctx).
+				Where("id = ?", src.ID()).
+				First(&dst).Error
 			// 此时怎么办
 			switch {
 			case errors.Is(err1, nil):
@@ -86,38 +93,55 @@ func (v *Validator[T]) validateBaseToTarget(ctx context.Context) {
 				// 要不要汇报数据不一致
 				// 1. 大概率一致，记录日志
 				v.l.Error("查询 target 数据失败", logger.Error(err1))
-				continue
 				// 2. 出于保险起见，我应该报数据不一致，我去修一下。
 			}
 		case errors.Is(err, gorm.ErrRecordNotFound):
 			// 比完了，没数据了，全量校验结束
-			return
+			// 同时支持全量校验和增量校验，这里就不能直接返回了
+			// 你要考虑，有些情况下，用户希望退出，有些情况下，用户希望继续
+			// 当用户希望继续的时候，你要 sleep 一下，然后继续
+			if v.sleepInterval <= 0 {
+				return nil
+			}
+			time.Sleep(v.sleepInterval)
+			continue
 		default:
 			v.l.Error("校验数据，查询 base 出错", logger.Error(err))
 			// offset 位置
-			continue
 		}
+		offset++
 	}
 }
 
-func (v *Validator[T]) validateTargetToBase(ctx context.Context) {
+func (v *Validator[T]) validateTargetToBase(ctx context.Context) error {
 	// 先找 target，再找 base
-	offset := -v.batchSize
+	offset := 0
 	for {
 		dbCtx, cancel := context.WithTimeout(ctx, time.Second)
-		offset += v.batchSize
+
 		var dstTs []T
 		err := v.target.WithContext(dbCtx).
-			Offset(offset).
-			Order("id").Find(&dstTs).Error
+			Where("utime >?", v.utime).
+			Offset(offset).Limit(v.batchSize).
+			Order("utime").Find(&dstTs).Error
 		if len(dstTs) == 0 {
-			return
+			if v.sleepInterval <= 0 {
+				return nil
+			}
+			time.Sleep(v.sleepInterval)
+			continue
 		}
 		cancel()
 		switch {
+		// 正常来说，返回结果是多个的情况下，不会进来这个分支
+		// gorm 在 Find 的时候，不会返回 gorm.ErrRecordNotFound
 		case errors.Is(err, gorm.ErrRecordNotFound):
 			// 没数据了，直接返回
-			return
+			if v.sleepInterval <= 0 {
+				return nil
+			}
+			time.Sleep(v.sleepInterval)
+			continue
 		case errors.Is(err, nil):
 			ids := slice.Map(dstTs, func(idx int, src T) int64 {
 				return src.ID()
@@ -136,13 +160,19 @@ func (v *Validator[T]) validateTargetToBase(ctx context.Context) {
 				v.notifyBaseMissing(ctx, diff)
 
 			default:
-				// 记录日志
-				continue
 			}
+		default:
+			// 记录日志
+			v.l.Error("校验数据，查询 target 出错", logger.Error(err))
 		}
+		offset += len(dstTs)
 		if len(dstTs) < v.batchSize {
 			// 没数据了
-			return
+			if v.sleepInterval <= 0 {
+				return nil
+			}
+			time.Sleep(v.sleepInterval)
+			continue
 		}
 	}
 }

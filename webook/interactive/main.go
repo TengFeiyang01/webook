@@ -34,6 +34,7 @@ func main() {
 			panic(err)
 		}
 	}
+	log.Println("开始启动服务")
 	err := app.server.Serve()
 	log.Println(err)
 }

@@ -21,7 +21,8 @@ function Page(){
     const params = useSearchParams()
     // const router = useRouter()
     // const artID = router.query.id
-    const artID = params?.get('id') || '1'
+    const artID = params?.get('id')!
+    debugger
     useEffect(() => {
         setLoading(true)
         axios.get('/articles/pub/'+artID)

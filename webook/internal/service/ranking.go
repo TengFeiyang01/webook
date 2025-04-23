@@ -2,9 +2,9 @@ package service
 
 import (
 	"errors"
+	artv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/article/v1"
 	intrv1 "github.com/TengFeiyang01/webook/webook/api/proto/gen/intr/v1"
 	"github.com/TengFeiyang01/webook/webook/article/domain"
-	service2 "github.com/TengFeiyang01/webook/webook/article/service"
 	"github.com/TengFeiyang01/webook/webook/internal/repository"
 	"github.com/ecodeclub/ekit/queue"
 	"github.com/ecodeclub/ekit/slice"
@@ -19,7 +19,7 @@ type RankingService interface {
 }
 
 type BatchRankingService struct {
-	artSvc    service2.ArticleService
+	artSvc    artv1.ArticleServiceClient
 	interSvc  intrv1.InteractiveServiceClient
 	repo      repository.RankingRepository
 	batchSize int
@@ -28,7 +28,7 @@ type BatchRankingService struct {
 	scoreFunc func(t time.Time, likeCnt int64) float64
 }
 
-func NewBatchRankingService(artSvc service2.ArticleService, interSvc intrv1.InteractiveServiceClient) RankingService {
+func NewBatchRankingService(artSvc artv1.ArticleServiceClient, interSvc intrv1.InteractiveServiceClient) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		interSvc:  interSvc,
@@ -55,7 +55,7 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 	now := time.Now()
 	ddl := now.Add(-time.Hour * 24 * 7)
 	type Score struct {
-		art   domain.Article
+		art   *artv1.Article
 		score float64
 	}
 	q := queue.NewPriorityQueue[Score](svc.n, func(src Score, dst Score) int {
@@ -69,33 +69,41 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 	})
 
 	for {
-		arts, err := svc.artSvc.ListPub(ctx, now, offset, svc.batchSize)
+		artResp, err := svc.artSvc.ListPub(ctx, &artv1.ListPubRequest{
+			Timestamp: now.UnixMilli(),
+			Offset:    int32(offset),
+			Limit:     int32(svc.batchSize),
+		})
+		if artResp == nil {
+			return nil, errors.New("没有数据")
+		}
+		arts := artResp.Arts
 		if err != nil {
 			return nil, err
 		}
-		ids := slice.Map[domain.Article, int64](arts, func(idx int, src domain.Article) int64 {
+		ids := slice.Map[*artv1.Article, int64](arts, func(idx int, src *artv1.Article) int64 {
 			return src.Id
 		})
 
 		// 要去找到对应的点赞数据
-		resp, err := svc.interSvc.GetByIds(ctx, &intrv1.GetByIdsRequest{
+		intrResp, err := svc.interSvc.GetByIds(ctx, &intrv1.GetByIdsRequest{
 			Biz:    "art",
 			BizIds: ids,
 		})
 		if err != nil {
 			return nil, err
 		}
-		if len(resp.Intrs) == 0 {
+		if len(intrResp.Intrs) == 0 {
 			return nil, errors.New("没有数据")
 		}
 
 		// 合并计算 score
 		// 排序
 		for _, art := range arts {
-			intr := resp.Intrs[art.Id]
+			intr := intrResp.Intrs[art.Id]
 
 			// 规避负数问题
-			score := svc.scoreFunc(art.Utime, intr.LikeCnt+2)
+			score := svc.scoreFunc(time.UnixMilli(art.Utime), intr.LikeCnt+2)
 
 			err = q.Enqueue(Score{
 				art:   art,
@@ -116,7 +124,7 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 		}
 
 		// 一批已经处理完了, 问题来了, 我要不要进入下一批？我怎么知道还有没有
-		if len(arts) == 0 || len(arts) < svc.batchSize || arts[len(arts)-1].Utime.Before(ddl) {
+		if len(arts) == 0 || len(arts) < svc.batchSize || (time.UnixMilli(arts[len(arts)-1].Utime)).Before(ddl) {
 			break
 		}
 		// 更新 offset
@@ -127,7 +135,22 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 	res := make([]domain.Article, ql)
 	for i := ql - 1; i >= 0; i-- {
 		val, _ := q.Dequeue()
-		res[i] = val.art
+		res[i] = toDTO(val.art)
 	}
 	return res, nil
+}
+
+func toDTO(art *artv1.Article) domain.Article {
+	return domain.Article{
+		Id:      art.Id,
+		Title:   art.Title,
+		Content: art.Content,
+		Author: domain.Author{
+			Id:   art.Author.Id,
+			Name: art.Author.Name,
+		},
+		Status: domain.ArticleStatus(uint8(art.Status)),
+		Ctime:  time.UnixMilli(art.Ctime),
+		Utime:  time.UnixMilli(art.Utime),
+	}
 }
