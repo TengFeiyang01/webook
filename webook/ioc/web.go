@@ -1,6 +1,7 @@
 package ioc
 
 import (
+	"github.com/TengFeiyang01/webook/webook/internal/web"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -8,7 +9,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"strings"
 	"time"
-	"github.com/TengFeiyang01/webook/webook/internal/web"
 
 	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
 	"github.com/TengFeiyang01/webook/webook/internal/web/middleware"
@@ -19,11 +19,11 @@ import (
 )
 
 func InitWebServer(middlewares []gin.HandlerFunc, userHandler *web.UserHandler,
-	oauth2WechatHdl *web.OAuth2WechatHandler, articleHdl *web.ArticleHandler) *gin.Engine {
+	articleHdl *web.ArticleHandler) *gin.Engine {
 	server := gin.Default()
 	server.Use(middlewares...)
 	userHandler.RegisterRoutes(server)
-	oauth2WechatHdl.RegisterRoutes(server)
+	//oauth2WechatHdl.RegisterRoutes(server)
 	articleHdl.RegisterRoutes(server)
 	(&web.ObservabilityHandler{}).RegisterRoutes(server)
 	return server

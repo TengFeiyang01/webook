@@ -86,11 +86,11 @@ func InitApp() *App {
 		service.NewCodeService,
 
 		ioc.InitSMSService,
-		ioc.InitOAuth2WechatService,
-		ioc.NewWechatHandlerConfig,
+		//ioc.InitOAuth2WechatService,
+		//ioc.NewWechatHandlerConfig,
 
 		web.NewUserHandler,
-		web.NewOAuth2WechatHandler,
+		//web.NewOAuth2WechatHandler,
 		web.NewArticleHandler,
 		ijwt.NewRedisJWT,
 
