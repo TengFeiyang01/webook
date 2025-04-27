@@ -279,7 +279,7 @@ func (u *UserHandler) Edit(ctx *gin.Context, req EditReq, uc ijwt.UserClaims) (g
 	if err != nil {
 		return ginx.Result{Code: 5, Msg: "系统错误"}, err
 	}
-	return ginx.Result{Code: http.StatusOK, Msg: "OK"}, nil
+	return ginx.Result{Code: http.StatusOK, Msg: "修改个人信息成功"}, nil
 }
 
 func (u *UserHandler) ProfileJWT(ctx *gin.Context, uc ijwt.UserClaims) (ginx.Result, error) {

@@ -71,7 +71,7 @@ func InitGinMiddlewares(redisClient redis.Cmdable, jwtHdl ijwt.Handler, l myLogg
 func corsHandler() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		//AllowAllOrigins: true,
-		//AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{"http://localhost:3000"},
 		AllowCredentials: true,
 
 		AllowHeaders: []string{"Content-Type", "Authorization"},

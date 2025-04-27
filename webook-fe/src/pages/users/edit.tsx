@@ -55,7 +55,7 @@ function EditForm() {
         initialValues={{
             birthday: moment(data.Birthday, 'YYYY-MM-DD'),
             nickname: data.Nickname,
-            aboutMe: data.AboutMe
+            about_me: data.AboutMe
         }}
         onFinish={onFinish}
         onFinishFailed={onFinishFailed}
@@ -78,7 +78,7 @@ function EditForm() {
 
         <Form.Item
             label="关于我"
-            name="aboutMe"
+            name="about_me"
         >
             <TextArea rows={4}/>
         </Form.Item>

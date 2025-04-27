@@ -8,56 +8,76 @@ import (
 	"go.etcd.io/etcd/client/v3/naming/endpoints"
 	"go.etcd.io/etcd/client/v3/naming/resolver"
 	"google.golang.org/grpc"
-	_ "google.golang.org/grpc/balancer/weightedroundrobin"
 	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"testing"
 	"time"
 )
 
-type EtcdTestSuite struct {
+type FailoverTestSuite struct {
 	suite.Suite
 	client *etcdv3.Client
 }
 
-func (s *EtcdTestSuite) SetupSuite() {
-	client, err := etcdv3.New(etcdv3.Config{
-		Endpoints: []string{"localhost:12379"},
-	})
-	require.NoError(s.T(), err)
-	s.client = client
-}
-
-func (s *EtcdTestSuite) TestClient() {
+func (s *FailoverTestSuite) TestFailoverClient() {
+	t := s.T()
 	etcdResolver, err := resolver.NewBuilder(s.client)
 	require.NoError(s.T(), err)
-	svcCfg := `
-{
-	"loadBalancingConfig": [
-		{
-			"weighted_round_robin": {}
-		}
-	]
-}
-`
 	cc, err := grpc.Dial("etcd:///service/user",
 		grpc.WithResolvers(etcdResolver),
-		grpc.WithDefaultServiceConfig(svcCfg),
+		grpc.WithDefaultServiceConfig(`
+{
+  "loadBalancingConfig": [{"round_robin": {}}],
+  "methodConfig":  [
+    {
+      "name": [{"service":  "UserService"}],
+      "retryPolicy": {
+        "maxAttempts": 4,
+        "initialBackoff": "0.01s",
+        "maxBackoff": "0.1s",
+        "backoffMultiplier": 2.0,
+        "retryableStatusCodes": ["UNAVAILABLE"]
+      }
+    }
+  ]
+}
+`),
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(s.T(), err)
+	require.NoError(t, err)
 	client := NewUserServiceClient(cc)
 	for i := 0; i < 10; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		resp, err := client.GetById(ctx, &GetByIdReq{
-			Id: 123,
-		})
+		resp, err := client.GetById(ctx, &GetByIdReq{Id: 123})
 		cancel()
-		require.NoError(s.T(), err)
-		s.T().Log(resp.User)
+		require.NoError(t, err)
+		t.Log(resp.User)
 	}
 }
 
-func (s *EtcdTestSuite) startServer(addr string, weight int, svc UserServiceServer) {
+func (s *FailoverTestSuite) SetupSuite() {
+	cli, err := etcdv3.NewFromURL("localhost:12379")
+	// etcdv3.NewFromURLs()
+	// etcdv3.New(etcdv3.Config{Endpoints: })
+	require.NoError(s.T(), err)
+	s.client = cli
+}
+
+func TestFailover(t *testing.T) {
+	suite.Run(t, &FailoverTestSuite{})
+}
+
+func (s *FailoverTestSuite) TestServer() {
+	go func() {
+		s.startServer(":8091", &AlwaysFailedServer{
+			Name: "failed",
+		})
+	}()
+	s.startServer(":8090", &Server{
+		Name: "normal",
+	})
+}
+
+func (s *FailoverTestSuite) startServer(addr string, svc UserServiceServer) {
 	t := s.T()
 	em, err := endpoints.NewManager(s.client, "service/user")
 	require.NoError(t, err)
@@ -76,11 +96,7 @@ func (s *EtcdTestSuite) startServer(addr string, weight int, svc UserServiceServ
 	require.NoError(t, err)
 
 	err = em.AddEndpoint(ctx, key, endpoints.Endpoint{
-		// 定位信息，客户端怎么连你
 		Addr: addr,
-		Metadata: map[string]any{
-			"weight": weight,
-		},
 	}, etcdv3.WithLease(leaseResp.ID))
 	require.NoError(t, err)
 	kaCtx, kaCancel := context.WithCancel(context.Background())
@@ -93,6 +109,7 @@ func (s *EtcdTestSuite) startServer(addr string, weight int, svc UserServiceServ
 	}()
 
 	server := grpc.NewServer()
+
 	RegisterUserServiceServer(server, svc)
 	server.Serve(l)
 	kaCancel()
@@ -102,8 +119,4 @@ func (s *EtcdTestSuite) startServer(addr string, weight int, svc UserServiceServ
 	}
 	server.GracefulStop()
 	//s.cli.Close()
-}
-
-func TestEtcd(t *testing.T) {
-	suite.Run(t, new(EtcdTestSuite))
 }
