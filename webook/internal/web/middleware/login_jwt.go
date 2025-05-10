@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	ijwt "github.com/TengFeiyang01/webook/webook/internal/web/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -40,9 +41,15 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			return []byte("GpJCNEnLiNblrZj5xdY9aG5cgVdKHCxh"), nil
 		})
 		// 格式对了内容不对
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			err := l.SetRefreshToken(ctx, claims.Uid, claims.Ssid)
+			if err != nil {
+				ctx.AbortWithStatus(http.StatusInternalServerError)
+			}
+			return
+		}
 		if err != nil {
-			// 没登陆 Bearer xxx1234
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 

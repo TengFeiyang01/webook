@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"github.com/ecodeclub/ekit/queue"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -126,6 +127,32 @@ func (l *TokenBucketLimiter) NewServerInterceptor() grpc.UnaryServerInterceptor 
 	}
 }
 
-func (l *TokenBucketLimiter) Close() {
+func (l *TokenBucketLimiter) Close() error {
 	close(l.closeCh)
+	return nil
+}
+
+// LeakyBucket 漏桶算法
+type LeakyBucket struct {
+	interval time.Duration
+	closeCh  chan struct{}
+}
+
+func (l *LeakyBucket) NewLeakyBucket() grpc.UnaryServerInterceptor {
+	ticker := time.NewTicker(l.interval)
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
+		select {
+		case <-ticker.C:
+			return handler(ctx, req)
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-l.closeCh:
+			return nil, errors.New("限流器关闭")
+		}
+	}
+}
+
+func (l *LeakyBucket) Close() error {
+	close(l.closeCh)
+	return nil
 }

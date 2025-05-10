@@ -3,10 +3,10 @@ package ratelimit
 import (
 	_ "embed"
 	"fmt"
+	"github.com/TengFeiyang01/webook/webook/pkg/ratelimit"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	"github.com/TengFeiyang01/webook/webook/pkg/ratelimit"
 )
 
 type Builder struct {
@@ -31,6 +31,9 @@ func (b *Builder) Prefix(prefix string) *Builder {
 
 func (b *Builder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		//timeout := ctx.GetHeader("x-timeout").(int64)
+		//t := time.UnixMilli(timeout)
+		//reqCtx, cancel := context.WithDeadline(ctx, t)
 		limited, err := b.limit(ctx)
 		if err != nil {
 			log.Println(err)

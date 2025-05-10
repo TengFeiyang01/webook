@@ -63,6 +63,7 @@ func InitGinMiddlewares(redisClient redis.Cmdable, jwtHdl ijwt.Handler, l myLogg
 			IgnorePaths("/users/login_sms/code/send").
 			IgnorePaths("/users/refresh_token").
 			IgnorePaths("/test/metric").
+			IgnorePaths("/users/refresh_token").
 			Build(),
 		ratelimit.NewBuilder(NewRateLimiter(time.Second, 100)).Build(),
 	}
